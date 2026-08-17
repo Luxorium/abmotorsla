@@ -1,0 +1,15 @@
+# Per-machine run state for the scripts. These are resume checkpoints holding
+# thousands of product GIDs — useful locally, meaningless in version control.
+.charm_prices_state.json
+.cleanup_state.json
+.orders_state.json
+.store_setup_state.json
+.tag_shipping_state.json
+.weights_state.json
+
+# Built preview bundle (regenerate with preview/build.py)
+preview/dist/
+
+# Never commit credentials. They live in the CoreYard .env, outside this repo.
+.env
+*.pem
