@@ -1,0 +1,32 @@
+{
+  "type": "footer",
+  "name": "Footer group",
+  "sections": {
+    "newsletter": {
+      "type": "newsletter",
+      "settings": {
+        "heading": "Can't find the part?",
+        "text": "Our yard changes daily. Tell us what you need and we'll call you when it comes in."
+      }
+    },
+    "footer": {
+      "type": "footer",
+      "settings": {
+        "blurb": "Quality used OEM parts pulled, inspected, and warrantied from our 10-acre lot in Amite, Louisiana. Shipped nationwide, delivered free locally.",
+        "legal_menu": "footer"
+      },
+      "blocks": {
+        "shop": {
+          "type": "menu",
+          "settings": { "heading": "Shop Parts", "menu": "main-menu" }
+        },
+        "help": {
+          "type": "menu",
+          "settings": { "heading": "Help", "menu": "footer" }
+        }
+      },
+      "block_order": ["shop", "help"]
+    }
+  },
+  "order": ["newsletter", "footer"]
+}

@@ -1,0 +1,19 @@
+<div class="page-width">
+  <div class="section">
+    <h1 class="h1">Order {{ order.name }}</h1>
+    <p class="small muted">{{ order.created_at | date: '%B %d, %Y' }}</p>
+    {%- for line in order.line_items -%}
+      <div class="cart-item">
+        <div class="cart-item__media">{% if line.image %}{{ line.image | image_url: width: 200 | image_tag: alt: line.title }}{% endif %}</div>
+        <div>
+          <b>{{ line.title }}</b>
+          <div class="card__meta"><span>Stock <b>{{ line.sku }}</b></span><span>Qty {{ line.quantity }}</span></div>
+        </div>
+        <div style="text-align:right;"><span class="price">{{ line.final_line_price | money }}</span></div>
+      </div>
+    {%- endfor -%}
+    <div class="cart-summary__row cart-summary__row--total" style="max-width:340px;margin-left:auto;">
+      <span>Total</span><span>{{ order.total_price | money }}</span>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,71 @@
+{%- comment -%}
+  Open Graph + JSON-LD. Parts get LocalBusiness context so a search for
+  "alternator Amite LA" can connect the listing to the yard.
+{%- endcomment -%}
+<meta property="og:site_name" content="{{ shop.name }}">
+<meta property="og:url" content="{{ canonical_url }}">
+<meta property="og:title" content="{{ page_title | escape }}">
+<meta property="og:type" content="{% if request.page_type == 'product' %}product{% else %}website{% endif %}">
+<meta property="og:description" content="{{ page_description | default: shop.description | default: shop.name | escape }}">
+{%- comment -%}
+  https, not http: the storefront is served over TLS, and Facebook/X reject or silently drop
+  a mixed-content preview image. The JSON-LD below already had this right.
+{%- endcomment -%}
+{%- if request.page_type == 'product' and product.featured_media -%}
+  <meta property="og:image" content="https:{{ product.featured_media | image_url: width: 1200 }}">
+  <meta property="og:image:alt" content="{{ product.title | escape }}">
+  <meta property="og:price:amount" content="{{ product.price | divided_by: 100.0 }}">
+  <meta property="og:price:currency" content="{{ cart.currency.iso_code }}">
+{%- elsif settings.logo -%}
+  <meta property="og:image" content="https:{{ settings.logo | image_url: width: 1200 }}">
+  <meta property="og:image:alt" content="{{ shop.name | escape }}">
+{%- endif -%}
+<meta name="twitter:card" content="summary_large_image">
+
+{%- if request.page_type == 'product' -%}
+  {%- assign variant = product.selected_or_first_available_variant -%}
+  <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "Product",
+      "name": {{ product.title | strip_html | json }},
+      "url": {{ shop.url | append: product.url | json }},
+      {% if product.featured_media %}"image": [{{ product.featured_media | image_url: width: 1200 | prepend: "https:" | json }}],{% endif %}
+      "description": {{ product.description | strip_html | truncate: 600 | json }},
+      "sku": {{ variant.sku | json }},
+      "brand": { "@type": "Brand", "name": {{ product.vendor | json }} },
+      "itemCondition": "https://schema.org/UsedCondition",
+      "offers": {
+        "@type": "Offer",
+        "price": "{{ variant.price | divided_by: 100.0 }}",
+        "priceCurrency": {{ cart.currency.iso_code | json }},
+        "availability": "{% if product.available %}https://schema.org/InStock{% else %}https://schema.org/OutOfStock{% endif %}",
+        "url": {{ shop.url | append: product.url | json }},
+        "seller": { "@type": "AutoPartsStore", "name": {{ shop.name | json }} }
+      }
+    }
+  </script>
+{%- endif -%}
+
+{%- if request.page_type == 'index' -%}
+  <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "AutoPartsStore",
+      "name": {{ shop.name | json }},
+      "url": {{ shop.url | json }},
+      {% if settings.logo %}"logo": {{ settings.logo | image_url: width: 600 | prepend: "https:" | json }},{% endif %}
+      "telephone": {{ settings.phone | json }},
+      "email": {{ settings.email | json }},
+      "address": {
+        "@type": "PostalAddress",
+        "streetAddress": "59174 Hwy 51",
+        "addressLocality": "Amite",
+        "addressRegion": "LA",
+        "postalCode": "70422",
+        "addressCountry": "US"
+      },
+      "openingHours": "Mo-Fr 08:00-17:00"
+    }
+  </script>
+{%- endif -%}

@@ -1,0 +1,33 @@
+<div class="page-width">
+  <div class="section">
+    <div class="section-head">
+      <h1 class="h1">{{ page_title | default: 'Shop by part type' }}</h1>
+      <p class="lede">Every part on this site was pulled from a vehicle on our own lot in Amite.</p>
+    </div>
+
+    <div class="grid grid--{{ section.settings.columns }}">
+      {%- for collection in collections -%}
+        <a href="{{ collection.url }}" class="cat-card">
+          {%- if collection.featured_image -%}
+            {{ collection.featured_image | image_url: width: 700 | image_tag:
+                 widths: '300,500,700', sizes: '(min-width:990px) 320px, 45vw',
+                 loading: 'lazy', alt: collection.title }}
+          {%- endif -%}
+          <span class="cat-card__label">
+            {{ collection.title }}
+            <small>{{ collection.products_count }} part{% if collection.products_count != 1 %}s{% endif %}</small>
+          </span>
+        </a>
+      {%- endfor -%}
+    </div>
+  </div>
+</div>
+
+{% schema %}
+{
+  "name": "Collections list",
+  "settings": [
+    { "type": "range", "id": "columns", "label": "Columns", "min": 2, "max": 5, "step": 1, "default": 4 }
+  ]
+}
+{% endschema %}

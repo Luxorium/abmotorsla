@@ -1,0 +1,105 @@
+{%- comment -%}
+  Resolves how a part ships from its ship:* tag and renders the right notice.
+  Tags are written by scripts/tag_shipping.py from content/freight.json, so the
+  storefront and the delivery profiles always agree.
+
+  Accepts:
+    product (required)
+    style: 'badge' | 'banner' | 'line'   (default 'badge')
+
+  Sets nothing globally — call it wherever the notice belongs.
+
+  'banner' is the important one. A shopper in another state must learn a door is
+  pickup-only on the product page, not by hitting a checkout with no available
+  shipping method.
+{%- endcomment -%}
+{%- liquid
+  assign group = 'free'
+  if product.tags contains 'ship:pickup-only'
+    assign group = 'pickup'
+  elsif product.tags contains 'ship:freight-299'
+    assign group = 'freight299'
+  elsif product.tags contains 'ship:freight-199'
+    assign group = 'freight199'
+  endif
+  assign style = style | default: 'badge'
+  assign phone = settings.phone
+  assign phone_href = phone | remove: '-' | remove: ' '
+-%}
+
+{%- case style -%}
+
+  {%- when 'badge' -%}
+    {%- if group == 'pickup' -%}
+      <span class="badge badge--pickup">Pickup only</span>
+    {%- elsif group == 'freight299' -%}
+      <span class="badge badge--freight">Freight $299.99</span>
+    {%- elsif group == 'freight199' -%}
+      <span class="badge badge--freight">Freight $199.99</span>
+    {%- else -%}
+      <span class="badge badge--green">Free shipping</span>
+    {%- endif -%}
+
+  {%- when 'line' -%}
+    {%- if group == 'pickup' -%}
+      <span class="ship-line ship-line--pickup">{% render 'icon', name: 'pin' %} Pickup only &mdash; not shipped</span>
+    {%- elsif group == 'freight299' -%}
+      <span class="ship-line ship-line--freight">{% render 'icon', name: 'truck' %} $299.99 freight &middot; commercial address</span>
+    {%- elsif group == 'freight199' -%}
+      <span class="ship-line ship-line--freight">{% render 'icon', name: 'truck' %} $199.99 freight &middot; commercial address</span>
+    {%- else -%}
+      <span class="ship-line ship-line--free">{% render 'icon', name: 'truck' %} Free shipping</span>
+    {%- endif -%}
+
+  {%- when 'banner' -%}
+    {%- if group == 'pickup' -%}
+      <div class="ship-notice ship-notice--pickup">
+        {% render 'icon', name: 'pin' %}
+        <div>
+          <b>Local pickup only &mdash; available in Amite, Louisiana</b>
+          <p>
+            We don't ship body panels or glass at any price. They arrive damaged too often, and
+            crating them properly costs more than the panel is worth. This part is available for
+            <b>pickup at the yard</b> or <b>free local delivery</b> in our area.
+          </p>
+          <p class="ship-notice__actions">
+            {%- if phone != blank -%}
+              <a href="tel:{{ phone_href }}" class="btn btn--sm">{% render 'icon', name: 'phone' %} Call {{ phone }}</a>
+            {%- endif -%}
+            <a href="{{ routes.root_url }}pages/freight" class="link">How pickup works &rarr;</a>
+          </p>
+        </div>
+      </div>
+
+    {%- elsif group == 'freight299' or group == 'freight199' -%}
+      {%- if group == 'freight299' -%}{%- assign fee = '$299.99' -%}{%- else -%}{%- assign fee = '$199.99' -%}{%- endif -%}
+      <div class="ship-notice ship-notice--freight">
+        {% render 'icon', name: 'truck' %}
+        <div>
+          <b>Ships freight &mdash; {{ fee }} flat rate</b>
+          <p>
+            <b>MUST SHIP TO A COMMERCIAL/BUSINESS ADDRESS WITH A FORKLIFT.</b>
+            A freight truck can't unload a part this heavy at a house. Ship it to your mechanic's
+            shop, or pick it up at the freight terminal nearest you &mdash; usually the cheapest option.
+          </p>
+          <p>
+            Free pickup at our yard in Amite is always available. Not sure what works?
+            {%- if phone != blank %} Call <a href="tel:{{ phone_href }}">{{ phone }}</a> and we'll sort it out before you pay.{% endif %}
+          </p>
+          <p class="ship-notice__actions">
+            <a href="{{ routes.root_url }}pages/freight" class="link">Read the freight rules &rarr;</a>
+          </p>
+        </div>
+      </div>
+
+    {%- else -%}
+      <div class="ship-notice ship-notice--free">
+        {% render 'icon', name: 'truck' %}
+        <div>
+          <b>Free shipping</b>
+          <p>Ships free anywhere in the lower 48, usually the same or next business day. Free local delivery around Amite, or pick it up at the yard.</p>
+        </div>
+      </div>
+    {%- endif -%}
+
+{%- endcase -%}

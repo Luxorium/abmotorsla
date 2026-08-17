@@ -1,0 +1,135 @@
+{%- liquid
+  assign phone = settings.phone
+  assign phone_href = phone | remove: '-' | remove: ' ' | remove: '(' | remove: ')'
+-%}
+
+<header class="header" data-header>
+  <div class="header__bar">
+    <button class="icon-btn mobile-only" data-drawer-open aria-label="Open menu">
+      {% render 'icon', name: 'menu' %}
+    </button>
+
+    <a href="{{ routes.root_url }}" class="header__logo" aria-label="{{ shop.name }} — home">
+      {%- if settings.logo != blank -%}
+        {{ settings.logo | image_url: width: 700 | image_tag:
+            loading: 'eager',
+            widths: '200,300,400,600,700',
+            style: 'max-height:' | append: settings.logo_height | append: 'px',
+            alt: shop.name }}
+      {%- else -%}
+        <span class="header__logo-text"><span class="chrome-text">A&amp;B</span> MOTORS</span>
+      {%- endif -%}
+    </a>
+
+    <div class="header__search desktop-only">
+      {% render 'search-field', uid: 'header', placeholder: section.settings.search_placeholder %}
+    </div>
+
+    <div class="header__actions">
+      {%- if phone != blank -%}
+        <a href="tel:{{ phone_href }}" class="header__phone desktop-only">
+          {% render 'icon', name: 'phone' %}
+          <span><small>Call the yard</small>{{ phone }}</span>
+        </a>
+      {%- endif -%}
+
+      <a href="{{ routes.search_url }}" class="icon-btn mobile-only" aria-label="Search">
+        {% render 'icon', name: 'search' %}
+      </a>
+
+      <a href="{{ routes.cart_url }}" class="icon-btn" aria-label="Cart" data-cart-link>
+        {% render 'icon', name: 'cart' %}
+        <span class="icon-btn__count" data-cart-count {% if cart.item_count == 0 %}hidden{% endif %}>
+          {{- cart.item_count -}}
+        </span>
+      </a>
+    </div>
+  </div>
+
+  <nav class="nav desktop-only" aria-label="Main">
+    <div class="nav__inner">
+      {%- for link in section.settings.menu.links -%}
+        {%- if link.links.size > 0 -%}
+          <details class="nav__item" data-nav-item>
+            <summary class="nav__link" role="button">
+              {{ link.title }}
+              <svg viewBox="0 0 12 8" width="10" height="7" aria-hidden="true"><path d="M1 1.5 6 6.5l5-5" fill="none" stroke="currentColor" stroke-width="1.8"/></svg>
+            </summary>
+            <div class="nav__panel">
+              {%- for child in link.links -%}
+                <a href="{{ child.url }}">{{ child.title }}</a>
+              {%- endfor -%}
+            </div>
+          </details>
+        {%- else -%}
+          <a href="{{ link.url }}"
+             class="nav__link{% if link.active %} nav__link--active{% endif %}"
+             {% if link.active %}aria-current="page"{% endif %}>{{ link.title }}</a>
+        {%- endif -%}
+      {%- endfor -%}
+
+      {%- if section.settings.cta_label != blank -%}
+        <a href="{{ section.settings.cta_url }}" class="nav__link nav__link--accent push">
+          {% render 'icon', name: 'dollar' %}
+          {{ section.settings.cta_label }}
+        </a>
+      {%- endif -%}
+    </div>
+  </nav>
+
+  <div class="page-width mobile-only" style="padding-top:10px;padding-bottom:12px;">
+    {% render 'search-field', uid: 'mobile', placeholder: section.settings.search_placeholder %}
+  </div>
+</header>
+
+<div class="drawer" data-drawer>
+  <button class="drawer__scrim" data-drawer-close aria-label="Close menu" tabindex="-1"></button>
+  <div class="drawer__panel" role="dialog" aria-modal="true" aria-label="Menu">
+    <div class="drawer__head">
+      <span class="header__logo-text" style="font-size:18px;"><span class="chrome-text">A&amp;B</span> MOTORS</span>
+      <button class="icon-btn" data-drawer-close aria-label="Close menu">{% render 'icon', name: 'close' %}</button>
+    </div>
+
+    {%- for link in section.settings.menu.links -%}
+      <a href="{{ link.url }}" class="drawer__link">{{ link.title }}</a>
+      {%- for child in link.links -%}
+        <a href="{{ child.url }}" class="drawer__link drawer__link--sub">{{ child.title }}</a>
+      {%- endfor -%}
+    {%- endfor -%}
+
+    {%- if section.settings.cta_label != blank -%}
+      <a href="{{ section.settings.cta_url }}" class="btn btn--full" style="margin-top:18px;">
+        {{ section.settings.cta_label }}
+      </a>
+    {%- endif -%}
+
+    {%- if phone != blank -%}
+      <a href="tel:{{ phone_href }}" class="btn btn--outline btn--full" style="margin-top:10px;">
+        {% render 'icon', name: 'phone' %} {{ phone }}
+      </a>
+    {%- endif -%}
+
+    <p class="small muted" style="margin-top:18px;">
+      {{ settings.address | newline_to_br }}<br>
+      {{ settings.hours }}
+    </p>
+  </div>
+</div>
+
+{% schema %}
+{
+  "name": "Header",
+  "settings": [
+    { "type": "link_list", "id": "menu", "label": "Menu", "default": "main-menu" },
+    {
+      "type": "text",
+      "id": "search_placeholder",
+      "label": "Search placeholder",
+      "default": "Search by part, year, make, model, or stock #"
+    },
+    { "type": "text", "id": "cta_label", "label": "Right-side link label", "default": "Sell Your Car" },
+    { "type": "url", "id": "cta_url", "label": "Right-side link URL" }
+  ],
+  "enabled_on": { "groups": ["header"] }
+}
+{% endschema %}

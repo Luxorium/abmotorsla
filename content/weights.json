@@ -1,0 +1,576 @@
+{
+  "_comment": "Packed shipping weights in POUNDS, keyed by product type. Rules are matched IN ORDER, first match wins, case-insensitive substring \u2014 so specific patterns must come before general ones ('Engine Assembly' before 'Engine'). Values include packaging and are deliberately rounded UP: under-declaring weight costs money at the carrier, over-declaring costs a little margin. A safety_multiplier is applied on top and the result rounded UP to a whole pound. Covers all 201 types in the catalog via 'default'.",
+  "unit": "POUNDS",
+  "default": 15,
+  "rules": [
+    [
+      "engine assembly",
+      550
+    ],
+    [
+      "short cyl block",
+      420
+    ],
+    [
+      "transmission / transaxle",
+      240
+    ],
+    [
+      "transfer case",
+      110
+    ],
+    [
+      "transmission shifter",
+      8
+    ],
+    [
+      "at parts",
+      10
+    ],
+    [
+      "trans oil cooler",
+      8
+    ],
+    [
+      "pickup box",
+      400
+    ],
+    [
+      "decklid tailgate",
+      80
+    ],
+    [
+      "door assembly",
+      90
+    ],
+    [
+      "dr assm",
+      90
+    ],
+    [
+      "quarter panel assembly",
+      85
+    ],
+    [
+      "hood hinge",
+      6
+    ],
+    [
+      "hood",
+      70
+    ],
+    [
+      "bumper assembly",
+      55
+    ],
+    [
+      "bumper rein",
+      42
+    ],
+    [
+      "bumper filler",
+      8
+    ],
+    [
+      "fender flare",
+      10
+    ],
+    [
+      "fender",
+      30
+    ],
+    [
+      "running board",
+      34
+    ],
+    [
+      "radiator core supp",
+      42
+    ],
+    [
+      "susp crossm k-frame",
+      85
+    ],
+    [
+      "roof glass",
+      55
+    ],
+    [
+      "back glass regulato",
+      8
+    ],
+    [
+      "back glass",
+      42
+    ],
+    [
+      "quarter glass",
+      14
+    ],
+    [
+      "door vent glass",
+      8
+    ],
+    [
+      "door glass",
+      14
+    ],
+    [
+      "cowl vent panel",
+      10
+    ],
+    [
+      "engine cover",
+      8
+    ],
+    [
+      "grille",
+      18
+    ],
+    [
+      "fuel filler door",
+      4
+    ],
+    [
+      "fuel filler neck",
+      6
+    ],
+    [
+      "fuel tank",
+      55
+    ],
+    [
+      "axle assembly",
+      200
+    ],
+    [
+      "axle parts",
+      20
+    ],
+    [
+      "carrier assembly",
+      140
+    ],
+    [
+      "drive shaft",
+      55
+    ],
+    [
+      "yoke/u-joint",
+      6
+    ],
+    [
+      "spindle knuckle",
+      28
+    ],
+    [
+      "rear knuckle",
+      28
+    ],
+    [
+      "lower cntrl arm",
+      24
+    ],
+    [
+      "upper cntrl arm",
+      16
+    ],
+    [
+      "steering gear rack",
+      42
+    ],
+    [
+      "steering column",
+      38
+    ],
+    [
+      "steering wheel",
+      8
+    ],
+    [
+      "strut",
+      20
+    ],
+    [
+      "hatchback strut",
+      3
+    ],
+    [
+      "spare wheel carrier",
+      20
+    ],
+    [
+      "hub",
+      16
+    ],
+    [
+      "cylinder head",
+      70
+    ],
+    [
+      "intake manifold",
+      32
+    ],
+    [
+      "exhaust manifold",
+      30
+    ],
+    [
+      "turbo-supercharger",
+      48
+    ],
+    [
+      "intercooler",
+      26
+    ],
+    [
+      "oil pan",
+      22
+    ],
+    [
+      "timing cover",
+      17
+    ],
+    [
+      "valve cover",
+      10
+    ],
+    [
+      "engine oil cooler",
+      14
+    ],
+    [
+      "thermostat housing",
+      4
+    ],
+    [
+      "vacuum pump",
+      8
+    ],
+    [
+      "belt tensioner",
+      4
+    ],
+    [
+      "radiators",
+      35
+    ],
+    [
+      "radiator",
+      35
+    ],
+    [
+      "ac condenser",
+      26
+    ],
+    [
+      "ac evaporator",
+      14
+    ],
+    [
+      "a/c compressor",
+      30
+    ],
+    [
+      "rad cond fan motor",
+      20
+    ],
+    [
+      "blower motor",
+      10
+    ],
+    [
+      "air shutter",
+      8
+    ],
+    [
+      "coolant reservoir",
+      6
+    ],
+    [
+      "wash reservoir",
+      6
+    ],
+    [
+      "power steering res",
+      4
+    ],
+    [
+      "power steering pump",
+      20
+    ],
+    [
+      "seat, front",
+      80
+    ],
+    [
+      "seat, rear",
+      95
+    ],
+    [
+      "seat belt",
+      8
+    ],
+    [
+      "headrest",
+      6
+    ],
+    [
+      "console, front",
+      25
+    ],
+    [
+      "glove box",
+      11
+    ],
+    [
+      "sun visor",
+      4
+    ],
+    [
+      "interior rear view mirror",
+      3
+    ],
+    [
+      "side view mirror",
+      8
+    ],
+    [
+      "dash wire harness",
+      17
+    ],
+    [
+      "engine wire harness",
+      17
+    ],
+    [
+      "lamp wiring harness",
+      6
+    ],
+    [
+      "pedal, brake/clutch",
+      6
+    ],
+    [
+      "accelerator parts",
+      4
+    ],
+    [
+      "jack",
+      16
+    ],
+    [
+      "starter motor",
+      18
+    ],
+    [
+      "alternator",
+      18
+    ],
+    [
+      "battery tray",
+      5
+    ],
+    [
+      "battery",
+      50
+    ],
+    [
+      "engine fuse box",
+      9
+    ],
+    [
+      "cabin fuse box",
+      8
+    ],
+    [
+      "fuse box",
+      8
+    ],
+    [
+      "engine control module",
+      6
+    ],
+    [
+      "chassis cont mod",
+      6
+    ],
+    [
+      "speedometer instrument",
+      8
+    ],
+    [
+      "info-gps-tv screen",
+      10
+    ],
+    [
+      "radio / audio unit",
+      10
+    ],
+    [
+      "temperature / climate",
+      8
+    ],
+    [
+      "temp control",
+      8
+    ],
+    [
+      "camera projector",
+      3
+    ],
+    [
+      "conv/invert/charger",
+      14
+    ],
+    [
+      "coil/ignitor",
+      5
+    ],
+    [
+      "throttle body",
+      10
+    ],
+    [
+      "air flow meter",
+      3
+    ],
+    [
+      "air cleaner",
+      11
+    ],
+    [
+      "air tube/resonator",
+      5
+    ],
+    [
+      "fuel pump",
+      11
+    ],
+    [
+      "fuel inject parts",
+      4
+    ],
+    [
+      "wiper motor",
+      10
+    ],
+    [
+      "wiper transmission",
+      9
+    ],
+    [
+      "antenna",
+      3
+    ],
+    [
+      "ignition switch",
+      2
+    ],
+    [
+      "column switch",
+      3
+    ],
+    [
+      "relay, electrical",
+      2
+    ],
+    [
+      "resistor,electrical",
+      2
+    ],
+    [
+      "misc electrical",
+      5
+    ],
+    [
+      "chassis sensor",
+      2
+    ],
+    [
+      "drivetrain sensor",
+      2
+    ],
+    [
+      "abs anti-lock brake",
+      16
+    ],
+    [
+      "brake master cyl",
+      9
+    ],
+    [
+      "power brake booster",
+      18
+    ],
+    [
+      "caliper",
+      16
+    ],
+    [
+      "headlamp assembly",
+      15
+    ],
+    [
+      "tail lamp",
+      11
+    ],
+    [
+      "tail light assembly",
+      9
+    ],
+    [
+      "front lamp",
+      11
+    ],
+    [
+      "high mtd stop lamp",
+      3
+    ],
+    [
+      "license lamp",
+      2
+    ],
+    [
+      "wheel",
+      40
+    ],
+    [
+      "center cap",
+      2
+    ],
+    [
+      "door window reg",
+      11
+    ],
+    [
+      "dr window reg",
+      11
+    ],
+    [
+      "dr handle",
+      3
+    ],
+    [
+      "door latch",
+      3
+    ],
+    [
+      "keys/latches/locks",
+      3
+    ],
+    [
+      "door switch",
+      2
+    ],
+    [
+      "dsh/int/seat switch",
+      2
+    ],
+    [
+      "air bag",
+      9
+    ]
+  ],
+  "safety_multiplier": 1.1
+}

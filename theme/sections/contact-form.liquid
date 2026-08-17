@@ -1,0 +1,102 @@
+{%- liquid
+  assign phone = settings.phone
+  assign phone_href = phone | remove: '-' | remove: ' '
+-%}
+
+<div class="page-width">
+  <div class="section">
+    <div class="split" style="align-items:start;">
+      <div>
+        <h1 class="h1">{{ section.settings.heading }}</h1>
+        <div class="rte lede">{{ section.settings.text }}</div>
+
+        <div class="footer__contact" style="color:var(--ink);margin-top:26px;gap:16px;">
+          {%- if phone != blank -%}
+            <div>{% render 'icon', name: 'phone' %}<span><b>Call the yard</b><a class="link" href="tel:{{ phone_href }}">{{ phone }}</a></span></div>
+          {%- endif -%}
+          {%- if settings.email != blank -%}
+            <div>{% render 'icon', name: 'mail' %}<span><b>Email</b><a class="link" href="mailto:{{ settings.email }}">{{ settings.email }}</a></span></div>
+          {%- endif -%}
+          {%- if settings.address != blank -%}
+            <div>{% render 'icon', name: 'pin' %}<span><b>Come by the lot</b>{{ settings.address | newline_to_br }}</span></div>
+          {%- endif -%}
+          {%- if settings.hours != blank -%}
+            <div>{% render 'icon', name: 'clock' %}<span><b>Hours</b>{{ settings.hours | newline_to_br }}</span></div>
+          {%- endif -%}
+        </div>
+
+        {%- if section.settings.show_map and settings.map_query != blank -%}
+          <iframe
+            title="Map to A&B Motors"
+            width="100%" height="300" style="border:0;border-radius:10px;margin-top:22px;"
+            loading="lazy" referrerpolicy="no-referrer-when-downgrade"
+            src="https://maps.google.com/maps?q={{ settings.map_query }}&output=embed"></iframe>
+        {%- endif -%}
+      </div>
+
+      <div>
+        {%- form 'contact', class: 'contact-form' -%}
+          {%- if form.posted_successfully? -%}
+            <p class="form-success">Thanks — we got it. Someone from the yard will get back to you, usually same day.</p>
+          {%- elsif form.errors -%}
+            <p class="form-error">{{ form.errors | default_errors }}</p>
+          {%- endif -%}
+
+          <label class="field">
+            <span>Name</span>
+            <input type="text" name="contact[name]" required autocomplete="name">
+          </label>
+
+          <div class="split" style="gap:14px;grid-template-columns:1fr 1fr;">
+            <label class="field">
+              <span>Email</span>
+              <input type="email" name="contact[email]" required autocomplete="email">
+            </label>
+            <label class="field">
+              <span>Phone</span>
+              <input type="tel" name="contact[phone]" autocomplete="tel">
+            </label>
+          </div>
+
+          <label class="field">
+            <span>Year / make / model</span>
+            <input type="text" name="contact[vehicle]" placeholder="2012 Chevrolet Silverado 1500">
+          </label>
+
+          <label class="field">
+            <span>Part you need (or stock number)</span>
+            <input type="text" name="contact[part]" placeholder="Alternator — or 641-00118L">
+          </label>
+
+          <label class="field">
+            <span>Anything else</span>
+            <textarea name="contact[body]" placeholder="VIN, trim, engine size — whatever helps us match it."></textarea>
+          </label>
+
+          <button type="submit" class="btn btn--lg btn--full">{{ section.settings.button_label }}</button>
+          <p class="form-note" style="margin-top:10px;">
+            We only use this to answer your request. No lists, no spam.
+          </p>
+        {%- endform -%}
+      </div>
+    </div>
+  </div>
+</div>
+
+{% schema %}
+{
+  "name": "Contact form",
+  "settings": [
+    { "type": "text", "id": "heading", "label": "Heading", "default": "Tell us what you're looking for" },
+    {
+      "type": "richtext",
+      "id": "text",
+      "label": "Text",
+      "default": "<p>Not everything on the lot is listed online yet. Send us the vehicle and the part, and we'll check the racks and the interchange for you.</p>"
+    },
+    { "type": "text", "id": "button_label", "label": "Button label", "default": "Send it to the yard" },
+    { "type": "checkbox", "id": "show_map", "label": "Show map", "default": true }
+  ],
+  "presets": [{ "name": "Contact form" }]
+}
+{% endschema %}

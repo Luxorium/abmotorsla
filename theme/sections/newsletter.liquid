@@ -1,0 +1,41 @@
+<section class="section section--dark">
+  <div class="page-width">
+    <div class="split" style="align-items:center;">
+      <div>
+        <p class="eyebrow">{{ section.settings.eyebrow }}</p>
+        <h2 class="h2">{{ section.settings.heading }}</h2>
+        <p class="muted" style="margin:0;">{{ section.settings.text }}</p>
+      </div>
+      <div>
+        {%- form 'customer' -%}
+          <input type="hidden" name="contact[tags]" value="newsletter">
+          {%- if form.posted_successfully? -%}
+            <p class="form-success">You're on the list. We'll be in touch when it lands.</p>
+          {%- else -%}
+            <div class="newsletter-form">
+              <label class="visually-hidden" for="NewsletterEmail">Email</label>
+              <input id="NewsletterEmail" type="email" name="contact[email]" placeholder="you@email.com" required>
+              <button type="submit" class="btn">{{ section.settings.button_label }}</button>
+            </div>
+            <p class="small muted" style="margin-top:10px;">
+              Parts alerts and yard news. Unsubscribe any time.
+            </p>
+          {%- endif -%}
+        {%- endform -%}
+      </div>
+    </div>
+  </div>
+</section>
+
+{% schema %}
+{
+  "name": "Newsletter",
+  "settings": [
+    { "type": "text", "id": "eyebrow", "label": "Eyebrow", "default": "Parts request" },
+    { "type": "text", "id": "heading", "label": "Heading", "default": "Can't find the part?" },
+    { "type": "textarea", "id": "text", "label": "Text", "default": "Our yard changes daily. Get on the list and we'll let you know when what you need comes in." },
+    { "type": "text", "id": "button_label", "label": "Button label", "default": "Notify me" }
+  ],
+  "enabled_on": { "groups": ["footer"] }
+}
+{% endschema %}

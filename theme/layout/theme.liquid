@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="{{ request.locale.iso_code }}">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#171C1F">
+    <link rel="canonical" href="{{ canonical_url }}">
+    <link rel="preconnect" href="https://cdn.shopify.com" crossorigin>
+
+    {%- if settings.favicon != blank -%}
+      <link rel="icon" type="image/png" href="{{ settings.favicon | image_url: width: 48, height: 48 }}">
+    {%- endif -%}
+
+    {%- comment -%}
+      Both sides of the "already has the shop name?" test have to be escaped the same way.
+      Comparing raw page_title against an escaped shop.name never matches for a name with
+      an "&" in it, which is how the home page ended up titled "A&B MOTORS - A&amp;B MOTORS".
+      Escaping here also keeps the bare "&" out of the markup.
+    {%- endcomment -%}
+    {%- assign shop_name = shop.name | escape_once -%}
+    {%- assign head_title = page_title | escape_once -%}
+    {%- comment -%}
+      Compare case-insensitively as well: the SEO title reads "A&B Motors | Used Auto Parts…"
+      while shop.name is "A&B MOTORS", and Liquid's `contains` is case-sensitive, so the brand
+      was being appended to a title that already led with it.
+    {%- endcomment -%}
+    {%- assign title_lower = head_title | downcase -%}
+    {%- assign shop_lower = shop_name | downcase -%}
+    <title>
+      {{- head_title -}}
+      {%- if current_tags %} &ndash; {{ current_tags | join: ', ' | escape }}{% endif -%}
+      {%- if current_page != 1 %} &ndash; Page {{ current_page }}{% endif -%}
+      {%- unless title_lower contains shop_lower %} &ndash; {{ shop_name }}{% endunless -%}
+    </title>
+
+    {%- comment -%}
+      The home page, /collections/all and search have no page_description, so without a
+      fallback they shipped no meta description at all — the home page most of all, which
+      is the one Google quotes for the business.
+    {%- endcomment -%}
+    {%- comment -%}
+      escape_once, not escape: shop.description already stores "&amp;", so escaping it a
+      second time shipped "A&amp;amp;B Motors" — which Google would print literally.
+      escape_once leaves an existing entity alone and still escapes a bare "&".
+    {%- endcomment -%}
+    {%- assign meta_description = page_description | default: shop.description | default: shop.name -%}
+    {%- if meta_description != blank -%}
+      <meta name="description" content="{{ meta_description | strip_html | escape_once }}">
+    {%- endif -%}
+
+    {% render 'meta-tags' %}
+
+    {{ content_for_header }}
+
+    {{ 'base.css' | asset_url | stylesheet_tag }}
+
+    {%- liquid
+      assign body_font = settings.type_body_font
+      assign heading_font = settings.type_heading_font
+    -%}
+    {% style %}
+      {{ body_font | font_face: font_display: 'swap' }}
+      {{ body_font | font_modify: 'weight', 'bold' | font_face: font_display: 'swap' }}
+      {{ heading_font | font_face: font_display: 'swap' }}
+      {{ heading_font | font_modify: 'weight', 'bolder' | font_face: font_display: 'swap' }}
+
+      :root {
+        --font-body-family: {{ body_font.family }}, {{ body_font.fallback_families }};
+        --font-heading-family: {{ heading_font.family }}, {{ heading_font.fallback_families }};
+        --green: {{ settings.color_accent }};
+        --green-dark: {{ settings.color_accent_dark }};
+        --graphite: {{ settings.color_dark }};
+        --page: {{ settings.page_width }}px;
+      }
+    {% endstyle %}
+
+    <script>
+      window.ABM = {
+        moneyFormat: {{ shop.money_format | json }},
+        cartType: {{ settings.cart_type | default: 'stay' | json }},
+        routes: {
+          cart: {{ routes.cart_url | json }},
+          search: {{ routes.search_url | json }},
+          predictive: {{ routes.predictive_search_url | json }}
+        }
+      };
+    </script>
+    <script src="{{ 'theme.js' | asset_url }}" defer></script>
+  </head>
+
+  <body class="template-{{ template.name | handle }}"
+        {% if template.name == 'product' %}data-product-id="{{ product.id }}"{% endif %}>
+    <a class="skip-link btn btn--sm" href="#MainContent">Skip to content</a>
+
+    {% sections 'header-group' %}
+
+    <main id="MainContent" role="main">
+      {{ content_for_layout }}
+    </main>
+
+    {% sections 'footer-group' %}
+  </body>
+</html>

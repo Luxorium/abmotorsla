@@ -1,0 +1,321 @@
+<title>A&amp;B Motors Launch Runbook</title>
+<style>
+  :root {
+    --bg: #f7f9f8; --surface: #ffffff; --surface-2: #eef2f1;
+    --ink: #0c1011; --ink-2: #45514f; --ink-3: #6b7876;
+    --line: #dbe3e1; --line-2: #c3cecb;
+    --green: #1a9e12; --green-ink: #0f6b0a; --green-wash: #e9f7e7;
+    --amber: #a86800; --amber-wash: #fdf3e0;
+    --red: #a8231c; --red-wash: #fceceb;
+    --shadow: 0 1px 2px rgba(12,16,17,.05), 0 6px 20px rgba(12,16,17,.06);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #0e1213; --surface: #171d1e; --surface-2: #1f2728;
+      --ink: #eef2f1; --ink-2: #b3bfbd; --ink-3: #859290;
+      --line: #2b3435; --line-2: #3b4647;
+      --green: #3ed132; --green-ink: #7fe376; --green-wash: #142a12;
+      --amber: #e0a44a; --amber-wash: #2a2113;
+      --red: #ef7d76; --red-wash: #2c1615;
+      --shadow: 0 1px 2px rgba(0,0,0,.4), 0 6px 20px rgba(0,0,0,.35);
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #0e1213; --surface: #171d1e; --surface-2: #1f2728;
+    --ink: #eef2f1; --ink-2: #b3bfbd; --ink-3: #859290;
+    --line: #2b3435; --line-2: #3b4647;
+    --green: #3ed132; --green-ink: #7fe376; --green-wash: #142a12;
+    --amber: #e0a44a; --amber-wash: #2a2113;
+    --red: #ef7d76; --red-wash: #2c1615;
+    --shadow: 0 1px 2px rgba(0,0,0,.4), 0 6px 20px rgba(0,0,0,.35);
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--ink);
+    font: 16px/1.6 ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: 880px; margin: 0 auto; padding: 40px 20px 80px; }
+
+  .kicker { font-size: 11.5px; font-weight: 800; letter-spacing: .11em; text-transform: uppercase; color: var(--green-ink); margin: 0 0 10px; }
+  h1 { font-size: clamp(30px, 5vw, 44px); line-height: 1.05; letter-spacing: -.022em; margin: 0 0 12px; text-wrap: balance; font-weight: 800; }
+  .sub { font-size: 18px; color: var(--ink-2); margin: 0; max-width: 62ch; }
+
+  .clock {
+    display: flex; flex-wrap: wrap; gap: 10px 26px; align-items: baseline;
+    margin-top: 22px; padding: 14px 18px;
+    background: var(--surface); border: 1px solid var(--line); border-radius: 10px; box-shadow: var(--shadow);
+  }
+  .clock div { font-size: 13px; color: var(--ink-3); }
+  .clock b { display: block; font-size: 21px; color: var(--ink); font-variant-numeric: tabular-nums; letter-spacing: -.01em; }
+
+  h2 { font-size: 13px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; margin: 46px 0 4px; color: var(--ink-3); }
+  h2 + p.note { margin: 0 0 18px; color: var(--ink-2); font-size: 15px; }
+
+  .task {
+    display: grid; grid-template-columns: 26px 1fr; gap: 14px;
+    padding: 16px 18px; margin-bottom: 10px;
+    background: var(--surface); border: 1px solid var(--line); border-radius: 10px; box-shadow: var(--shadow);
+  }
+  .task--block { border-left: 4px solid var(--red); }
+  .task--soon { border-left: 4px solid var(--amber); }
+  .task--done { border-left: 4px solid var(--green); }
+  .task input[type="checkbox"] { width: 20px; height: 20px; margin-top: 3px; accent-color: var(--green); cursor: pointer; }
+  .task h3 { margin: 0 0 4px; font-size: 16.5px; font-weight: 700; line-height: 1.3; }
+  .task p { margin: 0 0 8px; color: var(--ink-2); font-size: 14.5px; }
+  .task p:last-child { margin-bottom: 0; }
+  .task :checked ~ div h3 { text-decoration: line-through; color: var(--ink-3); }
+
+  .who { display: inline-block; margin-left: 8px; padding: 2px 8px; border-radius: 999px; font-size: 10.5px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; vertical-align: 2px; }
+  .who--you { background: var(--red-wash); color: var(--red); }
+  .who--me { background: var(--green-wash); color: var(--green-ink); }
+
+  .path { display: inline-block; padding: 1px 7px; border-radius: 4px; background: var(--surface-2); border: 1px solid var(--line); font-size: 13px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+  pre { margin: 10px 0 0; padding: 12px 14px; overflow-x: auto; background: var(--surface-2); border: 1px solid var(--line); border-radius: 8px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 13px; line-height: 1.5; }
+  a { color: var(--green-ink); text-underline-offset: 2px; }
+
+  table { width: 100%; border-collapse: collapse; margin-top: 8px; font-size: 14.5px; }
+  th, td { text-align: left; padding: 9px 12px; border-bottom: 1px solid var(--line); }
+  th { font-size: 11.5px; letter-spacing: .07em; text-transform: uppercase; color: var(--ink-3); }
+  td.num { text-align: right; font-variant-numeric: tabular-nums; }
+  .scroll { overflow-x: auto; }
+
+  .bar { height: 7px; border-radius: 999px; background: var(--surface-2); overflow: hidden; margin-top: 14px; }
+  .bar span { display: block; height: 100%; background: var(--green); width: 0; transition: width .3s ease; }
+  .progress-label { font-size: 13px; color: var(--ink-3); margin-top: 8px; }
+  footer { margin-top: 50px; padding-top: 20px; border-top: 1px solid var(--line); font-size: 13.5px; color: var(--ink-3); }
+</style>
+
+<div class="wrap">
+  <header>
+    <p class="kicker">abmotorsla.com · go-live runbook</p>
+    <h1>Two things left that only you can do.</h1>
+    <p class="sub">The catalog, theme, shipping, content, and sync are built and verified. What remains is
+      payments and tax — regulated account setup no tool can do on your behalf — plus a few optional
+      scope and app toggles. Everything else on this page is finished.</p>
+
+    <div class="clock">
+      <div>Products live<b>9,403</b></div>
+      <div>Shipping profiles<b>4</b></div>
+      <div>Pages<b>8</b></div>
+      <div>Collections<b>11</b></div>
+      <div>Sync<b>hourly</b></div>
+    </div>
+
+    <div class="bar"><span id="bar"></span></div>
+    <p class="progress-label" id="progressLabel">0 of 0 done</p>
+  </header>
+
+  <h2>Blocking — no orders without these</h2>
+  <p class="note">Both are account and banking setup gated behind identity verification. There is no API for either.</p>
+
+  <div class="task task--block">
+    <input type="checkbox" id="t1">
+    <div>
+      <h3>Turn on payments<span class="who who--you">you</span></h3>
+      <p><span class="path">Settings → Payments</span> → Complete account setup. Have ready: legal business
+        name and EIN, business address, owner date of birth, and a bank routing and account number.</p>
+      <p><b>Decide first which entity is the merchant of record.</b> Two exist at your address —
+        <b>A &amp; B Motors, Inc.</b> (corporation, 1968) and <b>A &amp; B Auto, LLC</b> (2005). The legal
+        name, EIN, and bank account on the application must all match the same one. A mismatch is the
+        most common cause of frozen payouts during review.</p>
+      <p>Set the statement descriptor to <span class="path">ABMOTORS</span> so buyers recognize the charge
+        and don't file chargebacks. Then enable Shop Pay, Apple Pay, Google Pay, and PayPal — they're toggles.</p>
+      <p>Worth adding: a manual payment method named <b>"Pay at the yard"</b> for local pickup orders.
+        Costs nothing and matches how you already do business.</p>
+    </div>
+  </div>
+
+  <div class="task task--block">
+    <input type="checkbox" id="t2">
+    <div>
+      <h3>Turn on tax<span class="who who--you">you</span></h3>
+      <p><span class="path">Settings → Taxes and duties → United States</span> → collect sales tax for
+        Louisiana, and enter your LA Department of Revenue account number. Leave Shopify Tax on; it handles
+        state plus parish rates at the rooftop level.</p>
+      <p>Two things to know: <b>Shopify does not remit for you</b> — unlike eBay, which files as a
+        marketplace facilitator, you are the retailer of record here. And you only owe tax where you have
+        nexus, which today is Louisiana only.</p>
+    </div>
+  </div>
+
+  <h2>Then, in this order</h2>
+
+  <div class="task task--soon">
+    <input type="checkbox" id="t3">
+    <div>
+      <h3>Preview the theme, then publish it<span class="who who--you">you</span></h3>
+      <p>Click through it first: <a href="https://5faf0h-z1.myshopify.com?preview_theme_id=160056508613">preview link</a>.
+        Then <span class="path">Online Store → Themes → Publish</span>, which replaces Horizon.</p>
+      <p>Test all four shipping cases before you trust it — a ground part, a $299.99 freight part, a
+        $199.99 freight part, and a pickup-only body part. Then put a ground part and a pickup-only part in
+        the same cart and confirm you see the mixed-cart warning.</p>
+    </div>
+  </div>
+
+  <div class="task task--soon">
+    <input type="checkbox" id="t4">
+    <div>
+      <h3>Remove the password page<span class="who who--you">you</span></h3>
+      <p><span class="path">Online Store → Preferences → Restrict access</span> — uncheck it.
+        <b>Do this last</b>, after payments work and you've clicked through the live site yourself.</p>
+    </div>
+  </div>
+
+  <div class="task task--soon">
+    <input type="checkbox" id="t5">
+    <div>
+      <h3>Install Search &amp; Discovery, then turn tags into filters<span class="who who--you">you</span></h3>
+      <p>Free Shopify app; app installs need your account. It's what makes the collection sidebar filters
+        real — filter by make, model year, and price across 9,403 parts. The theme renders whatever you
+        enable, and explains itself when nothing is enabled yet.</p>
+    </div>
+  </div>
+
+  <div class="task task--soon">
+    <input type="checkbox" id="t6">
+    <div>
+      <h3>Add <span class="path">read_orders</span> so the counter sees web orders<span class="who who--you">you</span></h3>
+      <p>Add <span class="path">read_orders</span> (plus <span class="path">write_orders</span> for work-order
+        write-back) to the app, release <b>0.1.7</b>, approve. Shopify also gates order payloads behind
+        protected customer data access — a toggle on the app in the dev dashboard.</p>
+      <p>The moment that's on, <span class="path">scripts/poll_orders.py</span> fetches new orders and prints
+        CoreYard pull tickets with bin locations. It's written and tested up to the permission wall.</p>
+    </div>
+  </div>
+
+  <div class="task task--soon">
+    <input type="checkbox" id="t7">
+    <div>
+      <h3>Upload the dark logo, and give me yard photos<span class="who who--you">you</span></h3>
+      <p>I generated <span class="path">brand/ab-motors-logo-light.png</span> from your existing PNG —
+        white "AUTO RECYCLING" and white arrows in the recycle mark, so it reads on the graphite footer.
+        Upload it in the theme editor under <b>Brand → Logo for dark backgrounds</b>.</p>
+      <p>Still missing: real photography. The hero and the About and Tour pages have image slots sitting on
+        gradients. Drop anything into <span class="path">brand/</span> and I'll place it.</p>
+    </div>
+  </div>
+
+  <div class="task task--soon">
+    <input type="checkbox" id="t8">
+    <div>
+      <h3>Submit the sitemap and set up Google Shopping<span class="who who--you">you</span></h3>
+      <p>After the password comes off: submit <span class="path">abmotorsla.com/sitemap.xml</span> in Google
+        Search Console. 9,403 pages of fitment-rich titles is the whole organic play.</p>
+      <p>Then install the <b>Google &amp; YouTube</b> channel for Shopping. Your products already carry
+        everything a feed needs — title, description, price, availability, image, brand, and the stock number
+        as MPN. Set condition to <b>used</b> in the channel settings.</p>
+    </div>
+  </div>
+
+  <h2>Done and verified</h2>
+  <p class="note">No action needed. Listed so you can check my work.</p>
+
+  <div class="task task--done">
+    <input type="checkbox" id="d1" checked>
+    <div>
+      <h3>Shipping, matching how you already ship on eBay<span class="who who--me">done</span></h3>
+      <div class="scroll"><table>
+        <tr><th>Profile</th><th>Parts</th><th>Rate</th></tr>
+        <tr><td>General (default)</td><td class="num">8,498</td><td>Free shipping + UPS calculated</td></tr>
+        <tr><td>Freight — Oversize</td><td class="num">744</td><td>$299.99 flat</td></tr>
+        <tr><td>Freight — Heavy</td><td class="num">60</td><td>$199.99 flat</td></tr>
+        <tr><td>Pickup Only — Body &amp; Glass</td><td class="num">101</td><td>no zones — cannot ship</td></tr>
+      </table></div>
+      <p style="margin-top:10px;">Local pickup enabled at the yard, ready in 24 hours, with counter hours and
+        your phone number in the instructions. Without that the 101 body and glass parts would have been
+        unbuyable. Before this, <span class="path">FREIGHT</span> and <span class="path">FREIGHT LIGHT</span>
+        sat on the <em>default</em> profile — offering $299.99 freight on a $50 alternator — and there was no
+        free-shipping rate at all.</p>
+    </div>
+  </div>
+
+  <div class="task task--done">
+    <input type="checkbox" id="d2" checked>
+    <div>
+      <h3>The storefront warns before checkout<span class="who who--me">done</span></h3>
+      <p>Every part carries a <span class="path">ship:*</span> tag, so the theme shows the truth on the product
+        card, a full banner on the product page, a per-line note in the cart, and a warning in the cart drawer.
+        Freight pages carry your own eBay wording: <b>MUST SHIP TO A COMMERCIAL/BUSINESS ADDRESS WITH A
+        FORKLIFT.</b> Body and glass say <b>Local pickup only — Amite, Louisiana</b>.</p>
+      <p>A cart holding both a shippable and a pickup-only part now explains the problem instead of dying at
+        checkout with no available shipping method.</p>
+    </div>
+  </div>
+
+  <div class="task task--done">
+    <input type="checkbox" id="d3" checked>
+    <div>
+      <h3>Catalog data<span class="who who--me">done</span></h3>
+      <p>9,403 products active and published · every one with photos · weights on all of them, biased heavy so
+        a carrier reweigh can't bill you · every price ending in .99 · 4 Shopify sample products deleted ·
+        "– OEM" stripped from every title (kept in the SEO fields, where it earns search traffic) ·
+        14 blank photo alt texts filled.</p>
+      <p>The .99 rule now lives in CoreYard behind <span class="path">STORE_CHARM_PRICES</span>, so the next
+        sync won't undo it. 12 unit tests cover the rounding.</p>
+    </div>
+  </div>
+
+  <div class="task task--done">
+    <input type="checkbox" id="d4" checked>
+    <div>
+      <h3>Inventory stays honest<span class="who who--me">done</span></h3>
+      <p>Cron on this machine: sync hourly Mon–Fri 7am–7pm, a 6:30am catch-up in case the yard machine was off
+        overnight, and a weekly rebuild of the vehicle picker. A part sold at the counter comes off the website
+        the same day instead of being sold twice.</p>
+    </div>
+  </div>
+
+  <div class="task task--done">
+    <input type="checkbox" id="d5" checked>
+    <div>
+      <h3>Content and trust<span class="who who--me">done</span></h3>
+      <p>Eight pages: About, Tour, Sell Your Car, Warranty &amp; Returns, Shipping, <b>Freight &amp; Pickup
+        Rules</b>, Will It Fit, Contact. Four policies including a privacy policy written around how your
+        business actually works — VIN fitment checks, vehicle purchase records, freight carriers, and the
+        recently-viewed list the theme keeps in the visitor's own browser.</p>
+      <p>Your eBay record — 99.2% positive, 16,257 reviews, 53,000+ parts shipped since 2005 — now appears on
+        product pages. It's the most persuasive thing a brand-new site can show.</p>
+    </div>
+  </div>
+
+  <div class="task task--done">
+    <input type="checkbox" id="d6" checked>
+    <div>
+      <h3>Finding the part<span class="who who--me">done</span></h3>
+      <p>Predictive search matching stock numbers as you type, a year/make/model picker built from your own
+        catalog tags so it can never offer a vehicle you have no parts for, 11 auto-maintaining collections,
+        and a cart drawer instead of a page reload.</p>
+    </div>
+  </div>
+
+  <footer>
+    Runbook state is saved in this browser only. The legal pages are solid working drafts written from how the
+    business operates — <b>not attorney-reviewed</b>. Have counsel read the Terms of Service and Privacy
+    Policy together before they carry real weight; the Terms is where the liability limits live.
+  </footer>
+</div>
+
+<script>
+  var boxes = Array.prototype.slice.call(document.querySelectorAll('.task input[type="checkbox"]'));
+  var KEY = 'abm-launch-v2';
+  var saved = {};
+  try { saved = JSON.parse(localStorage.getItem(KEY) || '{}'); } catch (e) {}
+
+  function paint() {
+    var done = boxes.filter(function (b) { return b.checked; }).length;
+    document.getElementById('bar').style.width = (done / boxes.length * 100) + '%';
+    document.getElementById('progressLabel').textContent = done + ' of ' + boxes.length + ' done';
+  }
+
+  boxes.forEach(function (b) {
+    if (Object.prototype.hasOwnProperty.call(saved, b.id)) b.checked = saved[b.id];
+    b.addEventListener('change', function () {
+      saved[b.id] = b.checked;
+      try { localStorage.setItem(KEY, JSON.stringify(saved)); } catch (e) {}
+      paint();
+    });
+  });
+  paint();
+</script>

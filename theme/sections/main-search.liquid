@@ -1,0 +1,80 @@
+{%- paginate search.results by section.settings.per_page -%}
+  <div class="page-width">
+    <div class="section section--tight">
+      <h1 class="h1">
+        {%- if search.performed -%}
+          {{ search.results_count }} result{% if search.results_count != 1 %}s{% endif %}
+          {%- if search.terms != blank %} for &ldquo;{{ search.terms | escape }}&rdquo;{% endif -%}
+        {%- else -%}
+          Search the yard
+        {%- endif -%}
+      </h1>
+
+      <div style="max-width:640px;margin:18px 0 6px;">
+        {% render 'search-field', hero: true, uid: 'search', button_label: 'Search' %}
+      </div>
+      <p class="small muted">
+        Searching a stock number, an interchange number, or a year/make/model all work.
+      </p>
+    </div>
+
+    {%- if search.performed -%}
+      {%- if search.results_count > 0 -%}
+        <div class="toolbar">
+          <span class="toolbar__count">Showing {{ search.results.size }} of {{ search.results_count }}</span>
+          <div class="push">
+            <label class="visually-hidden" for="SearchSort">Sort by</label>
+            <select id="SearchSort" class="select" data-sort>
+              {%- for option in search.sort_options -%}
+                <option value="{{ option.value }}" {% if option.value == search.sort_by %}selected{% endif %}>
+                  {{ option.name }}
+                </option>
+              {%- endfor -%}
+            </select>
+          </div>
+        </div>
+
+        <div class="grid grid--{{ section.settings.columns }}">
+          {%- for item in search.results -%}
+            {%- if item.object_type == 'product' -%}
+              {% render 'card-product', card_product: item, lazy: forloop.first %}
+            {%- else -%}
+              <article class="card">
+                <div class="card__body">
+                  <span class="card__type">{{ item.object_type }}</span>
+                  <h3 class="card__title"><a href="{{ item.url }}">{{ item.title }}</a></h3>
+                  <p class="small muted">{{ item.content | strip_html | truncatewords: 22 }}</p>
+                </div>
+              </article>
+            {%- endif -%}
+          {%- endfor -%}
+        </div>
+
+        {% render 'pagination', paginate: paginate %}
+      {%- else -%}
+        <div class="empty-state">
+          <h2 class="h3">No parts matched &ldquo;{{ search.terms | escape }}&rdquo;</h2>
+          <p class="muted" style="max-width:52ch;margin:0 auto 18px;">
+            Our inventory changes every day, and not every part on the lot is listed yet.
+            Call the yard and we'll walk the racks for you.
+          </p>
+          <div class="cluster" style="justify-content:center;">
+            {%- assign phone_href = settings.phone | remove: '-' -%}
+            <a href="tel:{{ phone_href }}" class="btn">{% render 'icon', name: 'phone' %} {{ settings.phone }}</a>
+            <a href="{{ routes.all_products_collection_url }}" class="btn btn--outline">Browse all parts</a>
+          </div>
+        </div>
+      {%- endif -%}
+    {%- endif -%}
+  </div>
+{%- endpaginate -%}
+
+{% schema %}
+{
+  "name": "Search results",
+  "settings": [
+    { "type": "range", "id": "per_page", "label": "Results per page", "min": 12, "max": 48, "step": 12, "default": 24 },
+    { "type": "range", "id": "columns", "label": "Columns", "min": 3, "max": 5, "step": 1, "default": 4 }
+  ]
+}
+{% endschema %}

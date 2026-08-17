@@ -1,0 +1,292 @@
+{%- liquid
+  assign variant = product.selected_or_first_available_variant
+  assign qty = variant.inventory_quantity
+  assign phone = settings.phone
+  assign phone_href = phone | remove: '-' | remove: ' '
+  assign warranty = settings.warranty_days | default: '90'
+-%}
+
+<div class="page-width">
+  <nav class="breadcrumbs" aria-label="Breadcrumb">
+    <a href="{{ routes.root_url }}">Home</a><span>/</span>
+    {%- if collection -%}
+      <a href="{{ collection.url }}">{{ collection.title }}</a><span>/</span>
+    {%- elsif product.type != blank -%}
+      <a href="{{ routes.search_url }}?q={{ product.type | url_encode }}">{{ product.type }}</a><span>/</span>
+    {%- endif -%}
+    <span class="muted">{{ product.title | truncate: 60 }}</span>
+  </nav>
+
+  <div class="product">
+    {%- comment -%} ---------------------------------------------- gallery {%- endcomment -%}
+    <div data-gallery>
+      <div class="gallery__main">
+        {%- if product.featured_media -%}
+          <img data-gallery-main
+               src="{{ product.featured_media | image_url: width: 1400 }}"
+               alt="{{ product.featured_media.alt | default: product.title | escape }}"
+               width="1400" height="1050" fetchpriority="high">
+        {%- else -%}
+          <div class="card__placeholder">{% render 'icon', name: 'photo' %}</div>
+        {%- endif -%}
+      </div>
+
+      {%- if product.media.size > 1 -%}
+        <div class="gallery__thumbs">
+          {%- for media in product.media -%}
+            <button type="button" class="gallery__thumb"
+                    data-gallery-thumb
+                    data-full="{{ media | image_url: width: 1400 }}"
+                    data-alt="{{ media.alt | default: product.title | escape }}"
+                    aria-current="{% if forloop.first %}true{% else %}false{% endif %}"
+                    aria-label="Photo {{ forloop.index }}">
+              {{ media | image_url: width: 200 | image_tag: loading: 'lazy', alt: '' }}
+            </button>
+          {%- endfor -%}
+        </div>
+      {%- endif -%}
+
+      <p class="gallery__note">
+        {% render 'icon', name: 'check' %}
+        <span>These are photos of the actual part on our lot — not a stock image. What you see is what ships.</span>
+      </p>
+    </div>
+
+    {%- comment -%} ------------------------------------------------ buybox {%- endcomment -%}
+    <div>
+      <div class="product__flags">
+        {%- if product.type != blank -%}<span class="badge badge--dark">{{ product.type }}</span>{%- endif -%}
+        <span class="badge badge--green">Used OEM</span>
+        {%- if qty == 1 and product.available -%}<span class="badge badge--amber">Only 1 in stock</span>{%- endif -%}
+        {%- unless product.available -%}<span class="badge badge--sold">Sold</span>{%- endunless -%}
+      </div>
+
+      <h1 class="product__title">{{ product.title }}</h1>
+
+      <div class="product__price-row">
+        {% render 'price', product: product, large: true %}
+      </div>
+
+      <div class="product__stock">
+        <span class="dot{% unless product.available %} dot--out{% endunless %}"></span>
+        {%- if product.available -%}
+          In stock at the yard, ready to pull
+        {%- else -%}
+          This one sold — call us, we may have another
+        {%- endif -%}
+      </div>
+
+      {% render 'shipping-group', product: product, style: 'banner' %}
+
+      <div class="buybox" data-buybox>
+        {%- form 'product', product, data-product-form: true -%}
+          <input type="hidden" name="id" value="{{ variant.id }}">
+          {%- comment -%}
+            Underscore-prefixed properties are hidden from the customer and the order,
+            and they DO come back from /cart.js — which is how the cart drawer knows a
+            line is pickup-only without a second round trip for tags.
+          {%- endcomment -%}
+          {%- liquid
+            assign ship_group = 'free'
+            if product.tags contains 'ship:pickup-only'
+              assign ship_group = 'pickup'
+            elsif product.tags contains 'ship:freight-299'
+              assign ship_group = 'freight299'
+            elsif product.tags contains 'ship:freight-199'
+              assign ship_group = 'freight199'
+            endif
+          -%}
+          <input type="hidden" name="properties[_ship]" value="{{ ship_group }}">
+
+          {%- if product.available -%}
+            <div class="cluster" style="margin-bottom:12px;">
+              <div class="qty" data-qty>
+                <button type="button" data-qty-step="down" aria-label="Decrease quantity">&minus;</button>
+                <input type="number" name="quantity" value="1" min="1"
+                       max="{{ variant.inventory_quantity | at_least: 1 }}" aria-label="Quantity">
+                <button type="button" data-qty-step="up" aria-label="Increase quantity">+</button>
+              </div>
+              <span class="small muted">{{ qty }} available</span>
+            </div>
+
+            <button type="submit" class="btn btn--lg btn--full" data-add-button>Add to cart</button>
+            {{ form | payment_button }}
+          {%- else -%}
+            <button type="button" class="btn btn--lg btn--full" disabled>Sold</button>
+          {%- endif -%}
+
+          <p class="form-error" data-cart-error hidden></p>
+        {%- endform -%}
+
+        {%- if phone != blank -%}
+          <a href="tel:{{ phone_href }}" class="btn btn--outline btn--full">
+            {% render 'icon', name: 'phone' %} Questions? Call {{ phone }}
+          </a>
+        {%- endif -%}
+
+        <div class="buybox__assure">
+          <div>{% render 'icon', name: 'shield' %}<span><b>{{ warranty }}-day money-back warranty.</b> If it doesn't work out, send it back.</span></div>
+          <div>{% render 'icon', name: 'truck' %}<span><b>Free shipping</b> on most parts. Free local delivery around Amite.</span></div>
+          <div>{% render 'icon', name: 'check' %}<span>Inspected and basic-refurbished before it leaves the yard.</span></div>
+        </div>
+      </div>
+
+      <div style="margin:16px 0;">{% render 'credibility' %}</div>
+
+      {%- comment -%} --------------------------------------- part details {%- endcomment -%}
+      <dl class="spec-table">
+        {%- if variant.sku != blank -%}
+          <div><dt>Stock number</dt><dd>{{ variant.sku }}</dd></div>
+        {%- endif -%}
+        {%- if product.type != blank -%}
+          <div><dt>Part type</dt><dd>{{ product.type }}</dd></div>
+        {%- endif -%}
+        {%- for field in product.metafields.abm -%}
+          {%- assign key = field | first -%}
+          {%- assign value = field | last -%}
+          {%- unless value == blank or key == 'fitment' -%}
+            <div><dt>{{ key | replace: '_', ' ' | capitalize }}</dt><dd>{{ value }}</dd></div>
+          {%- endunless -%}
+        {%- endfor -%}
+        <div><dt>Condition</dt><dd>Used &mdash; inspected OEM</dd></div>
+        <div><dt>Warranty</dt><dd>{{ warranty }}-day money back</dd></div>
+      </dl>
+
+      {%- if section.settings.show_share -%}
+        <p class="small muted" style="margin-top:14px;">
+          Stock #{{ variant.sku }} &middot; Ask about this part: <a class="link" href="mailto:{{ settings.email }}?subject=Part%20{{ variant.sku | url_encode }}">{{ settings.email }}</a>
+        </p>
+      {%- endif -%}
+    </div>
+  </div>
+
+  {%- comment -%} ---------------------------------------------- fitment {%- endcomment -%}
+  {%- assign fitment = product.metafields.abm.fitment.value -%}
+  {%- if fitment != blank -%}
+    <div class="section section--tight">
+      <div class="fitment">
+        <div class="fitment__head">
+          {% render 'icon', name: 'car' %}
+          <span>Fits these vehicles</span>
+        </div>
+        <table>
+          <thead><tr><th>Years</th><th>Make</th><th>Model</th><th>Notes</th></tr></thead>
+          <tbody>
+            {%- for row in fitment limit: 25 -%}
+              <tr>
+                <td class="nowrap">{{ row.years }}</td>
+                <td>{{ row.make }}</td>
+                <td>{{ row.model }}</td>
+                <td class="muted">{{ row.note }}</td>
+              </tr>
+            {%- endfor -%}
+          </tbody>
+        </table>
+        {%- if fitment.size > 25 -%}
+          <p class="fitment__more">…and {{ fitment.size | minus: 25 }} more applications. Not sure it fits yours? Call {{ phone }}.</p>
+        {%- endif -%}
+      </div>
+    </div>
+  {%- endif -%}
+
+  {%- comment -%} --------------------------------------------- accordions {%- endcomment -%}
+  <div class="section section--tight" style="max-width:900px;">
+    <div class="accordion">
+      {%- if product.description != blank -%}
+        <details class="accordion__item" open>
+          <summary class="accordion__summary">Part details &amp; fitment</summary>
+          <div class="accordion__body rte">{{ product.description }}</div>
+        </details>
+      {%- endif -%}
+
+      {%- for block in section.blocks -%}
+        {%- if block.type == 'policy' -%}
+          <details class="accordion__item" {{ block.shopify_attributes }}>
+            <summary class="accordion__summary">{{ block.settings.heading }}</summary>
+            <div class="accordion__body rte">{{ block.settings.content }}</div>
+          </details>
+        {%- endif -%}
+      {%- endfor -%}
+    </div>
+  </div>
+</div>
+
+{%- comment -%} ------------------------------------------ related parts {%- endcomment -%}
+{%- if section.settings.show_related -%}
+  <div class="section section--paper">
+    <div class="page-width">
+      <div class="section-head">
+        <h2 class="h2">More {{ product.type | default: 'parts' }} from the yard</h2>
+      </div>
+      <div class="grid grid--4">
+        {%- assign type_handle = product.type | handle -%}
+        {%- assign related = collections[type_handle].products | default: collections.all.products -%}
+        {%- assign shown = 0 -%}
+        {%- for item in related limit: 12 -%}
+          {%- if item.id != product.id and shown < 4 -%}
+            {% render 'card-product', card_product: item %}
+            {%- assign shown = shown | plus: 1 -%}
+          {%- endif -%}
+        {%- endfor -%}
+      </div>
+    </div>
+  </div>
+{%- endif -%}
+
+<div class="sticky-buy" data-sticky-buy>
+  {% render 'price', product: product %}
+  {%- if product.available -%}
+    <form method="post" action="{{ routes.cart_add_url }}" class="push" style="flex:1;display:flex;justify-content:flex-end;">
+      <input type="hidden" name="id" value="{{ variant.id }}">
+      <input type="hidden" name="quantity" value="1">
+      <button type="submit" class="btn">Add to cart</button>
+    </form>
+  {%- else -%}
+    <a href="tel:{{ phone_href }}" class="btn push">Call about this part</a>
+  {%- endif -%}
+</div>
+
+{% schema %}
+{
+  "name": "Product",
+  "settings": [
+    { "type": "checkbox", "id": "show_related", "label": "Show related parts", "default": true },
+    { "type": "checkbox", "id": "show_share", "label": "Show stock number / email line", "default": true }
+  ],
+  "blocks": [
+    {
+      "type": "policy",
+      "name": "Accordion row",
+      "settings": [
+        { "type": "text", "id": "heading", "label": "Heading", "default": "Shipping" },
+        { "type": "richtext", "id": "content", "label": "Content", "default": "<p>Most parts ship free within the lower 48. Large items like doors, hoods, and engines may require a freight quote — call us and we'll sort it out.</p>" }
+      ]
+    }
+  ],
+  "default": {
+    "blocks": [
+      {
+        "type": "policy",
+        "settings": {
+          "heading": "Shipping",
+          "content": "<p>Most parts ship free within the lower 48, usually the same or next business day. Large items — doors, hoods, engines, transmissions — may need a freight quote. Local to Amite? Delivery is free.</p>"
+        }
+      },
+      {
+        "type": "policy",
+        "settings": {
+          "heading": "90-day warranty & returns",
+          "content": "<p>Every part carries a 90-day money-back warranty. If it doesn't fit or doesn't work, call the yard at 985-748-7195 and we'll make it right — refund or replacement, your call.</p>"
+        }
+      },
+      {
+        "type": "policy",
+        "settings": {
+          "heading": "Will it fit my vehicle?",
+          "content": "<p>The listing shows the vehicles this part interchanges with. If yours isn't listed, or you're not sure, call us with your VIN and we'll check it against our interchange system before you buy.</p>"
+        }
+      }
+    ]
+  }
+}
+{% endschema %}

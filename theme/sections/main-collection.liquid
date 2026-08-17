@@ -1,0 +1,115 @@
+{%- paginate collection.products by section.settings.per_page -%}
+  <div class="page-width">
+    <nav class="breadcrumbs" aria-label="Breadcrumb">
+      <a href="{{ routes.root_url }}">Home</a><span>/</span>
+      <span class="muted">{{ collection.title }}</span>
+    </nav>
+
+    <div class="section-head">
+      <h1 class="h1">{{ collection.title }}</h1>
+      {%- if collection.description != blank -%}
+        <div class="rte lede">{{ collection.description }}</div>
+      {%- endif -%}
+    </div>
+
+    <div class="collection-layout">
+      {%- comment -%} ------------------------------------------- facets {%- endcomment -%}
+      <aside class="facets">
+        <form data-facet-form method="get">
+          {%- if collection.sort_by != blank -%}
+            <input type="hidden" name="sort_by" value="{{ collection.sort_by }}">
+          {%- endif -%}
+
+          {%- for filter in collection.filters -%}
+            <details class="facets__group" {% if forloop.index < 4 %}open{% endif %}>
+              <summary>{{ filter.label }}</summary>
+
+              {%- case filter.type -%}
+                {%- when 'list' -%}
+                  <div class="facets__list">
+                    {%- for value in filter.values -%}
+                      <label class="facets__item">
+                        <input type="checkbox" name="{{ value.param_name }}" value="{{ value.value }}"
+                               {% if value.active %}checked{% endif %}
+                               {% if value.count == 0 and value.active == false %}disabled{% endif %}>
+                        <span>{{ value.label }}</span>
+                        <em>{{ value.count }}</em>
+                      </label>
+                    {%- endfor -%}
+                  </div>
+
+                {%- when 'price_range' -%}
+                  <div class="cluster" style="margin-top:12px;">
+                    <label class="field" style="flex:1;margin:0;">
+                      <span>Min</span>
+                      <input type="number" name="{{ filter.min_value.param_name }}" inputmode="numeric"
+                             value="{{ filter.min_value.value | money_without_currency | replace: ',', '' }}"
+                             placeholder="0">
+                    </label>
+                    <label class="field" style="flex:1;margin:0;">
+                      <span>Max</span>
+                      <input type="number" name="{{ filter.max_value.param_name }}" inputmode="numeric"
+                             value="{{ filter.max_value.value | money_without_currency | replace: ',', '' }}"
+                             placeholder="{{ filter.range_max | money_without_currency | replace: ',', '' }}">
+                    </label>
+                  </div>
+                  <button type="submit" class="btn btn--sm btn--outline" style="margin-top:10px;">Apply price</button>
+              {%- endcase -%}
+            </details>
+          {%- else -%}
+            <p class="small muted">
+              Filters appear here once search &amp; discovery filters are set up in Shopify admin
+              (Online Store → Navigation → Filters). Tags from the sync — year, make, model — become
+              filters automatically.
+            </p>
+          {%- endfor -%}
+        </form>
+      </aside>
+
+      {%- comment -%} ------------------------------------------ results {%- endcomment -%}
+      <div>
+        <div class="toolbar">
+          <span class="toolbar__count">
+            {{ collection.products_count }} part{% if collection.products_count != 1 %}s{% endif %}
+          </span>
+          <div class="push">
+            <label class="visually-hidden" for="SortBy">Sort by</label>
+            <select id="SortBy" class="select" data-sort>
+              {%- assign current = collection.sort_by | default: collection.default_sort_by -%}
+              {%- for option in collection.sort_options -%}
+                <option value="{{ option.value }}" {% if option.value == current %}selected{% endif %}>
+                  {{ option.name }}
+                </option>
+              {%- endfor -%}
+            </select>
+          </div>
+        </div>
+
+        {%- if collection.products.size > 0 -%}
+          <div class="grid grid--{{ section.settings.columns }}">
+            {%- for product in collection.products -%}
+              {% render 'card-product', card_product: product, lazy: forloop.first %}
+            {%- endfor -%}
+          </div>
+          {% render 'pagination', paginate: paginate %}
+        {%- else -%}
+          <div class="empty-state">
+            <h2 class="h3">Nothing here right now</h2>
+            <p class="muted">The yard turns over fast. Try a different search, or call us at {{ settings.phone }} — we'll check the racks for you.</p>
+            <a href="{{ routes.all_products_collection_url }}" class="btn">Browse all parts</a>
+          </div>
+        {%- endif -%}
+      </div>
+    </div>
+  </div>
+{%- endpaginate -%}
+
+{% schema %}
+{
+  "name": "Collection",
+  "settings": [
+    { "type": "range", "id": "per_page", "label": "Parts per page", "min": 12, "max": 48, "step": 12, "default": 24 },
+    { "type": "range", "id": "columns", "label": "Columns", "min": 3, "max": 5, "step": 1, "default": 4 }
+  ]
+}
+{% endschema %}

@@ -1,0 +1,95 @@
+{%- comment -%}
+  Product card for a one-of-a-kind salvage part.
+  Accepts: card_product (product), lazy (boolean, default true)
+
+  Every part is a single unit with its own stock number, so the card leads with
+  what a yard buyer actually compares: part type, the vehicle it came off,
+  grade, and whether a real photo exists.
+{%- endcomment -%}
+{%- liquid
+  assign p = card_product
+  assign img = p.featured_media
+  assign fit = settings.card_image_fit | default: 'cover'
+  assign loading = 'lazy'
+  if lazy == false
+    assign loading = 'eager'
+  endif
+-%}
+
+{%- if p == blank -%}
+  <div class="card">
+    <div class="card__media"><div class="card__placeholder">{% render 'icon', name: 'photo' %}</div></div>
+    <div class="card__body">
+      <p class="card__title">{{ 'general.onboarding' | default: 'Example part' }}</p>
+      <div class="card__foot"><span class="price">$0.00</span></div>
+    </div>
+  </div>
+{%- else -%}
+  <article class="card">
+    <div class="card__media{% if fit == 'contain' %} card__media--contain{% endif %}">
+      {%- if img -%}
+        {{ img | image_url: width: 800 | image_tag:
+             widths: '200,300,400,600,800',
+             sizes: '(min-width: 990px) 300px, 45vw',
+             loading: loading,
+             alt: img.alt | default: p.title | escape }}
+      {%- else -%}
+        <div class="card__placeholder">{% render 'icon', name: 'photo' %}</div>
+      {%- endif -%}
+
+      <div class="card__flags">
+        {%- if p.tags contains 'ship:pickup-only' -%}
+          <span class="badge badge--pickup">Pickup only</span>
+        {%- elsif p.tags contains 'ship:freight-299' or p.tags contains 'ship:freight-199' -%}
+          <span class="badge badge--freight">Freight</span>
+        {%- endif -%}
+        {%- unless p.available -%}
+          <span class="badge badge--sold">Sold</span>
+        {%- else -%}
+          {%- if settings.card_show_stock and p.selected_or_first_available_variant.inventory_quantity == 1 -%}
+            <span class="badge badge--amber">Only 1</span>
+          {%- endif -%}
+        {%- endunless -%}
+        {%- if settings.card_show_grade -%}
+          {%- assign grade = p.metafields.abm.grade | default: p.metafields.custom.grade -%}
+          {%- if grade != blank -%}
+            <span class="badge badge--green">Grade {{ grade }}</span>
+          {%- endif -%}
+        {%- endif -%}
+      </div>
+
+      {%- if p.media.size > 1 -%}
+        <span class="card__count">{{ p.media.size }} photos</span>
+      {%- endif -%}
+    </div>
+
+    <div class="card__body">
+      {%- if settings.card_show_type and p.type != blank -%}
+        <span class="card__type">{{ p.type }}</span>
+      {%- endif -%}
+
+      <h3 class="card__title">
+        <a href="{{ p.url }}">{{ p.title }}</a>
+      </h3>
+
+      <div class="card__meta">
+        {% render 'shipping-group', product: p, style: 'line' %}
+      </div>
+
+      <div class="card__meta">
+        {%- if settings.card_show_sku and p.selected_or_first_available_variant.sku != blank -%}
+          <span>Stock&nbsp;<b>{{ p.selected_or_first_available_variant.sku }}</b></span>
+        {%- endif -%}
+        {%- assign miles = p.metafields.abm.mileage -%}
+        {%- if miles != blank -%}<span>{{ miles }} mi</span>{%- endif -%}
+      </div>
+
+      <div class="card__foot">
+        {% render 'price', product: p %}
+        {%- if p.available -%}
+          <span class="small" style="color:var(--green-dark);font-weight:700;">In stock</span>
+        {%- endif -%}
+      </div>
+    </div>
+  </article>
+{%- endif -%}

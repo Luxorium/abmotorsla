@@ -1,0 +1,37 @@
+<section class="section">
+  <div class="page-width">
+    <div class="callout">
+      <div>
+        {%- if section.settings.eyebrow != blank -%}<p class="eyebrow">{{ section.settings.eyebrow }}</p>{%- endif -%}
+        <h2 class="h2">{{ section.settings.heading }}</h2>
+        <p>{{ section.settings.text }}</p>
+      </div>
+      <div class="callout__actions">
+        {%- if section.settings.button_label != blank -%}
+          <a href="{{ section.settings.button_url }}" class="btn btn--lg">{{ section.settings.button_label }}</a>
+        {%- endif -%}
+        {%- if settings.phone != blank and section.settings.show_phone -%}
+          {%- assign phone_href = settings.phone | remove: '-' | remove: ' ' -%}
+          <a href="tel:{{ phone_href }}" class="btn btn--lg btn--ghost-light">
+            {% render 'icon', name: 'phone' %} {{ settings.phone }}
+          </a>
+        {%- endif -%}
+      </div>
+    </div>
+  </div>
+</section>
+
+{% schema %}
+{
+  "name": "CTA banner",
+  "settings": [
+    { "type": "text", "id": "eyebrow", "label": "Eyebrow", "default": "Cash for cars" },
+    { "type": "text", "id": "heading", "label": "Heading", "default": "We buy cars and trucks — any year, any condition." },
+    { "type": "textarea", "id": "text", "label": "Text", "default": "Wrecked, dead, or just done. Tell us what you've got and we'll make you a cash offer, then haul it off ourselves." },
+    { "type": "text", "id": "button_label", "label": "Button label", "default": "Get a cash offer" },
+    { "type": "url", "id": "button_url", "label": "Button URL" },
+    { "type": "checkbox", "id": "show_phone", "label": "Show phone button", "default": true }
+  ],
+  "presets": [{ "name": "CTA banner" }]
+}
+{% endschema %}

@@ -1,0 +1,46 @@
+{%- comment -%}
+  Part search. Salvage shoppers search three ways: part name, vehicle, or a
+  stock/interchange number — one field has to serve all three, so the
+  predictive lookup queries SKU as well as title.
+  Accepts: placeholder, hero (boolean), button_label, uid
+
+  uid must be unique per rendering on the page. The header draws this field twice — once
+  for desktop, once for mobile — so without an explicit uid both copies claimed the same
+  element ids, which broke the label/aria-controls pairing and pointed the mobile field's
+  predictive results at the desktop container, since getElementById only ever returns the
+  first match.
+{%- endcomment -%}
+{%- assign uid = uid | default: hero | default: 'header' -%}
+<div class="search-wrap" data-predictive>
+  <form action="{{ routes.search_url }}" method="get" role="search"
+        class="search-field{% if hero %} search-field--hero{% endif %}">
+    <label class="visually-hidden" for="Search-{{ uid }}">Search parts</label>
+    <input
+      id="Search-{{ uid }}"
+      type="search"
+      name="q"
+      value="{{ search.terms | escape }}"
+      placeholder="{{ placeholder | default: 'Search by part, year, make, model, or stock #' }}"
+      autocomplete="off"
+      autocorrect="off"
+      spellcheck="false"
+      enterkeyhint="search"
+      role="combobox"
+      aria-expanded="false"
+      aria-autocomplete="list"
+      aria-controls="PredictiveResults-{{ uid }}"
+      data-predictive-input>
+    <input type="hidden" name="options[prefix]" value="last">
+    {%- if hero -%}
+      <button type="submit" class="btn">{{ button_label | default: 'Find My Part' }}</button>
+    {%- else -%}
+      <button type="submit" class="search-field__submit" aria-label="Search">
+        {% render 'icon', name: 'search' %}
+      </button>
+    {%- endif -%}
+  </form>
+
+  <div class="predictive" id="PredictiveResults-{{ uid }}" data-predictive-results hidden>
+    <div class="predictive__body" data-predictive-body></div>
+  </div>
+</div>

@@ -1,0 +1,18 @@
+{%- comment -%}
+  Accepts: product (required), large (boolean)
+{%- endcomment -%}
+{%- liquid
+  assign variant = product.selected_or_first_available_variant
+  assign price = variant.price | default: product.price
+  assign compare = variant.compare_at_price
+-%}
+<span class="price{% if large %} price--lg{% endif %}">
+  {{ price | money }}
+  {%- if compare > price -%}
+    <s class="price__compare">{{ compare | money }}</s>
+  {%- endif -%}
+</span>
+{%- if large and compare > price -%}
+  {%- assign saved = compare | minus: price -%}
+  <span class="price__save">You save {{ saved | money }}</span>
+{%- endif -%}

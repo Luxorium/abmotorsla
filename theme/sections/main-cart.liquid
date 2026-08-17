@@ -1,0 +1,131 @@
+<div class="page-width">
+  <div class="section section--tight">
+    <h1 class="h1">Your cart</h1>
+  </div>
+
+  {%- liquid
+    assign pickup_count = 0
+    assign ship_count = 0
+    for line in cart.items
+      if line.product.tags contains 'ship:pickup-only'
+        assign pickup_count = pickup_count | plus: 1
+      else
+        assign ship_count = ship_count | plus: 1
+      endif
+    endfor
+  -%}
+
+  {%- if pickup_count > 0 and ship_count > 0 -%}
+    <div class="cart-alert">
+      {% render 'icon', name: 'truck' %}
+      <div>
+        <b>Your cart mixes a pickup-only part with parts we ship.</b>
+        <p>
+          Checkout can't combine the two — body panels and glass are pickup or local delivery only,
+          and the rest of your cart ships. Please place them as two separate orders, or call the yard
+          and we'll do it for you in one go.
+        </p>
+        <p>
+          {%- assign phone_href = settings.phone | remove: '-' -%}
+          <a class="link" href="tel:{{ phone_href }}">{{ settings.phone }}</a> &middot;
+          <a class="link" href="{{ routes.root_url }}pages/freight">how pickup and freight work</a>
+        </p>
+      </div>
+    </div>
+  {%- elsif pickup_count > 0 -%}
+    <div class="cart-alert">
+      {% render 'icon', name: 'pin' %}
+      <div>
+        <b>Pickup only &mdash; Amite, Louisiana</b>
+        <p>Choose <b>Pickup</b> at checkout. We'll have it at the counter within one business day, Monday&ndash;Friday 8&ndash;5.</p>
+      </div>
+    </div>
+  {%- endif -%}
+
+  {%- if cart.item_count == 0 -%}
+    <div class="empty-state" style="margin-bottom:60px;">
+      <h2 class="h3">Nothing in the cart yet</h2>
+      <p class="muted">Find your part by number, or start with the part type.</p>
+      <a href="{{ routes.all_products_collection_url }}" class="btn">Browse parts</a>
+    </div>
+  {%- else -%}
+    <form action="{{ routes.cart_url }}" method="post" novalidate>
+      <div class="cart-grid" style="margin-bottom:60px;">
+        <div>
+          {%- for line in cart.items -%}
+            <div class="cart-item">
+              <a href="{{ line.url }}" class="cart-item__media">
+                {%- if line.image -%}
+                  {{ line.image | image_url: width: 200 | image_tag: loading: 'lazy', alt: line.title | escape }}
+                {%- endif -%}
+              </a>
+
+              <div>
+                <a href="{{ line.url }}" style="font-weight:650;">{{ line.product.title }}</a>
+                <div class="card__meta" style="margin-top:6px;">
+                  {%- if line.sku != blank -%}<span>Stock <b>{{ line.sku }}</b></span>{%- endif -%}
+                  {%- if line.product.type != blank -%}<span>{{ line.product.type }}</span>{%- endif -%}
+                </div>
+                <div class="card__meta" style="margin-top:4px;">
+                  {% render 'shipping-group', product: line.product, style: 'line' %}
+                </div>
+                <div class="cluster" style="margin-top:10px;">
+                  <div class="qty" data-qty>
+                    <button type="button" data-qty-step="down" aria-label="Decrease">&minus;</button>
+                    <input type="number" value="{{ line.quantity }}" min="0"
+                           data-cart-qty data-line="{{ forloop.index }}" aria-label="Quantity">
+                    <button type="button" data-qty-step="up" aria-label="Increase">+</button>
+                  </div>
+                  <a href="{{ line.url_to_remove }}" class="small muted" style="text-decoration:underline;">Remove</a>
+                </div>
+              </div>
+
+              <div class="cart-item__price" style="text-align:right;">
+                <span class="price">{{ line.final_line_price | money }}</span>
+                {%- if line.quantity > 1 -%}
+                  <div class="small muted">{{ line.final_price | money }} each</div>
+                {%- endif -%}
+              </div>
+            </div>
+          {%- endfor -%}
+
+          {%- if settings.cart_notes -%}
+            <label class="field" style="margin-top:24px;">
+              <span>Order notes — vehicle VIN, delivery instructions, anything we should know</span>
+              <textarea name="note" style="min-height:90px;">{{ cart.note }}</textarea>
+            </label>
+          {%- endif -%}
+        </div>
+
+        <aside class="cart-summary">
+          <div class="cart-summary__row">
+            <span>Subtotal</span>
+            <span data-cart-total>{{ cart.total_price | money }}</span>
+          </div>
+          <div class="cart-summary__row">
+            <span>Shipping</span>
+            <span class="muted">Calculated at checkout</span>
+          </div>
+          <div class="cart-summary__row cart-summary__row--total">
+            <span>Total</span>
+            <span>{{ cart.total_price | money }}</span>
+          </div>
+
+          <button type="submit" name="checkout" class="btn btn--lg btn--full" style="margin-top:14px;">
+            Check out
+          </button>
+
+          <div class="buybox__assure">
+            <div>{% render 'icon', name: 'shield' %}<span>{{ settings.warranty_days | default: '90' }}-day money-back warranty on every part.</span></div>
+            <div>{% render 'icon', name: 'truck' %}<span>Free shipping on most parts; free local delivery.</span></div>
+            <div>{% render 'icon', name: 'phone' %}<span>Questions before you buy? {{ settings.phone }}</span></div>
+          </div>
+        </aside>
+      </div>
+    </form>
+  {%- endif -%}
+</div>
+
+{% schema %}
+{ "name": "Cart", "settings": [] }
+{% endschema %}

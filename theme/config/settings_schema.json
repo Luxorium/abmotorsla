@@ -1,0 +1,254 @@
+[
+  {
+    "name": "theme_info",
+    "theme_name": "A&B Motors \u2014 Yard",
+    "theme_version": "1.0.0",
+    "theme_author": "A&B Motors",
+    "theme_documentation_url": "https://abmotorsla.com",
+    "theme_support_url": "https://abmotorsla.com/pages/contact"
+  },
+  {
+    "name": "Brand",
+    "settings": [
+      {
+        "type": "image_picker",
+        "id": "logo",
+        "label": "Logo",
+        "info": "Chrome A&B MOTORS wordmark. Transparent PNG or SVG, at least 600px wide."
+      },
+      {
+        "type": "image_picker",
+        "id": "logo_light",
+        "label": "Logo for dark backgrounds",
+        "info": "Used in the footer. Falls back to the main logo."
+      },
+      {
+        "type": "range",
+        "id": "logo_height",
+        "label": "Logo height",
+        "min": 24,
+        "max": 72,
+        "step": 2,
+        "unit": "px",
+        "default": 44
+      },
+      {
+        "type": "image_picker",
+        "id": "favicon",
+        "label": "Favicon"
+      },
+      {
+        "type": "header",
+        "content": "Colors"
+      },
+      {
+        "type": "color",
+        "id": "color_accent",
+        "label": "Accent green",
+        "default": "#25BA1C",
+        "info": "The recycling mark green from the logo."
+      },
+      {
+        "type": "color",
+        "id": "color_accent_dark",
+        "label": "Accent green (dark)",
+        "default": "#13790F"
+      },
+      {
+        "type": "color",
+        "id": "color_dark",
+        "label": "Graphite",
+        "default": "#171C1F"
+      },
+      {
+        "type": "header",
+        "content": "Typography"
+      },
+      {
+        "type": "font_picker",
+        "id": "type_body_font",
+        "label": "Body font",
+        "default": "assistant_n4"
+      },
+      {
+        "type": "font_picker",
+        "id": "type_heading_font",
+        "label": "Heading font",
+        "default": "archivo_n7"
+      },
+      {
+        "type": "header",
+        "content": "Layout"
+      },
+      {
+        "type": "range",
+        "id": "page_width",
+        "label": "Page width",
+        "min": 1100,
+        "max": 1600,
+        "step": 20,
+        "unit": "px",
+        "default": 1320
+      }
+    ]
+  },
+  {
+    "name": "Yard details",
+    "settings": [
+      {
+        "type": "text",
+        "id": "phone",
+        "label": "Phone number",
+        "default": "985-748-7195"
+      },
+      {
+        "type": "text",
+        "id": "email",
+        "label": "Email",
+        "default": "abmotors@live.com"
+      },
+      {
+        "type": "textarea",
+        "id": "address",
+        "label": "Address",
+        "default": "59174 Hwy 51\nAmite, Louisiana 70422"
+      },
+      {
+        "type": "textarea",
+        "id": "hours",
+        "label": "Business hours",
+        "default": "Monday \u2013 Friday: 8:00 AM \u2013 5:00 PM CST"
+      },
+      {
+        "type": "text",
+        "id": "established",
+        "label": "Established year",
+        "default": "1958"
+      },
+      {
+        "type": "text",
+        "id": "warranty_days",
+        "label": "Warranty length (days)",
+        "default": "90"
+      },
+      {
+        "type": "url",
+        "id": "ebay_url",
+        "label": "eBay store URL",
+        "info": "https://www.ebay.com/str/abmotorslouisana"
+      },
+      {
+        "type": "url",
+        "id": "facebook_url",
+        "label": "Facebook URL"
+      },
+      {
+        "type": "text",
+        "id": "map_query",
+        "label": "Google Maps query",
+        "default": "A%26B+Motors+59174+Hwy+51+Amite+LA+70422"
+      },
+      {
+        "type": "header",
+        "content": "eBay track record"
+      },
+      {
+        "type": "text",
+        "id": "ebay_feedback_count",
+        "label": "eBay feedback count",
+        "default": "16,257",
+        "info": "Shown as social proof. Update it now and then from your eBay profile."
+      },
+      {
+        "type": "text",
+        "id": "ebay_feedback_pct",
+        "label": "eBay positive %",
+        "default": "99.2"
+      },
+      {
+        "type": "text",
+        "id": "ebay_since",
+        "label": "Selling on eBay since",
+        "default": "2005"
+      },
+      {
+        "type": "text",
+        "id": "ebay_items_sold",
+        "label": "Items sold",
+        "default": "53,000"
+      }
+    ]
+  },
+  {
+    "name": "Product cards",
+    "settings": [
+      {
+        "type": "checkbox",
+        "id": "card_show_type",
+        "label": "Show part type",
+        "default": true
+      },
+      {
+        "type": "checkbox",
+        "id": "card_show_sku",
+        "label": "Show stock number",
+        "default": true
+      },
+      {
+        "type": "checkbox",
+        "id": "card_show_grade",
+        "label": "Show part grade",
+        "default": true
+      },
+      {
+        "type": "checkbox",
+        "id": "card_show_stock",
+        "label": "Show \"1 in stock\" flag",
+        "default": true
+      },
+      {
+        "type": "select",
+        "id": "card_image_fit",
+        "label": "Image fit",
+        "options": [
+          {
+            "value": "cover",
+            "label": "Fill the card"
+          },
+          {
+            "value": "contain",
+            "label": "Fit whole photo"
+          }
+        ],
+        "default": "cover"
+      }
+    ]
+  },
+  {
+    "name": "Cart",
+    "settings": [
+      {
+        "type": "select",
+        "id": "cart_type",
+        "label": "Cart behaviour",
+        "options": [
+          {
+            "value": "page",
+            "label": "Go to cart page"
+          },
+          {
+            "value": "stay",
+            "label": "Stay on page"
+          }
+        ],
+        "default": "stay"
+      },
+      {
+        "type": "checkbox",
+        "id": "cart_notes",
+        "label": "Enable order notes",
+        "default": true
+      }
+    ]
+  }
+]

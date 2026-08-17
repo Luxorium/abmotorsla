@@ -1,0 +1,24 @@
+{
+  "type": "header",
+  "name": "Header group",
+  "sections": {
+    "announcement": {
+      "type": "announcement-bar",
+      "settings": {
+        "message": "Free shipping on most parts · Free local delivery around Amite",
+        "link_label": "90-day money-back warranty",
+        "link_url": "/pages/warranty"
+      }
+    },
+    "header": {
+      "type": "header",
+      "settings": {
+        "menu": "main-menu",
+        "search_placeholder": "Search by part, year, make, model, or stock #",
+        "cta_label": "Sell Your Car",
+        "cta_url": "/pages/sell-your-car"
+      }
+    }
+  },
+  "order": ["announcement", "header"]
+}

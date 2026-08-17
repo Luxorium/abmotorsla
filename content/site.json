@@ -1,0 +1,430 @@
+{
+  "_comment": "Store structure applied by scripts/store_setup.py. Collection rules match the real productType values in the catalog (201 distinct types as of 2026-08-16).",
+  "collections": [
+    {
+      "handle": "engines-transmissions",
+      "title": "Engines & Transmissions",
+      "sort": "CREATED_DESC",
+      "description": "Complete used engines, transmissions, transfer cases, and driveline components \u2014 pulled, inspected, and photographed on our racks in Amite.",
+      "contains": [
+        "Engine Assembly",
+        "Transmission",
+        "Transaxle",
+        "Transfer Case",
+        "Drive Shaft",
+        "Axle Assembly",
+        "Carrier Assembly",
+        "Torque Converter",
+        "Flywheel",
+        "Engine Mount",
+        "Oil Pan",
+        "Turbocharger",
+        "Supercharger",
+        "Exhaust Manifold",
+        "Intake Manifold",
+        "Cylinder Head",
+        "Timing Cover",
+        "Starter Motor"
+      ]
+    },
+    {
+      "handle": "body-parts",
+      "title": "Body Parts & Doors",
+      "sort": "CREATED_DESC",
+      "description": "Doors, fenders, hoods, bumpers, tailgates, and truck beds in factory colors, straight off the vehicle. <strong>Body parts and glass are pickup or local delivery only \u2014 we don't ship them.</strong> Call 985-748-7195 and we'll have it at the counter.",
+      "contains": [
+        "Door",
+        "Fender",
+        "Hood",
+        "Bumper",
+        "Grille",
+        "Pickup BOX",
+        "Tailgate",
+        "Quarter Panel",
+        "Deck Lid",
+        "Roof",
+        "Rocker Panel",
+        "Side View Mirror",
+        "Fuel Filler Door",
+        "Splash Shield",
+        "Cowl",
+        "Header Panel",
+        "Trunk Lid",
+        "Body Hardware"
+      ]
+    },
+    {
+      "handle": "lights",
+      "title": "Lights & Lamps",
+      "sort": "CREATED_DESC",
+      "description": "Headlamps, tail lamps, fog lamps, and marker lights \u2014 OEM assemblies, tested before they go on the shelf.",
+      "contains": [
+        "Lamp",
+        "Light",
+        "Headlight",
+        "Taillight",
+        "Fog",
+        "Xenon",
+        "HID",
+        "LED Assembly"
+      ]
+    },
+    {
+      "handle": "wheels",
+      "title": "Wheels & Tires",
+      "sort": "CREATED_DESC",
+      "description": "Factory alloy and steel wheels, hub caps, and wheel covers by bolt pattern and diameter.",
+      "contains": [
+        "Wheel",
+        "Tire",
+        "Hub Cap",
+        "Wheel Cover",
+        "Rim",
+        "Spare"
+      ]
+    },
+    {
+      "handle": "interior-parts",
+      "title": "Interior Parts",
+      "sort": "CREATED_DESC",
+      "description": "Seats, consoles, dash components, radios, climate controls, clusters, and trim in factory colors.",
+      "contains": [
+        "Seat",
+        "Console",
+        "Glove Box",
+        "SUN Visor",
+        "Interior Rear View Mirror",
+        "Speedometer Instrument Cluster",
+        "Radio",
+        "Audio",
+        "Info-GPS-TV Screen",
+        "Temperature / Climate Control",
+        "Carpet",
+        "Headliner",
+        "Dash",
+        "Trim Panel",
+        "Arm Rest",
+        "Steering Wheel",
+        "Seat Belt",
+        "AIR Bag",
+        "Speaker",
+        "Door Panel"
+      ]
+    },
+    {
+      "handle": "suspension-steering",
+      "title": "Suspension & Steering",
+      "sort": "CREATED_DESC",
+      "description": "Struts, control arms, knuckles, steering columns, racks, and power steering pumps.",
+      "contains": [
+        "Strut",
+        "Shock",
+        "Control Arm",
+        "Steering Column",
+        "Power Steering Pump",
+        "Steering Gear",
+        "Rack and Pinion",
+        "Spindle",
+        "Knuckle",
+        "Suspension",
+        "Leaf Spring",
+        "Coil Spring",
+        "Stabilizer",
+        "Sway Bar",
+        "Hub",
+        "Bearing"
+      ]
+    },
+    {
+      "handle": "brakes",
+      "title": "Brakes & ABS",
+      "sort": "CREATED_DESC",
+      "description": "ABS pumps and modules, calipers, master cylinders, boosters, and brake hardware.",
+      "contains": [
+        "ABS",
+        "Caliper",
+        "Brake",
+        "Rotor",
+        "Booster",
+        "Master CYL",
+        "Proportioning"
+      ]
+    },
+    {
+      "handle": "cooling-a-c",
+      "title": "Cooling & A/C",
+      "sort": "CREATED_DESC",
+      "description": "A/C compressors, condensers, radiators, fan assemblies, blower motors, and coolant reservoirs.",
+      "contains": [
+        "A/C Compressor",
+        "AC Condenser",
+        "Radiator",
+        "Coolant",
+        "RAD Cond FAN",
+        "Blower Motor",
+        "Heater Core",
+        "Water Pump",
+        "Fan Clutch",
+        "Cooling",
+        "Evaporator",
+        "Compressor"
+      ]
+    },
+    {
+      "handle": "electrical",
+      "title": "Electrical & Modules",
+      "sort": "CREATED_DESC",
+      "description": "Alternators, starters, ECM/PCM computers, control modules, fuse boxes, switches, and motors.",
+      "contains": [
+        "Alternator",
+        "Starter",
+        "Engine Control Module",
+        "ECM",
+        "PCM",
+        "Chassis Cont MOD",
+        "Fuse Box",
+        "Switch",
+        "Coil/ignitor",
+        "Wiper Motor",
+        "Relay",
+        "Sensor",
+        "Module",
+        "Battery",
+        "Body Control",
+        "Window Reg",
+        "Actuator",
+        "Antenna",
+        "Horn"
+      ]
+    },
+    {
+      "handle": "fuel-system",
+      "title": "Fuel & Intake",
+      "sort": "CREATED_DESC",
+      "description": "Fuel pumps, tanks, injectors, throttle bodies, and air intake components.",
+      "contains": [
+        "Fuel",
+        "Air Cleaner",
+        "Intake",
+        "Throttle",
+        "Injector",
+        "Carburetor",
+        "Gas Tank",
+        "EGR",
+        "Emission"
+      ]
+    },
+    {
+      "handle": "just-pulled",
+      "title": "Just Pulled",
+      "sort": "CREATED_DESC",
+      "description": "The newest parts off the lot. Our inventory turns over every day \u2014 this is what came off the racks most recently.",
+      "in_stock_only": true
+    }
+  ],
+  "pages": [
+    {
+      "handle": "about",
+      "title": "About A&B Motors",
+      "file": "pages/about.html"
+    },
+    {
+      "handle": "tour",
+      "title": "Tour the Yard",
+      "file": "pages/tour.html"
+    },
+    {
+      "handle": "sell-your-car",
+      "title": "Sell Your Car for Cash",
+      "file": "pages/sell-your-car.html"
+    },
+    {
+      "handle": "warranty-returns",
+      "title": "90-Day Warranty & Returns",
+      "file": "pages/warranty-returns.html"
+    },
+    {
+      "handle": "shipping",
+      "title": "Shipping & Delivery",
+      "file": "pages/shipping.html"
+    },
+    {
+      "handle": "freight",
+      "title": "Freight & Pickup Rules",
+      "file": "pages/freight.html"
+    },
+    {
+      "handle": "will-it-fit",
+      "title": "Will It Fit My Vehicle?",
+      "file": "pages/will-it-fit.html"
+    },
+    {
+      "handle": "contact",
+      "title": "Contact the Yard",
+      "file": "pages/contact.html",
+      "template_suffix": "contact"
+    }
+  ],
+  "policies": [
+    {
+      "type": "REFUND_POLICY",
+      "file": "policies/refund.html"
+    },
+    {
+      "type": "PRIVACY_POLICY",
+      "file": "policies/privacy.html"
+    },
+    {
+      "type": "TERMS_OF_SERVICE",
+      "file": "policies/terms.html"
+    },
+    {
+      "type": "SHIPPING_POLICY",
+      "file": "policies/shipping.html"
+    }
+  ],
+  "menus": [
+    {
+      "handle": "main-menu",
+      "title": "Main menu",
+      "items": [
+        {
+          "title": "Shop All Parts",
+          "url": "/collections/just-pulled"
+        },
+        {
+          "title": "Parts by Type",
+          "url": "/collections",
+          "items": [
+            {
+              "title": "Engines & Transmissions",
+              "url": "/collections/engines-transmissions"
+            },
+            {
+              "title": "Body Parts & Doors",
+              "url": "/collections/body-parts"
+            },
+            {
+              "title": "Lights & Lamps",
+              "url": "/collections/lights"
+            },
+            {
+              "title": "Wheels & Tires",
+              "url": "/collections/wheels"
+            },
+            {
+              "title": "Interior Parts",
+              "url": "/collections/interior-parts"
+            },
+            {
+              "title": "Electrical & Modules",
+              "url": "/collections/electrical"
+            },
+            {
+              "title": "Brakes & ABS",
+              "url": "/collections/brakes"
+            },
+            {
+              "title": "Cooling & A/C",
+              "url": "/collections/cooling-a-c"
+            },
+            {
+              "title": "Suspension & Steering",
+              "url": "/collections/suspension-steering"
+            },
+            {
+              "title": "Fuel & Intake",
+              "url": "/collections/fuel-system"
+            }
+          ]
+        },
+        {
+          "title": "Help",
+          "url": "/pages/will-it-fit",
+          "items": [
+            {
+              "title": "Will It Fit My Vehicle?",
+              "url": "/pages/will-it-fit"
+            },
+            {
+              "title": "90-Day Warranty & Returns",
+              "url": "/pages/warranty-returns"
+            },
+            {
+              "title": "Freight & Pickup Rules",
+              "url": "/pages/freight"
+            },
+            {
+              "title": "Shipping & Delivery",
+              "url": "/pages/shipping"
+            }
+          ]
+        },
+        {
+          "title": "Tour the Yard",
+          "url": "/pages/tour"
+        },
+        {
+          "title": "About",
+          "url": "/pages/about"
+        },
+        {
+          "title": "Contact",
+          "url": "/pages/contact"
+        }
+      ]
+    },
+    {
+      "handle": "footer",
+      "title": "Footer menu",
+      "items": [
+        {
+          "title": "Will It Fit My Vehicle?",
+          "url": "/pages/will-it-fit"
+        },
+        {
+          "title": "90-Day Warranty & Returns",
+          "url": "/pages/warranty-returns"
+        },
+        {
+          "title": "Freight & Pickup Rules",
+          "url": "/pages/freight"
+        },
+        {
+          "title": "Shipping & Delivery",
+          "url": "/pages/shipping"
+        },
+        {
+          "title": "Sell Your Car",
+          "url": "/pages/sell-your-car"
+        },
+        {
+          "title": "Contact the Yard",
+          "url": "/pages/contact"
+        }
+      ]
+    },
+    {
+      "handle": "legal",
+      "title": "Legal",
+      "items": [
+        {
+          "title": "Refund Policy",
+          "url": "/policies/refund-policy"
+        },
+        {
+          "title": "Privacy Policy",
+          "url": "/policies/privacy-policy"
+        },
+        {
+          "title": "Terms of Service",
+          "url": "/policies/terms-of-service"
+        },
+        {
+          "title": "Shipping Policy",
+          "url": "/policies/shipping-policy"
+        }
+      ]
+    }
+  ]
+}

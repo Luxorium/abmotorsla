@@ -1,0 +1,56 @@
+<section class="section {{ section.settings.background }}">
+  <div class="page-width">
+    <div class="section-head section-head--row">
+      <div>
+        {%- if section.settings.eyebrow != blank -%}<p class="eyebrow">{{ section.settings.eyebrow }}</p>{%- endif -%}
+        <h2 class="h2">{{ section.settings.heading }}</h2>
+        {%- if section.settings.subheading != blank -%}
+          <p class="muted" style="margin:0;">{{ section.settings.subheading }}</p>
+        {%- endif -%}
+      </div>
+      {%- if section.settings.collection != blank -%}
+        <a href="{{ section.settings.collection.url }}" class="link">
+          View all{% if section.settings.collection.products_count > 0 %} {{ section.settings.collection.products_count }}{% endif %} &rarr;
+        </a>
+      {%- endif -%}
+    </div>
+
+    {%- assign products = section.settings.collection.products -%}
+    <div class="grid grid--{{ section.settings.columns }}">
+      {%- if products.size > 0 -%}
+        {%- for product in products limit: section.settings.count -%}
+          {% render 'card-product', card_product: product %}
+        {%- endfor -%}
+      {%- else -%}
+        {%- for i in (1..section.settings.count) -%}
+          {% render 'card-product' %}
+        {%- endfor -%}
+      {%- endif -%}
+    </div>
+  </div>
+</section>
+
+{% schema %}
+{
+  "name": "Featured parts",
+  "settings": [
+    { "type": "text", "id": "eyebrow", "label": "Eyebrow" },
+    { "type": "text", "id": "heading", "label": "Heading", "default": "Just pulled" },
+    { "type": "text", "id": "subheading", "label": "Subheading", "default": "New off the lot this week — every one photographed on our own racks." },
+    { "type": "collection", "id": "collection", "label": "Collection" },
+    { "type": "range", "id": "count", "label": "Parts to show", "min": 4, "max": 24, "step": 2, "default": 8 },
+    { "type": "range", "id": "columns", "label": "Columns", "min": 3, "max": 5, "step": 1, "default": 4 },
+    {
+      "type": "select",
+      "id": "background",
+      "label": "Background",
+      "options": [
+        { "value": "", "label": "White" },
+        { "value": "section--paper", "label": "Light grey" }
+      ],
+      "default": ""
+    }
+  ],
+  "presets": [{ "name": "Featured parts" }]
+}
+{% endschema %}

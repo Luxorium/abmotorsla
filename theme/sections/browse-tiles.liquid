@@ -1,0 +1,103 @@
+{%- comment -%}
+  Two ways a yard customer starts: by the part they need, or by the vehicle
+  they own. This section does either — tiles link anywhere (collection, tag
+  filter, or a search URL), so it works before collections are built out.
+{%- endcomment -%}
+<section class="section {{ section.settings.background }}">
+  <div class="page-width">
+    <div class="section-head section-head--row">
+      <div>
+        {%- if section.settings.eyebrow != blank -%}<p class="eyebrow">{{ section.settings.eyebrow }}</p>{%- endif -%}
+        <h2 class="h2">{{ section.settings.heading }}</h2>
+        {%- if section.settings.subheading != blank -%}
+          <p class="muted" style="margin:0;">{{ section.settings.subheading }}</p>
+        {%- endif -%}
+      </div>
+      {%- if section.settings.link_label != blank -%}
+        <a href="{{ section.settings.link_url }}" class="link">{{ section.settings.link_label }} &rarr;</a>
+      {%- endif -%}
+    </div>
+
+    <div class="grid grid--{{ section.settings.columns }}">
+      {%- for block in section.blocks -%}
+        <a href="{{ block.settings.url }}" class="tile" {{ block.shopify_attributes }}>
+          {%- if block.settings.image != blank -%}
+            {{ block.settings.image | image_url: width: 160 | image_tag: loading: 'lazy', alt: block.settings.label }}
+          {%- elsif block.settings.icon != 'none' -%}
+            {% render 'icon', name: block.settings.icon %}
+          {%- endif -%}
+          <span>
+            {{ block.settings.label }}
+            {%- if block.settings.sublabel != blank -%}<small>{{ block.settings.sublabel }}</small>{%- endif -%}
+          </span>
+        </a>
+      {%- endfor -%}
+    </div>
+  </div>
+</section>
+
+{% schema %}
+{
+  "name": "Browse tiles",
+  "settings": [
+    { "type": "text", "id": "eyebrow", "label": "Eyebrow" },
+    { "type": "text", "id": "heading", "label": "Heading", "default": "Shop by part" },
+    { "type": "text", "id": "subheading", "label": "Subheading" },
+    { "type": "text", "id": "link_label", "label": "Link label", "default": "See all parts" },
+    { "type": "url", "id": "link_url", "label": "Link URL" },
+    { "type": "range", "id": "columns", "label": "Columns", "min": 3, "max": 6, "step": 1, "default": 6 },
+    {
+      "type": "select",
+      "id": "background",
+      "label": "Background",
+      "options": [
+        { "value": "", "label": "White" },
+        { "value": "section--paper", "label": "Light grey" }
+      ],
+      "default": ""
+    }
+  ],
+  "blocks": [
+    {
+      "type": "tile",
+      "name": "Tile",
+      "settings": [
+        { "type": "text", "id": "label", "label": "Label", "default": "Engines" },
+        { "type": "text", "id": "sublabel", "label": "Sub-label" },
+        { "type": "url", "id": "url", "label": "Link" },
+        { "type": "image_picker", "id": "image", "label": "Image (optional)", "info": "Use for make logos. Overrides the icon." },
+        {
+          "type": "select",
+          "id": "icon",
+          "label": "Icon",
+          "options": [
+            { "value": "none", "label": "None" },
+            { "value": "engine", "label": "Engine" },
+            { "value": "wheel", "label": "Wheel" },
+            { "value": "door", "label": "Door" },
+            { "value": "car", "label": "Car" },
+            { "value": "bolt", "label": "Electrical" },
+            { "value": "truck", "label": "Truck" },
+            { "value": "recycle", "label": "Recycle" },
+            { "value": "tag", "label": "Tag" }
+          ],
+          "default": "engine"
+        }
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": "Browse tiles",
+      "blocks": [
+        { "type": "tile", "settings": { "label": "Engines", "icon": "engine" } },
+        { "type": "tile", "settings": { "label": "Transmissions", "icon": "bolt" } },
+        { "type": "tile", "settings": { "label": "Body & Doors", "icon": "door" } },
+        { "type": "tile", "settings": { "label": "Wheels & Tires", "icon": "wheel" } },
+        { "type": "tile", "settings": { "label": "Electrical", "icon": "bolt" } },
+        { "type": "tile", "settings": { "label": "Suspension", "icon": "car" } }
+      ]
+    }
+  ]
+}
+{% endschema %}

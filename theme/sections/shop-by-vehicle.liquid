@@ -1,0 +1,79 @@
+{%- comment -%}
+  Year / make / model picker. This is how people actually shop for auto parts —
+  they know their truck, not our part-type taxonomy.
+
+  The options come from assets/vehicles.json, built by scripts/build_vehicles.py
+  out of the year+make+model tags CoreYard already writes. No API calls, no app,
+  and it can't offer a vehicle we have no parts for.
+{%- endcomment -%}
+<section class="section {{ section.settings.background }}">
+  <div class="page-width">
+    <div class="section-head">
+      {%- if section.settings.eyebrow != blank -%}<p class="eyebrow">{{ section.settings.eyebrow }}</p>{%- endif -%}
+      <h2 class="h2">{{ section.settings.heading }}</h2>
+      {%- if section.settings.subheading != blank -%}
+        <p class="lede">{{ section.settings.subheading }}</p>
+      {%- endif -%}
+    </div>
+
+    <form class="ymm" data-ymm data-src="{{ 'vehicles.json' | asset_url }}"
+          action="{{ routes.search_url }}" method="get">
+      <div class="ymm__row">
+        <label class="field">
+          <span>Make</span>
+          <select data-ymm-make aria-label="Make">
+            <option value="">Choose a make</option>
+          </select>
+        </label>
+        <label class="field">
+          <span>Model</span>
+          <select data-ymm-model aria-label="Model" disabled>
+            <option value="">Choose a model</option>
+          </select>
+        </label>
+        <label class="field">
+          <span>Year</span>
+          <select data-ymm-year aria-label="Year" disabled>
+            <option value="">Any year</option>
+          </select>
+        </label>
+        <button type="submit" class="btn" data-ymm-submit disabled>
+          {% render 'icon', name: 'search' %} {{ section.settings.button_label }}
+        </button>
+      </div>
+      <input type="hidden" name="q" data-ymm-q value="">
+      <input type="hidden" name="options[prefix]" value="last">
+      <p class="ymm__hint" data-ymm-hint>{{ section.settings.hint }}</p>
+    </form>
+  </div>
+</section>
+
+{% schema %}
+{
+  "name": "Shop by vehicle",
+  "settings": [
+    { "type": "text", "id": "eyebrow", "label": "Eyebrow", "default": "Find parts that fit" },
+    { "type": "text", "id": "heading", "label": "Heading", "default": "Shop by your vehicle" },
+    {
+      "type": "text",
+      "id": "subheading",
+      "label": "Subheading",
+      "default": "Pick your make, model, and year. We'll show only the parts we actually have for it."
+    },
+    { "type": "text", "id": "button_label", "label": "Button label", "default": "Find parts" },
+    { "type": "text", "id": "hint", "label": "Hint", "default": "Don't see your vehicle? Call the yard — not everything on the lot is listed yet." },
+    {
+      "type": "select",
+      "id": "background",
+      "label": "Background",
+      "options": [
+        { "value": "", "label": "White" },
+        { "value": "section--paper", "label": "Light grey" },
+        { "value": "section--dark", "label": "Graphite" }
+      ],
+      "default": "section--paper"
+    }
+  ],
+  "presets": [{ "name": "Shop by vehicle" }]
+}
+{% endschema %}

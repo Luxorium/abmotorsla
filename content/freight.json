@@ -1,0 +1,60 @@
+{
+  "_comment": "Shipping classification by product type. Matched in order within each group, first hit wins, case-insensitive substring. PICKUP is checked first, then A, then B; anything unmatched ships free ground. Keep the freight lists tight — a freight charge on a part that could have gone ground loses the sale outright.",
+
+  "groups": {
+    "PICKUP": {
+      "price": null,
+      "label": "Pickup only",
+      "handle": "pickup-only",
+      "note": "Body panels and glass. We do not ship these at any price — they arrive damaged and cost more to crate than they are worth. Local pickup at the yard only."
+    },
+    "A": {
+      "price": "299.99",
+      "label": "Freight — oversize",
+      "handle": "freight-oversize",
+      "note": "Engines, transmissions, axles, and K-frames. Ships by LTL freight to a commercial address."
+    },
+    "B": {
+      "price": "199.99",
+      "label": "Freight — heavy",
+      "handle": "freight-heavy",
+      "note": "Transfer cases and differential carriers. Ships by LTL freight to a commercial address."
+    }
+  },
+
+  "PICKUP": [
+    "pickup box",
+    "door assembly",
+    "dr assm",
+    "hood",
+    "bumper assembly",
+    "bumper rein",
+    "bumper filler",
+    "quarter panel assembly",
+    "decklid tailgate",
+    "fender",
+    "fender flare",
+    "running board",
+    "radiator core supp",
+    "cowl vent panel",
+    "roof glass",
+    "back glass",
+    "quarter glass",
+    "door glass",
+    "door vent glass",
+    "glass"
+  ],
+
+  "A": [
+    "engine assembly",
+    "short cyl block",
+    "transmission / transaxle",
+    "axle assembly",
+    "susp crossm k-frame"
+  ],
+
+  "B": [
+    "transfer case",
+    "carrier assembly"
+  ]
+}

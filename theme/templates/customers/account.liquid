@@ -1,0 +1,23 @@
+<div class="page-width">
+  <div class="section">
+    <h1 class="h1">Your orders</h1>
+    <p class="small muted"><a class="link" href="{{ routes.account_logout_url }}">Log out</a></p>
+    {%- if customer.orders.size > 0 -%}
+      <table class="rte" style="width:100%;">
+        <thead><tr><th>Order</th><th>Date</th><th>Total</th><th>Status</th></tr></thead>
+        <tbody>
+          {%- for order in customer.orders -%}
+            <tr>
+              <td><a class="link" href="{{ order.customer_url }}">{{ order.name }}</a></td>
+              <td>{{ order.created_at | date: '%b %d, %Y' }}</td>
+              <td>{{ order.total_price | money }}</td>
+              <td>{{ order.fulfillment_status_label }}</td>
+            </tr>
+          {%- endfor -%}
+        </tbody>
+      </table>
+    {%- else -%}
+      <p class="muted">No orders yet.</p>
+    {%- endif -%}
+  </div>
+</div>

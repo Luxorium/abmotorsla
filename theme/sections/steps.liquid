@@ -1,0 +1,68 @@
+<section class="section {{ section.settings.background }}">
+  <div class="page-width">
+    <div class="section-head">
+      {%- if section.settings.eyebrow != blank -%}<p class="eyebrow">{{ section.settings.eyebrow }}</p>{%- endif -%}
+      <h2 class="h2">{{ section.settings.heading }}</h2>
+      {%- if section.settings.subheading != blank -%}<p class="lede">{{ section.settings.subheading }}</p>{%- endif -%}
+    </div>
+
+    <div class="step-row">
+      {%- for block in section.blocks -%}
+        <div class="step" {{ block.shopify_attributes }}>
+          <h3>{{ block.settings.title }}</h3>
+          <p>{{ block.settings.text }}</p>
+        </div>
+      {%- endfor -%}
+    </div>
+
+    {%- if section.settings.button_label != blank -%}
+      <div style="margin-top:30px;">
+        <a href="{{ section.settings.button_url }}" class="btn btn--lg">{{ section.settings.button_label }}</a>
+      </div>
+    {%- endif -%}
+  </div>
+</section>
+
+{% schema %}
+{
+  "name": "Steps",
+  "settings": [
+    { "type": "text", "id": "eyebrow", "label": "Eyebrow" },
+    { "type": "text", "id": "heading", "label": "Heading", "default": "How ordering works" },
+    { "type": "text", "id": "subheading", "label": "Subheading" },
+    { "type": "text", "id": "button_label", "label": "Button label" },
+    { "type": "url", "id": "button_url", "label": "Button URL" },
+    {
+      "type": "select",
+      "id": "background",
+      "label": "Background",
+      "options": [
+        { "value": "", "label": "White" },
+        { "value": "section--paper", "label": "Light grey" }
+      ],
+      "default": "section--paper"
+    }
+  ],
+  "blocks": [
+    {
+      "type": "step",
+      "name": "Step",
+      "limit": 3,
+      "settings": [
+        { "type": "text", "id": "title", "label": "Title", "default": "Find it" },
+        { "type": "textarea", "id": "text", "label": "Text", "default": "Search by part, vehicle, or stock number." }
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": "Steps",
+      "blocks": [
+        { "type": "step", "settings": { "title": "Find it", "text": "Search by part, vehicle, or stock number — or call the yard and we'll look for you." } },
+        { "type": "step", "settings": { "title": "We pull and inspect", "text": "Your part is checked, cleaned up, and packed the same or next business day." } },
+        { "type": "step", "settings": { "title": "It ships free", "text": "Most parts ship free nationwide. Local to Amite? We deliver it ourselves." } }
+      ]
+    }
+  ]
+}
+{% endschema %}

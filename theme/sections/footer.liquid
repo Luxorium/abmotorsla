@@ -1,0 +1,116 @@
+{%- liquid
+  assign phone = settings.phone
+  assign phone_href = phone | remove: '-' | remove: ' ' | remove: '(' | remove: ')'
+  assign logo = settings.logo_light | default: settings.logo
+-%}
+
+<footer class="footer">
+  <div class="page-width">
+    <div class="footer__top">
+      <div>
+        {%- if logo != blank -%}
+          {{ logo | image_url: width: 600 | image_tag: class: 'footer__logo', alt: shop.name, loading: 'lazy' }}
+        {%- else -%}
+          <div class="header__logo-text" style="color:#fff;margin-bottom:14px;">A&amp;B MOTORS</div>
+        {%- endif -%}
+        <p class="small" style="max-width:36ch;">{{ section.settings.blurb }}</p>
+        <div class="cluster" style="margin-top:14px;">
+          {%- if settings.ebay_url != blank -%}
+            <a href="{{ settings.ebay_url }}" class="badge badge--dark" target="_blank" rel="noopener">eBay Store</a>
+          {%- endif -%}
+          {%- if settings.facebook_url != blank -%}
+            <a href="{{ settings.facebook_url }}" class="badge badge--dark" target="_blank" rel="noopener">Facebook</a>
+          {%- endif -%}
+        </div>
+      </div>
+
+      {%- for block in section.blocks -%}
+        {%- if block.type == 'menu' -%}
+          <div {{ block.shopify_attributes }}>
+            <h4>{{ block.settings.heading }}</h4>
+            <ul>
+              {%- for link in block.settings.menu.links -%}
+                <li><a href="{{ link.url }}">{{ link.title }}</a></li>
+              {%- endfor -%}
+            </ul>
+          </div>
+        {%- endif -%}
+      {%- endfor -%}
+
+      <div>
+        <h4>The Yard</h4>
+        <div class="footer__contact">
+          {%- if settings.address != blank -%}
+            <div>
+              {% render 'icon', name: 'pin' %}
+              <span>
+                <b>Come see us</b>
+                {{ settings.address | newline_to_br }}
+              </span>
+            </div>
+          {%- endif -%}
+          {%- if phone != blank -%}
+            <div>
+              {% render 'icon', name: 'phone' %}
+              <span><b>Call</b><a href="tel:{{ phone_href }}">{{ phone }}</a></span>
+            </div>
+          {%- endif -%}
+          {%- if settings.email != blank -%}
+            <div>
+              {% render 'icon', name: 'mail' %}
+              <span><b>Email</b><a href="mailto:{{ settings.email }}">{{ settings.email }}</a></span>
+            </div>
+          {%- endif -%}
+          {%- if settings.hours != blank -%}
+            <div>
+              {% render 'icon', name: 'clock' %}
+              <span><b>Hours</b>{{ settings.hours | newline_to_br }}</span>
+            </div>
+          {%- endif -%}
+        </div>
+      </div>
+    </div>
+
+    <div class="footer__bottom">
+      <span>&copy; {{ 'now' | date: '%Y' }} {{ shop.name }}. All rights reserved.</span>
+      {%- if settings.established != blank -%}
+        <span class="muted">Recycling vehicles in Amite, Louisiana since {{ settings.established }}.</span>
+      {%- endif -%}
+      <nav aria-label="Legal">
+        {%- for link in section.settings.legal_menu.links -%}
+          <a href="{{ link.url }}">{{ link.title }}</a>
+        {%- endfor -%}
+      </nav>
+    </div>
+  </div>
+</footer>
+
+{% schema %}
+{
+  "name": "Footer",
+  "settings": [
+    {
+      "type": "textarea",
+      "id": "blurb",
+      "label": "About blurb",
+      "default": "Quality used OEM parts pulled, inspected, and warrantied from our 10-acre lot in Amite, Louisiana. Shipped nationwide, delivered free locally."
+    },
+    { "type": "link_list", "id": "legal_menu", "label": "Legal menu" }
+  ],
+  "blocks": [
+    {
+      "type": "menu",
+      "name": "Menu column",
+      "limit": 2,
+      "settings": [
+        { "type": "text", "id": "heading", "label": "Heading", "default": "Shop" },
+        { "type": "link_list", "id": "menu", "label": "Menu" }
+      ]
+    }
+  ],
+  "default": {
+    "blocks": [{ "type": "menu" }, { "type": "menu" }]
+  },
+  "enabled_on": { "groups": ["footer"] }
+}
+{% endschema %}

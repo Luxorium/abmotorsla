@@ -1,0 +1,56 @@
+<div class="trust">
+  <div class="trust__inner">
+    {%- for block in section.blocks -%}
+      <div class="trust__item" {{ block.shopify_attributes }}>
+        {% render 'icon', name: block.settings.icon %}
+        <span>
+          <b>{{ block.settings.title }}</b>
+          <span>{{ block.settings.text }}</span>
+        </span>
+      </div>
+    {%- endfor -%}
+  </div>
+</div>
+
+{% schema %}
+{
+  "name": "Trust bar",
+  "blocks": [
+    {
+      "type": "item",
+      "name": "Item",
+      "limit": 4,
+      "settings": [
+        {
+          "type": "select",
+          "id": "icon",
+          "label": "Icon",
+          "options": [
+            { "value": "shield", "label": "Shield" },
+            { "value": "truck", "label": "Truck" },
+            { "value": "recycle", "label": "Recycle" },
+            { "value": "dollar", "label": "Dollar" },
+            { "value": "check", "label": "Check" },
+            { "value": "phone", "label": "Phone" },
+            { "value": "photo", "label": "Photo" }
+          ],
+          "default": "shield"
+        },
+        { "type": "text", "id": "title", "label": "Title", "default": "90-day warranty" },
+        { "type": "text", "id": "text", "label": "Text", "default": "Money back, no hassle" }
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": "Trust bar",
+      "blocks": [
+        { "type": "item", "settings": { "icon": "shield", "title": "90-day warranty", "text": "Money back, no hassle" } },
+        { "type": "item", "settings": { "icon": "truck", "title": "Free shipping", "text": "On most parts, nationwide" } },
+        { "type": "item", "settings": { "icon": "photo", "title": "Real photos", "text": "You see the exact part" } },
+        { "type": "item", "settings": { "icon": "phone", "title": "Talk to the yard", "text": "985-748-7195, Mon–Fri" } }
+      ]
+    }
+  ]
+}
+{% endschema %}

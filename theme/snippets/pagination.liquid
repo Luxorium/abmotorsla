@@ -1,0 +1,20 @@
+{%- comment -%}Accepts: paginate{%- endcomment -%}
+{%- if paginate.pages > 1 -%}
+  <nav class="pagination" role="navigation" aria-label="Pagination">
+    {%- if paginate.previous -%}
+      <a href="{{ paginate.previous.url }}" aria-label="Previous page">&larr;</a>
+    {%- endif -%}
+    {%- for part in paginate.parts -%}
+      {%- if part.is_link -%}
+        <a href="{{ part.url }}">{{ part.title }}</a>
+      {%- elsif part.title == '&hellip;' -%}
+        <span>&hellip;</span>
+      {%- else -%}
+        <span aria-current="page">{{ part.title }}</span>
+      {%- endif -%}
+    {%- endfor -%}
+    {%- if paginate.next -%}
+      <a href="{{ paginate.next.url }}" aria-label="Next page">&rarr;</a>
+    {%- endif -%}
+  </nav>
+{%- endif -%}

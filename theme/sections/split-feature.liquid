@@ -1,0 +1,96 @@
+{%- comment -%}
+  Image + text with a checklist. Used for "why buy recycled", the yard story,
+  and the sell-your-car pitch.
+{%- endcomment -%}
+<section class="section {{ section.settings.background }}">
+  <div class="page-width">
+    <div class="split{% if section.settings.reverse %} split--reverse{% endif %}">
+      <div class="split__media">
+        {%- if section.settings.image != blank -%}
+          {{ section.settings.image | image_url: width: 1200 | image_tag:
+               widths: '600,900,1200', sizes: '(min-width:900px) 600px, 100vw',
+               loading: 'lazy', alt: section.settings.heading }}
+        {%- else -%}
+          <div style="aspect-ratio:4/3;background:var(--chrome-3);border-radius:var(--radius-lg);display:flex;align-items:center;justify-content:center;color:var(--chrome);">
+            {% render 'icon', name: 'photo' %}
+          </div>
+        {%- endif -%}
+      </div>
+
+      <div>
+        {%- if section.settings.eyebrow != blank -%}<p class="eyebrow">{{ section.settings.eyebrow }}</p>{%- endif -%}
+        <h2 class="h1">{{ section.settings.heading }}</h2>
+        <div class="rte">{{ section.settings.text }}</div>
+
+        {%- if section.blocks.size > 0 -%}
+          <ul class="checks">
+            {%- for block in section.blocks -%}
+              <li {{ block.shopify_attributes }}>
+                {% render 'icon', name: 'check' %}
+                <span>{{ block.settings.text }}</span>
+              </li>
+            {%- endfor -%}
+          </ul>
+        {%- endif -%}
+
+        <div class="cluster">
+          {%- if section.settings.button_label != blank -%}
+            <a href="{{ section.settings.button_url }}" class="btn">{{ section.settings.button_label }}</a>
+          {%- endif -%}
+          {%- if section.settings.button2_label != blank -%}
+            <a href="{{ section.settings.button2_url }}" class="btn btn--outline">{{ section.settings.button2_label }}</a>
+          {%- endif -%}
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+{% schema %}
+{
+  "name": "Image + text",
+  "settings": [
+    { "type": "image_picker", "id": "image", "label": "Image" },
+    { "type": "checkbox", "id": "reverse", "label": "Image on the right", "default": false },
+    { "type": "text", "id": "eyebrow", "label": "Eyebrow" },
+    { "type": "text", "id": "heading", "label": "Heading", "default": "Family run since 1958" },
+    {
+      "type": "richtext",
+      "id": "text",
+      "label": "Text",
+      "default": "<p>We're a working salvage yard on ten acres of Highway 51, forty-five minutes east of Baton Rouge. Every part we list was pulled here, inspected here, and photographed here.</p>"
+    },
+    { "type": "text", "id": "button_label", "label": "Button label" },
+    { "type": "url", "id": "button_url", "label": "Button URL" },
+    { "type": "text", "id": "button2_label", "label": "Second button label" },
+    { "type": "url", "id": "button2_url", "label": "Second button URL" },
+    {
+      "type": "select",
+      "id": "background",
+      "label": "Background",
+      "options": [
+        { "value": "", "label": "White" },
+        { "value": "section--paper", "label": "Light grey" }
+      ],
+      "default": ""
+    }
+  ],
+  "blocks": [
+    {
+      "type": "check",
+      "name": "Checklist item",
+      "settings": [{ "type": "text", "id": "text", "label": "Text", "default": "Inspected and refurbished before it ships" }]
+    }
+  ],
+  "presets": [
+    {
+      "name": "Image + text",
+      "blocks": [
+        { "type": "check", "settings": { "text": "Every part inspected and basic-refurbished, free of charge" } },
+        { "type": "check", "settings": { "text": "Photographed on our racks — you buy the part in the picture" } },
+        { "type": "check", "settings": { "text": "90-day money-back warranty on everything we sell" } }
+      ]
+    }
+  ]
+}
+{% endschema %}

@@ -1,0 +1,15 @@
+# Named targets for the Shopify CLI, so a deploy is `shopify theme push -e live -f`
+# instead of four flags that wrap across terminal lines and get split apart.
+#
+#   shopify theme push -e live -f      publish changes to the storefront customers see
+#   shopify theme push -e staging      upload to a preview copy, leaving live alone
+#   shopify theme dev  -e live         local server rendering real products, touches nothing
+
+[environments.live]
+store = "5faf0h-z1.myshopify.com"
+theme = "160056508613"
+allow-live = true
+
+[environments.staging]
+store = "5faf0h-z1.myshopify.com"
+unpublished = true

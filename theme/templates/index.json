@@ -1,0 +1,446 @@
+{
+  "sections": {
+    "hero": {
+      "type": "hero-search",
+      "blocks": {
+        "s1": {
+          "type": "stat",
+          "settings": {
+            "value": "25,000+",
+            "label": "Parts in stock"
+          }
+        },
+        "s2": {
+          "type": "stat",
+          "settings": {
+            "value": "1958",
+            "label": "Family run since"
+          }
+        },
+        "s3": {
+          "type": "stat",
+          "settings": {
+            "value": "10 acres",
+            "label": "Of inventory"
+          }
+        },
+        "s4": {
+          "type": "stat",
+          "settings": {
+            "value": "90 days",
+            "label": "Money-back warranty"
+          }
+        }
+      },
+      "block_order": [
+        "s1",
+        "s2",
+        "s3",
+        "s4"
+      ],
+      "settings": {
+        "eyebrow": "Used OEM parts \u00b7 Amite, Louisiana",
+        "heading": "The part you need is already on our lot.",
+        "subheading": "Search 25,000+ inspected parts pulled from our ten-acre yard. Save up to 50% off new, backed by a 90-day money-back warranty.",
+        "search_placeholder": "Try \"2012 Silverado alternator\" or a stock number",
+        "button_label": "Find My Part",
+        "examples": "Engine, Transmission, Alternator, Tailgate, Wheel, Seat",
+        "image": "shopify://shop_images/abm-storefront-hero.jpg"
+      }
+    },
+    "trust": {
+      "type": "trust-bar",
+      "blocks": {
+        "t1": {
+          "type": "item",
+          "settings": {
+            "icon": "shield",
+            "title": "90-day warranty",
+            "text": "Money back, no hassle"
+          }
+        },
+        "t2": {
+          "type": "item",
+          "settings": {
+            "icon": "truck",
+            "title": "Free shipping",
+            "text": "On most parts, nationwide"
+          }
+        },
+        "t3": {
+          "type": "item",
+          "settings": {
+            "icon": "photo",
+            "title": "Real photos",
+            "text": "You see the exact part"
+          }
+        },
+        "t4": {
+          "type": "item",
+          "settings": {
+            "icon": "phone",
+            "title": "Talk to the yard",
+            "text": "985-748-7195, Mon\u2013Fri"
+          }
+        }
+      },
+      "block_order": [
+        "t1",
+        "t2",
+        "t3",
+        "t4"
+      ],
+      "settings": {}
+    },
+    "shop_by_part": {
+      "type": "browse-tiles",
+      "blocks": {
+        "b1": {
+          "type": "tile",
+          "settings": {
+            "label": "Engines & Transmissions",
+            "icon": "engine",
+            "url": "/collections/engines-transmissions"
+          }
+        },
+        "b2": {
+          "type": "tile",
+          "settings": {
+            "label": "Body Parts & Doors",
+            "icon": "door",
+            "url": "/collections/body-parts"
+          }
+        },
+        "b3": {
+          "type": "tile",
+          "settings": {
+            "label": "Lights & Lamps",
+            "icon": "bolt",
+            "url": "/collections/lights"
+          }
+        },
+        "b4": {
+          "type": "tile",
+          "settings": {
+            "label": "Wheels & Tires",
+            "icon": "wheel",
+            "url": "/collections/wheels"
+          }
+        },
+        "b5": {
+          "type": "tile",
+          "settings": {
+            "label": "Electrical & Modules",
+            "icon": "bolt",
+            "url": "/collections/electrical"
+          }
+        },
+        "b6": {
+          "type": "tile",
+          "settings": {
+            "label": "Interior Parts",
+            "icon": "car",
+            "url": "/collections/interior-parts"
+          }
+        },
+        "b7": {
+          "type": "tile",
+          "settings": {
+            "label": "Brakes & ABS",
+            "icon": "wheel",
+            "url": "/collections/brakes"
+          }
+        },
+        "b8": {
+          "type": "tile",
+          "settings": {
+            "label": "Cooling & A/C",
+            "icon": "engine",
+            "url": "/collections/cooling-a-c"
+          }
+        },
+        "b9": {
+          "type": "tile",
+          "settings": {
+            "label": "Suspension & Steering",
+            "icon": "car",
+            "url": "/collections/suspension-steering"
+          }
+        },
+        "b10": {
+          "type": "tile",
+          "settings": {
+            "label": "Fuel & Intake",
+            "icon": "truck",
+            "url": "/collections/fuel-system"
+          }
+        }
+      },
+      "block_order": [
+        "b1",
+        "b2",
+        "b3",
+        "b4",
+        "b5",
+        "b6",
+        "b7",
+        "b8",
+        "b9",
+        "b10"
+      ],
+      "settings": {
+        "eyebrow": "Browse",
+        "heading": "Shop by part",
+        "subheading": "Foreign and domestic, 1990s through current model years.",
+        "link_label": "See all parts",
+        "link_url": "/collections/just-pulled",
+        "columns": 5
+      }
+    },
+    "featured": {
+      "type": "featured-parts",
+      "settings": {
+        "eyebrow": "Fresh inventory",
+        "heading": "Just pulled",
+        "subheading": "New off the lot this week \u2014 every one photographed on our own racks.",
+        "count": 8,
+        "columns": 4,
+        "background": "section--paper",
+        "collection": "just-pulled"
+      }
+    },
+    "shop_by_make": {
+      "type": "browse-tiles",
+      "blocks": {
+        "m1": {
+          "type": "tile",
+          "settings": {
+            "label": "Chevrolet",
+            "icon": "car",
+            "url": "/search?q=Chevrolet"
+          }
+        },
+        "m2": {
+          "type": "tile",
+          "settings": {
+            "label": "Ford",
+            "icon": "car",
+            "url": "/search?q=Ford"
+          }
+        },
+        "m3": {
+          "type": "tile",
+          "settings": {
+            "label": "Dodge / Ram",
+            "icon": "truck",
+            "url": "/search?q=Dodge"
+          }
+        },
+        "m4": {
+          "type": "tile",
+          "settings": {
+            "label": "Toyota",
+            "icon": "car",
+            "url": "/search?q=Toyota"
+          }
+        },
+        "m5": {
+          "type": "tile",
+          "settings": {
+            "label": "Honda",
+            "icon": "car",
+            "url": "/search?q=Honda"
+          }
+        },
+        "m6": {
+          "type": "tile",
+          "settings": {
+            "label": "Nissan",
+            "icon": "car",
+            "url": "/search?q=Nissan"
+          }
+        },
+        "m7": {
+          "type": "tile",
+          "settings": {
+            "label": "GMC",
+            "icon": "truck",
+            "url": "/search?q=GMC"
+          }
+        },
+        "m8": {
+          "type": "tile",
+          "settings": {
+            "label": "Jeep",
+            "icon": "car",
+            "url": "/search?q=Jeep"
+          }
+        },
+        "m9": {
+          "type": "tile",
+          "settings": {
+            "label": "Hyundai",
+            "icon": "car",
+            "url": "/search?q=Hyundai"
+          }
+        },
+        "m10": {
+          "type": "tile",
+          "settings": {
+            "label": "Kia",
+            "icon": "car",
+            "url": "/search?q=Kia"
+          }
+        },
+        "m11": {
+          "type": "tile",
+          "settings": {
+            "label": "Cadillac",
+            "icon": "car",
+            "url": "/search?q=Cadillac"
+          }
+        },
+        "m12": {
+          "type": "tile",
+          "settings": {
+            "label": "All makes",
+            "icon": "tag",
+            "url": "/collections/all"
+          }
+        }
+      },
+      "block_order": [
+        "m1",
+        "m2",
+        "m3",
+        "m4",
+        "m5",
+        "m6",
+        "m7",
+        "m8",
+        "m9",
+        "m10",
+        "m11",
+        "m12"
+      ],
+      "settings": {
+        "eyebrow": "Or start with your vehicle",
+        "heading": "Shop by make",
+        "columns": 6
+      }
+    },
+    "steps": {
+      "type": "steps",
+      "blocks": {
+        "s1": {
+          "type": "step",
+          "settings": {
+            "title": "Find it",
+            "text": "Search by part, vehicle, or stock number \u2014 or call the yard and we'll look for you."
+          }
+        },
+        "s2": {
+          "type": "step",
+          "settings": {
+            "title": "We pull and inspect",
+            "text": "Your part is checked, cleaned up, and packed the same or next business day."
+          }
+        },
+        "s3": {
+          "type": "step",
+          "settings": {
+            "title": "It ships free",
+            "text": "Most parts ship free nationwide. Local to Amite? We deliver it ourselves."
+          }
+        }
+      },
+      "block_order": [
+        "s1",
+        "s2",
+        "s3"
+      ],
+      "settings": {
+        "eyebrow": "How it works",
+        "heading": "From our rack to your driveway",
+        "background": "section--paper"
+      }
+    },
+    "story": {
+      "type": "split-feature",
+      "blocks": {
+        "c1": {
+          "type": "check",
+          "settings": {
+            "text": "Every part inspected and basic-refurbished, free of charge"
+          }
+        },
+        "c2": {
+          "type": "check",
+          "settings": {
+            "text": "Photographed on our racks \u2014 you buy the part in the picture"
+          }
+        },
+        "c3": {
+          "type": "check",
+          "settings": {
+            "text": "90-day money-back warranty on everything we sell"
+          }
+        },
+        "c4": {
+          "type": "check",
+          "settings": {
+            "text": "Free local delivery around Amite, Hammond, and Independence"
+          }
+        }
+      },
+      "block_order": [
+        "c1",
+        "c2",
+        "c3",
+        "c4"
+      ],
+      "settings": {
+        "eyebrow": "A&B Motors Auto Recycling",
+        "heading": "Family run since 1958.",
+        "text": "<p>We're a working salvage yard on ten acres of Highway 51, forty-five minutes east of Baton Rouge and an hour north of New Orleans. New parts cost what they cost \u2014 recycled OEM parts do the same job for up to half the price, and keep a good vehicle out of the crusher.</p>",
+        "button_label": "About the yard",
+        "button_url": "/pages/about",
+        "button2_label": "Take the tour",
+        "button2_url": "/pages/tour"
+      }
+    },
+    "sell": {
+      "type": "cta-banner",
+      "settings": {
+        "eyebrow": "Cash for cars",
+        "heading": "We buy cars and trucks \u2014 any year, any condition.",
+        "text": "Wrecked, dead, or just done with it. Tell us what you've got and we'll make a cash offer, then haul it off ourselves.",
+        "button_label": "Get a cash offer",
+        "button_url": "/pages/sell-your-car",
+        "show_phone": true
+      }
+    },
+    "shop_by_vehicle": {
+      "type": "shop-by-vehicle",
+      "settings": {
+        "eyebrow": "Find parts that fit",
+        "heading": "Shop by your vehicle",
+        "subheading": "Pick your make, model, and year. We'll show only the parts we actually have for it.",
+        "button_label": "Find parts",
+        "hint": "Don't see your vehicle? Call 985-748-7195 \u2014 not everything on the lot is listed yet.",
+        "background": "section--paper"
+      }
+    }
+  },
+  "order": [
+    "hero",
+    "trust",
+    "shop_by_vehicle",
+    "shop_by_part",
+    "featured",
+    "shop_by_make",
+    "steps",
+    "story",
+    "sell"
+  ]
+}

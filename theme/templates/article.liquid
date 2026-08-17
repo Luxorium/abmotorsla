@@ -1,0 +1,11 @@
+<div class="page-width page-width--narrow">
+  <div class="section">
+    <nav class="breadcrumbs"><a href="{{ blog.url }}">{{ blog.title }}</a><span>/</span><span class="muted">{{ article.title }}</span></nav>
+    <h1 class="h1">{{ article.title }}</h1>
+    <p class="small muted">{{ article.published_at | date: '%B %d, %Y' }}{% if article.author != blank %} · {{ article.author }}{% endif %}</p>
+    {%- if article.image -%}
+      {{ article.image | image_url: width: 1400 | image_tag: loading: 'eager', alt: article.title, style: 'border-radius:10px;margin:22px 0;' }}
+    {%- endif -%}
+    <div class="rte">{{ article.content }}</div>
+  </div>
+</div>

@@ -1,0 +1,29 @@
+{%- comment -%}
+  Why a stranger should trust a brand-new website: because the business behind it
+  has a two-decade public record somewhere else. Every number here is a setting,
+  so it stays accurate without a code change.
+{%- endcomment -%}
+{%- if settings.ebay_feedback_count != blank -%}
+  <div class="cred">
+    <span class="stars" aria-hidden="true">★★★★★</span>
+    <span class="cred__stat">
+      <b>{{ settings.ebay_feedback_pct }}%</b>
+      <span>positive feedback</span>
+    </span>
+    <span class="cred__stat">
+      <b>{{ settings.ebay_items_sold }}+</b>
+      <span>parts shipped</span>
+    </span>
+    <span class="cred__stat">
+      <b>{{ settings.ebay_feedback_count }}</b>
+      <span>buyer reviews</span>
+    </span>
+    <span class="cred__stat">
+      <b>Since {{ settings.ebay_since }}</b>
+      <span>selling online</span>
+    </span>
+    {%- if settings.ebay_url != blank -%}
+      <a class="link" href="{{ settings.ebay_url }}" target="_blank" rel="noopener">See our eBay record &rarr;</a>
+    {%- endif -%}
+  </div>
+{%- endif -%}
