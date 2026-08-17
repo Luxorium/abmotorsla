@@ -894,6 +894,182 @@ table { border-collapse: collapse; width: 100%; }
   .header, .nav, .footer, .sticky-buy, .announcement { display: none; }
 }
 
+/* --------------------------------------------------------------------------
+   19. Predictive search
+   -------------------------------------------------------------------------- */
+.search-wrap { position: relative; }
+
+.predictive {
+  position: absolute; top: calc(100% + 6px); left: 0; right: 0; z-index: 80;
+  max-height: min(70vh, 520px); overflow-y: auto;
+  background: #fff;
+  border: 1px solid var(--chrome);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-3);
+}
+.predictive[hidden] { display: none; }
+.predictive__head {
+  padding: 9px 14px;
+  font-size: 11px; font-weight: 800; letter-spacing: var(--tracking-caps);
+  text-transform: uppercase; color: var(--steel);
+  background: var(--paper); border-bottom: var(--hair);
+  position: sticky; top: 0;
+}
+.predictive__item {
+  display: grid; grid-template-columns: 54px 1fr auto; gap: 12px; align-items: center;
+  padding: 9px 14px; border-bottom: var(--hair);
+}
+.predictive__item:last-child { border-bottom: 0; }
+.predictive__item:hover,
+.predictive__item[aria-selected="true"] { background: var(--green-tint); }
+.predictive__thumb {
+  width: 54px; height: 42px; border-radius: 4px; overflow: hidden;
+  background: var(--chrome-3); display: flex; align-items: center; justify-content: center;
+  color: var(--chrome);
+}
+.predictive__thumb img { width: 100%; height: 100%; object-fit: cover; }
+.predictive__thumb svg { width: 20px; height: 20px; }
+.predictive__title {
+  font-size: 13.5px; font-weight: 600; line-height: 1.35;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+}
+.predictive__meta { font-size: 11.5px; color: var(--steel); margin-top: 2px; }
+.predictive__meta b { color: var(--green-dark); }
+.predictive__price { font-weight: 800; font-size: 14px; white-space: nowrap; }
+.predictive__all {
+  display: block; padding: 12px 14px; text-align: center;
+  font-weight: 700; font-size: 14px; color: var(--green-dark);
+  background: var(--paper); border-top: var(--hair);
+  position: sticky; bottom: 0;
+}
+.predictive__all:hover { background: var(--green-tint); }
+.predictive__empty { padding: 20px 16px; text-align: center; font-size: 14px; color: var(--steel); }
+.predictive__empty b { display: block; color: var(--ink); margin-bottom: 4px; }
+
+/* --------------------------------------------------------------------------
+   20. Cart drawer
+   -------------------------------------------------------------------------- */
+.cart-drawer { position: fixed; inset: 0; z-index: 120; }
+.cart-drawer[hidden] { display: none; }
+.cart-drawer__scrim {
+  position: absolute; inset: 0; width: 100%; border: 0;
+  background: rgba(12, 15, 17, 0.5);
+  animation: fade-in 0.15s ease-out;
+}
+@keyframes fade-in { from { opacity: 0; } }
+.cart-drawer__panel {
+  position: absolute; top: 0; right: 0; bottom: 0;
+  width: min(92vw, 420px);
+  display: flex; flex-direction: column;
+  background: #fff; box-shadow: var(--shadow-3);
+  animation: slide-in 0.2s ease-out;
+}
+@keyframes slide-in { from { transform: translateX(24px); opacity: 0.5; } }
+.cart-drawer__head {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 14px 16px; border-bottom: var(--hair);
+}
+.cart-drawer__head h2 { margin: 0; font-size: 17px; font-weight: 800; }
+.cart-drawer__items { flex: 1 1 auto; overflow-y: auto; padding: 0 16px; }
+.cart-drawer__foot { padding: 16px; border-top: var(--hair); background: var(--paper); }
+.cart-drawer__row {
+  display: flex; justify-content: space-between; align-items: baseline;
+  margin-bottom: 12px; font-size: 15px;
+}
+.cart-drawer__row b { font-size: 20px; font-weight: 800; }
+.cart-drawer .cart-item { grid-template-columns: 68px 1fr; gap: 12px; padding: 14px 0; }
+.cart-drawer .cart-item__price { grid-column: 2; }
+
+.toast {
+  position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%);
+  z-index: 130;
+  display: flex; align-items: center; gap: 10px;
+  padding: 12px 18px; border-radius: 999px;
+  background: var(--graphite); color: #fff;
+  font-size: 14px; font-weight: 600;
+  box-shadow: var(--shadow-3);
+  animation: toast-in 0.2s ease-out;
+}
+@keyframes toast-in { from { transform: translate(-50%, 12px); opacity: 0; } }
+.toast svg { width: 18px; height: 18px; color: var(--green); }
+
+/* --------------------------------------------------------------------------
+   21. Shipping notices
+   A shopper has to learn a part is pickup-only or freight on the product page,
+   not by hitting a checkout with no available shipping method.
+   -------------------------------------------------------------------------- */
+.badge--pickup { background: #eef0f7; color: #35407a; border-color: #ccd3ea; }
+.badge--freight { background: var(--amber-tint); color: #8a5300; border-color: #f3d9a4; }
+
+.ship-line {
+  display: inline-flex; align-items: center; gap: 5px;
+  font-size: 12px; font-weight: 700; letter-spacing: 0.01em;
+}
+.ship-line svg { width: 14px; height: 14px; flex: 0 0 auto; }
+.ship-line--free { color: var(--green-dark); }
+.ship-line--freight { color: #8a5300; }
+.ship-line--pickup { color: #35407a; }
+
+.ship-notice {
+  display: grid; grid-template-columns: 22px 1fr; gap: 12px;
+  padding: 14px 16px; margin: 18px 0;
+  border: 1px solid var(--chrome-2);
+  border-left: 4px solid var(--steel-2);
+  border-radius: var(--radius);
+  background: var(--paper);
+  font-size: 14px;
+}
+.ship-notice > svg { width: 22px; height: 22px; margin-top: 1px; }
+.ship-notice b { display: block; font-size: 14.5px; margin-bottom: 4px; }
+.ship-notice p { margin: 0 0 8px; color: var(--graphite-3); }
+.ship-notice p:last-child { margin-bottom: 0; }
+.ship-notice__actions { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; margin-top: 10px; }
+
+.ship-notice--free { border-left-color: var(--green); background: var(--green-tint); }
+.ship-notice--free > svg { color: var(--green-dark); }
+.ship-notice--freight { border-left-color: var(--amber); background: var(--amber-tint); }
+.ship-notice--freight > svg { color: var(--amber); }
+.ship-notice--pickup { border-left-color: #4a57a0; background: #f1f3fa; }
+.ship-notice--pickup > svg { color: #35407a; }
+
+/* Cart-level warning for a mix of shippable and pickup-only parts */
+.cart-alert {
+  display: grid; grid-template-columns: 22px 1fr; gap: 12px;
+  padding: 14px 16px; margin-bottom: 20px;
+  border: 1px solid #f3d9a4; border-left: 4px solid var(--amber);
+  border-radius: var(--radius); background: var(--amber-tint);
+  font-size: 14px;
+}
+.cart-alert svg { width: 22px; height: 22px; color: var(--amber); margin-top: 1px; }
+.cart-alert b { display: block; margin-bottom: 4px; }
+.cart-alert p { margin: 0 0 6px; color: var(--graphite-3); }
+.cart-alert p:last-child { margin: 0; }
+.cart-alert ul { margin: 6px 0; padding-left: 18px; }
+
+/* --------------------------------------------------------------------------
+   22. Shop by vehicle
+   -------------------------------------------------------------------------- */
+.ymm { display: grid; gap: 12px; }
+.ymm__row { display: grid; grid-template-columns: repeat(3, 1fr) auto; gap: 10px; align-items: end; }
+.ymm__row .field { margin: 0; }
+.ymm select:disabled { opacity: 0.55; cursor: not-allowed; }
+.ymm__hint { font-size: 13px; color: var(--steel); margin: 0; }
+@media (max-width: 749px) {
+  .ymm__row { grid-template-columns: 1fr 1fr; }
+  .ymm__row .btn { grid-column: 1 / -1; }
+}
+
+/* eBay track record */
+.cred {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 10px 22px;
+  padding: 14px 18px; border: var(--hair); border-radius: var(--radius-lg);
+  background: #fff;
+}
+.cred__stat { display: flex; align-items: baseline; gap: 7px; }
+.cred__stat b { font-family: var(--font-display); font-size: 20px; font-weight: 800; }
+.cred__stat span { font-size: 13px; color: var(--steel); }
+.cred .stars { letter-spacing: 1px; }
+
 </style>
 <style>
   /* Preview harness only — none of this ships in the theme.
@@ -1032,6 +1208,29 @@ table { border-collapse: collapse; width: 100%; }
   </section>
 
   <div class="trust"><div class="trust__inner" id="trustRow"></div></div>
+
+  <section class="section section--paper">
+    <div class="page-width">
+      <div class="section-head">
+        <p class="eyebrow">Find parts that fit</p>
+        <h2 class="h2">Shop by your vehicle</h2>
+        <p class="lede">Pick your make, model, and year. We'll show only the parts we actually have for it.</p>
+      </div>
+      <form class="ymm" onsubmit="return false">
+        <div class="ymm__row">
+          <label class="field"><span>Make</span>
+            <select><option>Chevrolet</option><option>Ford</option><option>Toyota</option></select></label>
+          <label class="field"><span>Model</span>
+            <select><option>Silverado 1500</option><option>Tahoe</option></select></label>
+          <label class="field"><span>Year</span>
+            <select><option>2014</option><option>2013</option><option>2012</option></select></label>
+          <button class="btn">Find parts</button>
+        </div>
+        <p class="ymm__hint">Built from the catalog's own tags &mdash; it can't offer a vehicle we have no parts for.</p>
+      </form>
+    </div>
+  </section>
+
 
   <section class="section">
     <div class="page-width">
@@ -1181,6 +1380,15 @@ table { border-collapse: collapse; width: 100%; }
           <span class="price__save">You save $283.00</span>
         </div>
         <div class="product__stock"><span class="dot"></span> In stock at the yard, ready to pull</div>
+
+        <div class="ship-notice ship-notice--freight">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h11v10H3zM14 9h3.6l2.4 3v4h-6" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"/><circle cx="7" cy="18" r="1.8" fill="none" stroke="currentColor" stroke-width="1.9"/><circle cx="17" cy="18" r="1.8" fill="none" stroke="currentColor" stroke-width="1.9"/></svg>
+          <div>
+            <b>Ships freight &mdash; $299.99 flat rate</b>
+            <p><b>MUST SHIP TO A COMMERCIAL/BUSINESS ADDRESS WITH A FORKLIFT.</b> A freight truck can't unload a part this heavy at a house. Ship it to your mechanic's shop, or pick it up at the freight terminal nearest you.</p>
+            <p>Free pickup at our yard in Amite is always available.</p>
+          </div>
+        </div>
 
         <div class="buybox">
           <div class="cluster" style="margin-bottom:12px">
@@ -1379,14 +1587,14 @@ table { border-collapse: collapse; width: 100%; }
   /* Preview harness. Sample data mirrors what CoreYard actually pushes:
      long SEO titles, stock-number SKUs, one unit each. */
   var PARTS = [
-    { type: 'ABS Anti-Lock Brake Pump', title: '2009-2014 Cadillac Escalade / Chevrolet Suburban 1500 / Tahoe & 8 more ABS Anti-Lock Brake Pump – OEM', sku: '641-00118L', price: '$129.00', photos: 4, one: true },
-    { type: 'Engine Assembly', title: '2011-2016 Chevrolet Silverado 1500 5.3L V8 Engine Assembly – 118K Miles, OEM', sku: '512-04471', price: '$1,850.00', photos: 9, one: true },
-    { type: 'Transmission', title: '2013-2018 Ford F-150 3.5L EcoBoost 6R80 Automatic Transmission – OEM', sku: '400-02219R', price: '$1,425.00', photos: 6, one: true },
-    { type: 'Alternator', title: '2007-2013 Toyota Tundra / Sequoia 4.6L 5.7L Alternator 130 Amp – OEM', sku: '601-00934', price: '$78.00', photos: 3, one: true },
-    { type: 'Tailgate', title: '2014-2018 GMC Sierra 1500 Tailgate Assembly – Summit White, OEM', sku: '210-01188', price: '$395.00', photos: 5, one: true },
-    { type: 'Front Door', title: '2012-2017 Nissan Altima Front Left Door Shell – Gun Metallic, OEM', sku: '124-00742L', price: '$215.00', photos: 4, one: true },
-    { type: 'Wheel', title: '2015-2020 Ford F-150 18" Aluminum Wheel Rim 6-Lug – OEM', sku: '560-03310', price: '$142.00', photos: 3, one: true },
-    { type: 'Seat', title: '2010-2015 Chevrolet Camaro Front Right Bucket Seat – Black Cloth, OEM', sku: '317-00655R', price: '$260.00', photos: 6, one: false }
+    { type: 'ABS Anti-Lock Brake Pump', title: '2009-2014 Cadillac Escalade / Chevrolet Suburban 1500 / Tahoe & 8 more ABS Anti-Lock Brake Pump', sku: '641-00118L', price: '$129.00', photos: 4, one: true },
+    { type: 'Engine Assembly', title: '2011-2016 Chevrolet Silverado 1500 5.3L V8 Engine Assembly, 118K Miles', sku: '512-04471', price: '$1,849.99', photos: 9, one: true, ship: '<span class="ship-line ship-line--freight">$299.99 freight &middot; commercial address</span>', flag: 'Freight' },
+    { type: 'Transmission', title: '2013-2018 Ford F-150 3.5L EcoBoost 6R80 Automatic Transmission', sku: '400-02219R', price: '$1,425.00', photos: 6, one: true },
+    { type: 'Alternator', title: '2007-2013 Toyota Tundra / Sequoia 4.6L 5.7L Alternator 130 Amp', sku: '601-00934', price: '$78.00', photos: 3, one: true },
+    { type: 'Tailgate', title: '2014-2018 GMC Sierra 1500 Tailgate Assembly – Summit White', sku: '210-01188', price: '$395.00', photos: 5, one: true },
+    { type: 'Front Door', title: '2012-2017 Nissan Altima Front Left Door Shell, Gun Metallic', sku: '124-00742L', price: '$214.99', photos: 4, one: true, ship: '<span class="ship-line ship-line--pickup">Pickup only &mdash; not shipped</span>', flag: 'Pickup only' },
+    { type: 'Wheel', title: '2015-2020 Ford F-150 18" Aluminum Wheel Rim 6-Lug', sku: '560-03310', price: '$142.00', photos: 3, one: true },
+    { type: 'Seat', title: '2010-2015 Chevrolet Camaro Front Right Bucket Seat – Black Cloth', sku: '317-00655R', price: '$260.00', photos: 6, one: false }
   ];
 
   var PHOTO_SVG = '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2" fill="none" stroke="currentColor" stroke-width="1.3"/><circle cx="8.5" cy="10" r="1.6" fill="none" stroke="currentColor" stroke-width="1.3"/><path d="m4 17 5-4.5 4 3.2 3-2.4 4 3.4" fill="none" stroke="currentColor" stroke-width="1.3"/></svg>';
@@ -1394,13 +1602,14 @@ table { border-collapse: collapse; width: 100%; }
   function cardHTML(p) {
     return '<article class="card">' +
       '<div class="card__media"><div class="card__placeholder">' + PHOTO_SVG + '</div>' +
-        '<div class="card__flags">' + (p.one ? '<span class="badge badge--amber">Only 1</span>' : '') + '</div>' +
+        '<div class="card__flags">' + (p.flag ? '<span class="badge badge--' + (p.flag === 'Pickup only' ? 'pickup' : 'freight') + '">' + p.flag + '</span>' : '') + (p.one ? '<span class="badge badge--amber">Only 1</span>' : '') + '</div>' +
         '<span class="card__count">' + p.photos + ' photos</span>' +
       '</div>' +
       '<div class="card__body">' +
         '<span class="card__type">' + p.type + '</span>' +
         '<h3 class="card__title"><a href="#">' + p.title + '</a></h3>' +
-        '<div class="card__meta"><span>Stock&nbsp;<b>' + p.sku + '</b></span></div>' +
+        '<div class="card__meta">' + (p.ship || '<span class="ship-line ship-line--free">Free shipping</span>') + '</div>' +
+      '<div class="card__meta"><span>Stock&nbsp;<b>' + p.sku + '</b></span></div>' +
         '<div class="card__foot"><span class="price">' + p.price + '</span>' +
         '<span class="small" style="color:var(--green-dark);font-weight:700">In stock</span></div>' +
       '</div></article>';

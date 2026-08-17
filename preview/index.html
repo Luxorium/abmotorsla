@@ -138,6 +138,29 @@
 
   <div class="trust"><div class="trust__inner" id="trustRow"></div></div>
 
+  <section class="section section--paper">
+    <div class="page-width">
+      <div class="section-head">
+        <p class="eyebrow">Find parts that fit</p>
+        <h2 class="h2">Shop by your vehicle</h2>
+        <p class="lede">Pick your make, model, and year. We'll show only the parts we actually have for it.</p>
+      </div>
+      <form class="ymm" onsubmit="return false">
+        <div class="ymm__row">
+          <label class="field"><span>Make</span>
+            <select><option>Chevrolet</option><option>Ford</option><option>Toyota</option></select></label>
+          <label class="field"><span>Model</span>
+            <select><option>Silverado 1500</option><option>Tahoe</option></select></label>
+          <label class="field"><span>Year</span>
+            <select><option>2014</option><option>2013</option><option>2012</option></select></label>
+          <button class="btn">Find parts</button>
+        </div>
+        <p class="ymm__hint">Built from the catalog's own tags &mdash; it can't offer a vehicle we have no parts for.</p>
+      </form>
+    </div>
+  </section>
+
+
   <section class="section">
     <div class="page-width">
       <div class="section-head section-head--row">
@@ -286,6 +309,15 @@
           <span class="price__save">You save $283.00</span>
         </div>
         <div class="product__stock"><span class="dot"></span> In stock at the yard, ready to pull</div>
+
+        <div class="ship-notice ship-notice--freight">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h11v10H3zM14 9h3.6l2.4 3v4h-6" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"/><circle cx="7" cy="18" r="1.8" fill="none" stroke="currentColor" stroke-width="1.9"/><circle cx="17" cy="18" r="1.8" fill="none" stroke="currentColor" stroke-width="1.9"/></svg>
+          <div>
+            <b>Ships freight &mdash; $299.99 flat rate</b>
+            <p><b>MUST SHIP TO A COMMERCIAL/BUSINESS ADDRESS WITH A FORKLIFT.</b> A freight truck can't unload a part this heavy at a house. Ship it to your mechanic's shop, or pick it up at the freight terminal nearest you.</p>
+            <p>Free pickup at our yard in Amite is always available.</p>
+          </div>
+        </div>
 
         <div class="buybox">
           <div class="cluster" style="margin-bottom:12px">
@@ -484,14 +516,14 @@
   /* Preview harness. Sample data mirrors what CoreYard actually pushes:
      long SEO titles, stock-number SKUs, one unit each. */
   var PARTS = [
-    { type: 'ABS Anti-Lock Brake Pump', title: '2009-2014 Cadillac Escalade / Chevrolet Suburban 1500 / Tahoe & 8 more ABS Anti-Lock Brake Pump – OEM', sku: '641-00118L', price: '$129.00', photos: 4, one: true },
-    { type: 'Engine Assembly', title: '2011-2016 Chevrolet Silverado 1500 5.3L V8 Engine Assembly – 118K Miles, OEM', sku: '512-04471', price: '$1,850.00', photos: 9, one: true },
-    { type: 'Transmission', title: '2013-2018 Ford F-150 3.5L EcoBoost 6R80 Automatic Transmission – OEM', sku: '400-02219R', price: '$1,425.00', photos: 6, one: true },
-    { type: 'Alternator', title: '2007-2013 Toyota Tundra / Sequoia 4.6L 5.7L Alternator 130 Amp – OEM', sku: '601-00934', price: '$78.00', photos: 3, one: true },
-    { type: 'Tailgate', title: '2014-2018 GMC Sierra 1500 Tailgate Assembly – Summit White, OEM', sku: '210-01188', price: '$395.00', photos: 5, one: true },
-    { type: 'Front Door', title: '2012-2017 Nissan Altima Front Left Door Shell – Gun Metallic, OEM', sku: '124-00742L', price: '$215.00', photos: 4, one: true },
-    { type: 'Wheel', title: '2015-2020 Ford F-150 18" Aluminum Wheel Rim 6-Lug – OEM', sku: '560-03310', price: '$142.00', photos: 3, one: true },
-    { type: 'Seat', title: '2010-2015 Chevrolet Camaro Front Right Bucket Seat – Black Cloth, OEM', sku: '317-00655R', price: '$260.00', photos: 6, one: false }
+    { type: 'ABS Anti-Lock Brake Pump', title: '2009-2014 Cadillac Escalade / Chevrolet Suburban 1500 / Tahoe & 8 more ABS Anti-Lock Brake Pump', sku: '641-00118L', price: '$129.00', photos: 4, one: true },
+    { type: 'Engine Assembly', title: '2011-2016 Chevrolet Silverado 1500 5.3L V8 Engine Assembly, 118K Miles', sku: '512-04471', price: '$1,849.99', photos: 9, one: true, ship: '<span class="ship-line ship-line--freight">$299.99 freight &middot; commercial address</span>', flag: 'Freight' },
+    { type: 'Transmission', title: '2013-2018 Ford F-150 3.5L EcoBoost 6R80 Automatic Transmission', sku: '400-02219R', price: '$1,425.00', photos: 6, one: true },
+    { type: 'Alternator', title: '2007-2013 Toyota Tundra / Sequoia 4.6L 5.7L Alternator 130 Amp', sku: '601-00934', price: '$78.00', photos: 3, one: true },
+    { type: 'Tailgate', title: '2014-2018 GMC Sierra 1500 Tailgate Assembly – Summit White', sku: '210-01188', price: '$395.00', photos: 5, one: true },
+    { type: 'Front Door', title: '2012-2017 Nissan Altima Front Left Door Shell, Gun Metallic', sku: '124-00742L', price: '$214.99', photos: 4, one: true, ship: '<span class="ship-line ship-line--pickup">Pickup only &mdash; not shipped</span>', flag: 'Pickup only' },
+    { type: 'Wheel', title: '2015-2020 Ford F-150 18" Aluminum Wheel Rim 6-Lug', sku: '560-03310', price: '$142.00', photos: 3, one: true },
+    { type: 'Seat', title: '2010-2015 Chevrolet Camaro Front Right Bucket Seat – Black Cloth', sku: '317-00655R', price: '$260.00', photos: 6, one: false }
   ];
 
   var PHOTO_SVG = '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2" fill="none" stroke="currentColor" stroke-width="1.3"/><circle cx="8.5" cy="10" r="1.6" fill="none" stroke="currentColor" stroke-width="1.3"/><path d="m4 17 5-4.5 4 3.2 3-2.4 4 3.4" fill="none" stroke="currentColor" stroke-width="1.3"/></svg>';
@@ -499,13 +531,14 @@
   function cardHTML(p) {
     return '<article class="card">' +
       '<div class="card__media"><div class="card__placeholder">' + PHOTO_SVG + '</div>' +
-        '<div class="card__flags">' + (p.one ? '<span class="badge badge--amber">Only 1</span>' : '') + '</div>' +
+        '<div class="card__flags">' + (p.flag ? '<span class="badge badge--' + (p.flag === 'Pickup only' ? 'pickup' : 'freight') + '">' + p.flag + '</span>' : '') + (p.one ? '<span class="badge badge--amber">Only 1</span>' : '') + '</div>' +
         '<span class="card__count">' + p.photos + ' photos</span>' +
       '</div>' +
       '<div class="card__body">' +
         '<span class="card__type">' + p.type + '</span>' +
         '<h3 class="card__title"><a href="#">' + p.title + '</a></h3>' +
-        '<div class="card__meta"><span>Stock&nbsp;<b>' + p.sku + '</b></span></div>' +
+        '<div class="card__meta">' + (p.ship || '<span class="ship-line ship-line--free">Free shipping</span>') + '</div>' +
+      '<div class="card__meta"><span>Stock&nbsp;<b>' + p.sku + '</b></span></div>' +
         '<div class="card__foot"><span class="price">' + p.price + '</span>' +
         '<span class="small" style="color:var(--green-dark);font-weight:700">In stock</span></div>' +
       '</div></article>';

@@ -126,7 +126,19 @@
 
         <div class="buybox__assure">
           <div>{% render 'icon', name: 'shield' %}<span><b>{{ warranty }}-day money-back warranty.</b> If it doesn't work out, send it back.</span></div>
-          <div>{% render 'icon', name: 'truck' %}<span><b>Free shipping</b> on most parts. Free local delivery around Amite.</span></div>
+          {%- comment -%}
+            Say the right thing for THIS part. A blanket "free shipping" line on a
+            pickup-only door contradicts the banner directly above it.
+          {%- endcomment -%}
+          {%- if product.tags contains 'ship:pickup-only' -%}
+            <div>{% render 'icon', name: 'pin' %}<span><b>Pickup or local delivery only.</b> We don't ship body parts or glass.</span></div>
+          {%- elsif product.tags contains 'ship:freight-299' -%}
+            <div>{% render 'icon', name: 'truck' %}<span><b>$299.99 flat rate freight</b> to a commercial address, or free pickup at the yard.</span></div>
+          {%- elsif product.tags contains 'ship:freight-199' -%}
+            <div>{% render 'icon', name: 'truck' %}<span><b>$199.99 flat rate freight</b> to a commercial address, or free pickup at the yard.</span></div>
+          {%- else -%}
+            <div>{% render 'icon', name: 'truck' %}<span><b>Free shipping</b> in the lower 48. Free local delivery around Amite.</span></div>
+          {%- endif -%}
           <div>{% render 'icon', name: 'check' %}<span>Inspected and basic-refurbished before it leaves the yard.</span></div>
         </div>
       </div>
