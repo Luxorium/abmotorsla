@@ -52,6 +52,8 @@
 
     {{ content_for_header }}
 
+    {% render 'analytics' %}
+
     {{ 'base.css' | asset_url | stylesheet_tag }}
 
     {%- liquid

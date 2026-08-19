@@ -1,0 +1,69 @@
+{%- comment -%}
+  Storefront analytics, off until an ID is set in Theme settings -> Analytics.
+
+  Scope: browsing only. Shopify's checkout is not themeable outside Plus, so nothing
+  here ever sees a purchase — for revenue and conversion data the free Google & YouTube
+  and Facebook & Instagram sales channels run inside checkout and are the right tool.
+  Run one or the other per network, never both, or every session is counted twice.
+
+  Consent: Shopify's customer privacy API answers asynchronously and may not have loaded
+  when this runs, so we subscribe to visitorConsentCollected as well as reading the
+  current state. With the setting off the tags load immediately.
+{%- endcomment -%}
+{%- liquid
+  assign ga4 = settings.ga4_measurement_id | strip
+  assign pixel = settings.meta_pixel_id | strip
+-%}
+{%- if ga4 != blank or pixel != blank -%}
+  <script>
+    (function () {
+      var GA4 = {{ ga4 | json }};
+      var PIXEL = {{ pixel | json }};
+      var GATED = {{ settings.analytics_respect_consent | default: true | json }};
+      var started = false;
+
+      function loadGa4() {
+        if (!GA4) return;
+        var s = document.createElement('script');
+        s.async = true;
+        s.src = 'https://www.googletagmanager.com/gtag/js?id=' + encodeURIComponent(GA4);
+        document.head.appendChild(s);
+        window.dataLayer = window.dataLayer || [];
+        window.gtag = function () { window.dataLayer.push(arguments); };
+        window.gtag('js', new Date());
+        // Shopify's own analytics already records the page; this is the browsing view.
+        window.gtag('config', GA4, { send_page_view: true });
+      }
+
+      function loadPixel() {
+        if (!PIXEL || window.fbq) return;
+        var n = window.fbq = function () {
+          n.callMethod ? n.callMethod.apply(n, arguments) : n.queue.push(arguments);
+        };
+        n.push = n; n.loaded = true; n.version = '2.0'; n.queue = [];
+        var s = document.createElement('script');
+        s.async = true;
+        s.src = 'https://connect.facebook.net/en_US/fbevents.js';
+        document.head.appendChild(s);
+        window.fbq('init', PIXEL);
+        window.fbq('track', 'PageView');
+      }
+
+      function start() {
+        if (started) return;
+        started = true;
+        loadGa4();
+        loadPixel();
+      }
+
+      if (!GATED) { start(); return; }
+
+      function allowed(c) { return !!(c && (c.analytics === true || c.marketing === true)); }
+      var api = window.Shopify && window.Shopify.customerPrivacy;
+      if (api && api.currentVisitorConsent && allowed(api.currentVisitorConsent())) start();
+      document.addEventListener('visitorConsentCollected', function (e) {
+        if (allowed(e && e.detail)) start();
+      });
+    })();
+  </script>
+{%- endif -%}

@@ -7,14 +7,20 @@ that to eBay. That queue is eBay's transport and explicitly not ours to write to
 (WORKORDER_WRITE_SPEC 5.6), so this job takes the same trigger and sends it over the
 Shopify API instead.
 
-**It deliberately does not create a fulfillment.** Shopify has no "fulfilled but not
-shipped" state — creating a fulfillment closes the fulfillment order, and ShipStation
-needs that open to attach the UPS tracking number when it buys the label. Fulfilling
-here would leave the buyer with no tracking at all. So the yard's progress is recorded
-as tags and a note; ShipStation still owns shipped-state and the tracking email.
+Whether it fulfills depends on how the part ships, because Shopify has no "fulfilled
+but not shipped" state — creating a fulfillment closes the fulfillment order, and
+ShipStation needs that open to attach the UPS tracking number when it buys the label.
 
-Freight and pickup-only orders never pass through ShipStation, so they stay
-UNFULFILLED until someone closes them by hand. That is a known, accepted gap.
+  parcel (ship:free)                tag only. ShipStation fulfills it and sends the
+                                    tracking email. Fulfilling here would leave the
+                                    buyer with no tracking at all.
+  freight-299 / freight-199         tag and fulfill. No UPS label is ever bought for
+  pickup-only                       these, so ShipStation never sees them and nothing
+                                    else would ever close them out.
+
+A mixed order is left alone: ShipStation still has parcel lines to ship, and closing
+the whole order early would cost the buyer their tracking. Fulfillment is created with
+notifyCustomer false — the yard decides when a customer hears from it.
 
 The link back to the storefront is ``INVOICE_LINEITEM.WorkOrderID`` -> ``WORKORDER``,
 whose ``CustomerPO`` holds the Shopify order name. The invoice's *own* ``CustomerPO`` is
@@ -106,10 +112,41 @@ def invoiced_orders() -> list[dict]:
 ORDER_BY_NAME = """
 query($q: String!) {
   orders(first: 5, query: $q) {
-    nodes { id name tags note displayFulfillmentStatus }
+    nodes {
+      id name tags note displayFulfillmentStatus
+      lineItems(first: 50) { nodes { id product { tags } } }
+      fulfillmentOrders(first: 10) { nodes { id status } }
+    }
   }
 }
 """
+
+FULFILL = """
+mutation($fulfillment: FulfillmentInput!) {
+  fulfillmentCreate(fulfillment: $fulfillment) {
+    fulfillment { id status }
+    userErrors { field message }
+  }
+}
+"""
+
+# How a part ships, from the ship:* tag tag_shipping.py writes. Anything without one
+# is parcel, matching snippets/shipping-group.liquid.
+NON_PARCEL = ("ship:freight-299", "ship:freight-199", "ship:pickup-only")
+
+
+def ship_group(tags: list[str]) -> str:
+    for t in NON_PARCEL:
+        if t in tags:
+            return t
+    return "ship:free"
+
+
+def shipstation_will_ship(order: dict) -> bool:
+    """True when any line goes out as a parcel, i.e. ShipStation owns this order."""
+    lines = (order.get("lineItems") or {}).get("nodes") or []
+    groups = {ship_group((li.get("product") or {}).get("tags") or []) for li in lines}
+    return (not groups) or ("ship:free" in groups)
 
 TAGS_ADD = """
 mutation($id: ID!, $tags: [String!]!) {
@@ -161,8 +198,18 @@ def main() -> None:
         note = order.get("note") or ""
         note_needed = marker not in note
 
-        if not missing and not note_needed:
-            print(f"  = {name}  already tagged (work order {wo})")
+        # Freight and pickup never reach ShipStation, so nothing else will ever close
+        # them. Parcel orders are left open on purpose: fulfilling closes the
+        # fulfillment order and ShipStation could no longer attach the tracking number.
+        parcel = shipstation_will_ship(order)
+        open_fos = [f["id"] for f in (order.get("fulfillmentOrders") or {}).get("nodes") or []
+                    if f.get("status") == "OPEN"]
+        fulfil = (not parcel) and bool(open_fos) \
+            and order.get("displayFulfillmentStatus") != "FULFILLED"
+
+        if not missing and not note_needed and not fulfil:
+            state = "parcel, ShipStation owns it" if parcel else "already closed"
+            print(f"  = {name}  nothing to do ({state})")
             continue
 
         changed += 1
@@ -172,6 +219,10 @@ def main() -> None:
             print(f"      tags += {missing}")
         if note_needed:
             print(f"      note += {marker!r}")
+        if fulfil:
+            print(f"      fulfil: yes — no parcel line, ShipStation will never see it")
+        elif parcel:
+            print(f"      fulfil: no — parcel line present, left open for ShipStation")
         if not args.apply:
             continue
 
@@ -188,6 +239,18 @@ def main() -> None:
             errs = (res.get("orderUpdate") or {}).get("userErrors") or res.get("__errors")
             if errs:
                 print(f"      ! note failed: {json.dumps(errs)[:160]}")
+
+        if fulfil:
+            payload = {"notifyCustomer": False,
+                       "lineItemsByFulfillmentOrder": [{"fulfillmentOrderId": fo}
+                                                       for fo in open_fos]}
+            res = gql(url, headers, FULFILL, {"fulfillment": payload})
+            node = (res.get("fulfillmentCreate") or {})
+            errs = node.get("userErrors") or res.get("__errors")
+            if errs:
+                print(f"      ! fulfillment failed: {json.dumps(errs)[:200]}")
+            else:
+                print(f"      fulfilled: {(node.get('fulfillment') or {}).get('status')}")
 
     if not args.apply and changed:
         print(f"\nplan only — {changed} order(s) would change; re-run with --apply")

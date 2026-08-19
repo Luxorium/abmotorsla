@@ -83,15 +83,36 @@ query($cursor: String) {
 """
 
 
+# The yard writes one make several ways. CoreYard's vehicle label keeps whichever form
+# the model carried, so "Mercedes-Benz" and "Mercedes" both reach the tags and would
+# otherwise open two separate makes in the picker for the same cars.
+MAKE_ALIASES = {
+    "mercedes": "Mercedes-Benz",
+    "mercedes benz": "Mercedes-Benz",
+    "vw": "Volkswagen",
+    "chevy": "Chevrolet",
+}
+
+
+def canonical_make(make: str, model: str) -> tuple[str, str]:
+    """Fold an alias onto its canonical make, and drop a make the model repeats."""
+    canon = MAKE_ALIASES.get(make.lower(), make)
+    # "Mercedes-Benz" + "Mercedes 450" -> "Mercedes-Benz" + "450"
+    head = canon.split("-")[0].split(" ")[0].lower()
+    if head and model.lower().startswith(head + " "):
+        model = model[len(head) + 1:]
+    return canon, model
+
+
 def split_make_model(rest: str) -> tuple[str, str] | None:
     low = rest.lower()
     for mk in TWO_WORD_MAKES:
         if low.startswith(mk + " "):
-            return rest[: len(mk)], rest[len(mk) + 1:]
+            return canonical_make(rest[: len(mk)], rest[len(mk) + 1:])
     parts = rest.split(" ", 1)
     if len(parts) != 2:
         return None
-    return parts[0], parts[1]
+    return canonical_make(parts[0], parts[1])
 
 
 def main() -> None:
@@ -116,6 +137,18 @@ def main() -> None:
                 year, rest = int(m.group(1)), m.group(2).strip()
                 split = split_make_model(rest)
                 if not split:
+                    # "<year> <make>" with no model: the yard has parts for the car but
+                    # never recorded a model. Register the make anyway so the picker can
+                    # still offer it — the facet applies a make-only tag filter when no
+                    # model is chosen. Dropping it hid every Smart part from the picker.
+                    # A make is a word, not a fragment: "Smart" qualifies, the stray
+                    # "CX-" left by a model that lost its make does not.
+                    letters = rest.replace("-", "").replace(".", "")
+                    if (" " not in rest and len(rest) >= 3 and letters.isalpha()
+                            and not rest.endswith("-")):
+                        bare = MAKE_ALIASES.get(rest.lower(), rest)
+                        tree[bare]            # touch: defaultdict creates the make
+                        makes_here.add(bare)
                     continue
                 make, model = split[0].strip(), split[1].strip()
                 if len(make) < 2 or len(model) < 1:

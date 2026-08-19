@@ -1,7 +1,7 @@
 [
   {
     "name": "theme_info",
-    "theme_name": "A&B Motors \u2014 Yard",
+    "theme_name": "A&B Motors — Yard",
     "theme_version": "1.0.0",
     "theme_author": "A&B Motors",
     "theme_documentation_url": "https://abmotorsla.com",
@@ -117,7 +117,7 @@
         "type": "textarea",
         "id": "hours",
         "label": "Business hours",
-        "default": "Monday \u2013 Friday: 8:00 AM \u2013 5:00 PM CST"
+        "default": "Monday – Friday: 8:00 AM – 5:00 PM CST"
       },
       {
         "type": "text",
@@ -242,6 +242,34 @@
         "id": "cart_notes",
         "label": "Enable order notes",
         "default": true
+      }
+    ]
+  },
+  {
+    "name": "Analytics",
+    "settings": [
+      {
+        "type": "paragraph",
+        "content": "Storefront browsing only. Shopify's checkout cannot be themed, so a tag added here never sees a purchase. For conversion and revenue data install the free Google & YouTube and Facebook & Instagram sales channels, which run inside checkout — and if you do, leave the matching field below empty so the same visit is not counted twice."
+      },
+      {
+        "type": "text",
+        "id": "ga4_measurement_id",
+        "label": "GA4 measurement ID",
+        "info": "Looks like G-XXXXXXXXXX. Leave empty if the Google & YouTube channel is installed."
+      },
+      {
+        "type": "text",
+        "id": "meta_pixel_id",
+        "label": "Meta pixel ID",
+        "info": "Numeric. Leave empty if the Facebook & Instagram channel is installed."
+      },
+      {
+        "type": "checkbox",
+        "id": "analytics_respect_consent",
+        "label": "Honour Shopify's tracking consent",
+        "default": true,
+        "info": "Hold the tags until the visitor's consent allows analytics. Turn off only if you have no consent banner and no regional obligation."
       }
     ]
   }
