@@ -6,6 +6,7 @@
 .store_setup_state.json
 .tag_shipping_state.json
 .weights_state.json
+.retitle_rollback.json
 
 # Built preview bundle (regenerate with preview/build.py)
 preview/dist/
@@ -13,3 +14,10 @@ preview/dist/
 # Never commit credentials. They live in the CoreYard .env, outside this repo.
 .env
 *.pem
+
+# Python bytecode
+__pycache__/
+*.pyc
+
+# Local agent/editor state — kept out of the repo so the rule travels with a clone
+.claude/
