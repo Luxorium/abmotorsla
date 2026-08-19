@@ -33,11 +33,11 @@ import urllib.request
 from datetime import datetime, timedelta, timezone
 
 REPO = pathlib.Path(__file__).resolve().parent.parent
-SYNC_REPO = REPO.parent / "abmotors-to-shopify"
+SYNC_REPO = REPO.parent / "coreyard"
 ENV = pathlib.Path(os.environ.get("ABM_ENV", SYNC_REPO / ".env"))
 STATE = REPO / ".orders_state.json"
 ORDER_DIR = SYNC_REPO / "out" / "orders"
-API_VERSION = "2025-07"
+API_VERSION = "2026-07"
 
 
 def load_env() -> dict:
@@ -77,7 +77,7 @@ def gql(url, headers, query, variables=None, tries=5):
 
 ORDERS = """
 query($q: String!, $cursor: String) {
-  orders(first: 25, after: $cursor, query: $q, sortKey: CREATED_AT) {
+  orders(first: 25, after: $cursor, query: $q, sortKey: CREATED_AT, reverse: false) {
     pageInfo { hasNextPage endCursor }
     nodes {
       id
@@ -108,10 +108,52 @@ query($q: String!, $cursor: String) {
 """
 
 
+def rest_get(store: str, token: str, path: str, tries: int = 5) -> dict:
+    """Fetch one order in the REST/webhook shape.
+
+    The GraphQL query above is how we discover what is new, but it answers in camelCase
+    (`lineItems`, `shippingAddress`). Everything downstream — the pull ticket renderer and
+    yms/orders.from_shopify — parses the webhook payload Shopify actually POSTs, which is
+    snake_case (`line_items`, `shipping_address`). Feeding the GraphQL shape to those is
+    not an error, it is worse: from_shopify finds no line items, treats the order as
+    "nothing of ours", and books nothing while reporting success.
+    """
+    url = f"https://{store}/admin/api/{API_VERSION}/{path}"
+    req = urllib.request.Request(url, headers={"X-Shopify-Access-Token": token})
+    for attempt in range(tries):
+        try:
+            with urllib.request.urlopen(req, timeout=60) as r:
+                return json.loads(r.read())
+        except (urllib.error.HTTPError, urllib.error.URLError, TimeoutError):
+            if attempt < tries - 1:
+                time.sleep(2 ** attempt)
+                continue
+            raise
+    return {}
+
+
 def load_state() -> dict:
     if STATE.exists():
         return json.loads(STATE.read_text())
     return {"seen": [], "last_created": None}
+
+
+def overlap_start(value: str) -> str:
+    """Back up the high-water mark so equal timestamps remain retryable."""
+    try:
+        parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
+        if parsed.tzinfo is None:
+            parsed = parsed.replace(tzinfo=timezone.utc)
+        return (parsed - timedelta(seconds=1)).astimezone(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+    except ValueError:
+        return value
+
+
+def save_state(seen: list[str], latest: str | None) -> None:
+    state = {"seen": seen[-2000:], "last_created": latest}
+    temporary = STATE.with_suffix(STATE.suffix + ".tmp")
+    temporary.write_text(json.dumps(state))
+    temporary.replace(STATE)
 
 
 def main() -> None:
@@ -119,6 +161,8 @@ def main() -> None:
     ap.add_argument("--check", action="store_true", help="verify scope and connectivity only")
     ap.add_argument("--since", help="ISO date to start from (default: last poll, else 2 days ago)")
     ap.add_argument("--no-ticket", action="store_true", help="save order JSON but skip rendering")
+    ap.add_argument("--write-orders", action="store_true",
+                    help="also book each order into the yard system (WRITES to PowerLink)")
     args = ap.parse_args()
 
     cfg = load_env()
@@ -145,11 +189,14 @@ def main() -> None:
     since = args.since or state.get("last_created") or (
         datetime.now(timezone.utc) - timedelta(days=2)
     ).strftime("%Y-%m-%dT%H:%M:%SZ")
-    seen = set(state["seen"])
+    seen_order = list(dict.fromkeys(state.get("seen") or []))
+    seen = set(seen_order)
 
     ORDER_DIR.mkdir(parents=True, exist_ok=True)
-    q = f"created_at:>'{since}'"
+    query_start = overlap_start(since)
+    q = f"created_at:>'{query_start}'"
     cursor, new, latest = None, 0, state.get("last_created")
+    failed = False
 
     while True:
         data = gql(url, headers, ORDERS, {"q": q, "cursor": cursor})
@@ -159,11 +206,17 @@ def main() -> None:
         for o in conn["nodes"]:
             if o["id"] in seen:
                 continue
-            seen.add(o["id"])
-            latest = o["createdAt"]
             path = ORDER_DIR / f"order-{o['name'].lstrip('#')}.json"
-            path.write_text(json.dumps(o, indent=2))
-            new += 1
+            # Save what the renderer and the yard writer can actually parse.
+            order_id = str(o["id"]).rsplit("/", 1)[-1]
+            payload = rest_get(cfg["SHOPIFY_STORE"], cfg["SHOPIFY_ADMIN_TOKEN"],
+                               f"orders/{order_id}.json").get("order") or {}
+            if not payload.get("line_items"):
+                print(f"  ! {o['name']}: REST payload had no line items; skipping")
+                failed = True
+                break
+            path.write_text(json.dumps(payload, indent=2))
+            path.chmod(0o600)          # buyer name, address, phone, email
             addr = o.get("shippingAddress") or {}
             ship = (o.get("shippingLine") or {}).get("title") or "(pickup)"
             print(f"\n{o['name']}  {o['createdAt'][:16]}  {ship}")
@@ -173,23 +226,43 @@ def main() -> None:
                 print(f"    {li['quantity']} x {li['sku'] or '(no sku)':<14} {li['name'][:52]}")
 
             if not args.no_ticket:
-                r = subprocess.run(
-                    [str(SYNC_REPO / ".venv/bin/python"), "-m", "coreyard.webhook", "replay", str(path)],
-                    cwd=SYNC_REPO, capture_output=True, text=True,
-                )
+                try:
+                    cmd = [str(SYNC_REPO / ".venv/bin/python"), "-m", "coreyard.webhook",
+                           "replay", str(path)]
+                    if args.write_orders:
+                        cmd.append("--write-order")
+                    r = subprocess.run(cmd, cwd=SYNC_REPO, capture_output=True, text=True)
+                except OSError as exc:
+                    print(f"    ! ticket failed: {exc}")
+                    failed = True
+                    break
                 if r.returncode == 0:
-                    print("    ticket rendered")
+                    line = (r.stdout or "").strip().splitlines()
+                    detail = next((x for x in line if "work order" in x), "")
+                    print(f"    ticket rendered{' -> ' + detail.split('->')[-1].strip() if detail else ''}")
                 else:
                     print(f"    ! ticket failed: {(r.stderr or r.stdout).strip()[:200]}")
+                    failed = True
+                    break
 
-        if not conn["pageInfo"]["hasNextPage"]:
+            seen.add(o["id"])
+            seen_order.append(o["id"])
+            if latest is None or o["createdAt"] > latest:
+                latest = o["createdAt"]
+            new += 1
+            save_state(seen_order, latest)
+
+        if failed or not conn["pageInfo"]["hasNextPage"]:
             break
         cursor = conn["pageInfo"]["endCursor"]
 
-    STATE.write_text(json.dumps({"seen": sorted(seen)[-2000:], "last_created": latest}))
-    print(f"\n{new} new order(s) since {since}")
+    save_state(seen_order, latest)
+    print(f"\n{new} new order(s) completed since {since}")
     if new:
         print(f"tickets and JSON in {ORDER_DIR}")
+    if failed:
+        print("ticket rendering failed; the order was not acknowledged and will retry next poll")
+        raise SystemExit(1)
 
 
 if __name__ == "__main__":
