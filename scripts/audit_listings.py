@@ -22,8 +22,8 @@ import urllib.error
 import urllib.request
 
 REPO = pathlib.Path(__file__).resolve().parent.parent
-ENV = pathlib.Path(os.environ.get("ABM_ENV", REPO.parent / "abmotors-to-shopify" / ".env"))
-API_VERSION = "2025-07"
+ENV = pathlib.Path(os.environ.get("ABM_ENV", REPO.parent / "coreyard" / ".env"))
+API_VERSION = "2026-07"
 
 
 def load_env() -> dict:

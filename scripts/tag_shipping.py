@@ -30,9 +30,9 @@ import urllib.request
 from concurrent.futures import ThreadPoolExecutor
 
 REPO = pathlib.Path(__file__).resolve().parent.parent
-ENV = pathlib.Path(os.environ.get("ABM_ENV", REPO.parent / "abmotors-to-shopify" / ".env"))
+ENV = pathlib.Path(os.environ.get("ABM_ENV", REPO.parent / "coreyard" / ".env"))
 STATE = REPO / ".tag_shipping_state.json"
-API_VERSION = "2025-07"
+API_VERSION = "2026-07"
 
 TAGS = {
     "PICKUP": "ship:pickup-only",

@@ -24,8 +24,8 @@ import urllib.request
 
 REPO = pathlib.Path(__file__).resolve().parent.parent
 OUT = REPO / "theme" / "assets" / "vehicles.json"
-ENV = pathlib.Path(os.environ.get("ABM_ENV", REPO.parent / "abmotors-to-shopify" / ".env"))
-API_VERSION = "2025-07"
+ENV = pathlib.Path(os.environ.get("ABM_ENV", REPO.parent / "coreyard" / ".env"))
+API_VERSION = "2026-07"
 
 # "2012 Honda Civic" -> year 2012, rest "Honda Civic"
 YEAR_TAG = re.compile(r"^(19[5-9]\d|20[0-4]\d)\s+(.+)$")

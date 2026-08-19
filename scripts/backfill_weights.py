@@ -30,8 +30,8 @@ from concurrent.futures import ThreadPoolExecutor
 REPO = pathlib.Path(__file__).resolve().parent.parent
 TABLE = REPO / "content" / "weights.json"
 STATE = REPO / ".weights_state.json"
-API_VERSION = "2025-07"
-ENV = pathlib.Path(os.environ.get("ABM_ENV", REPO.parent / "abmotors-to-shopify" / ".env"))
+API_VERSION = "2026-07"
+ENV = pathlib.Path(os.environ.get("ABM_ENV", REPO.parent / "coreyard" / ".env"))
 
 _lock = threading.Lock()
 

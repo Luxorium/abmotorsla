@@ -29,8 +29,8 @@ import urllib.error
 import urllib.request
 
 REPO = pathlib.Path(__file__).resolve().parent.parent
-ENV = pathlib.Path(os.environ.get("ABM_ENV", REPO.parent / "abmotors-to-shopify" / ".env"))
-API_VERSION = "2025-07"
+ENV = pathlib.Path(os.environ.get("ABM_ENV", REPO.parent / "coreyard" / ".env"))
+API_VERSION = "2026-07"
 CHUNK = 200
 
 
@@ -81,14 +81,38 @@ PROFILES_Q = """
       name
       default
       profileLocationGroups {
-        locationGroup { id }
+        locationGroup {
+          id
+          locations(first: 50) { nodes { id name isActive } }
+        }
         locationGroupZones(first: 20) {
           nodes {
             zone { id name }
-            methodDefinitions(first: 20) { nodes { id name } }
+            methodDefinitions(first: 20) {
+              nodes {
+                id name active description
+                rateProvider {
+                  __typename
+                  ... on DeliveryRateDefinition {
+                    price { amount currencyCode }
+                  }
+                }
+              }
+            }
           }
         }
       }
+    }
+  }
+}
+"""
+
+PROFILE_ITEMS_Q = """
+query($id: ID!, $cursor: String) {
+  deliveryProfile(id: $id) {
+    profileItems(first: 250, after: $cursor) {
+      pageInfo { hasNextPage endCursor }
+      nodes { variants(first: 100) { nodes { id } } }
     }
   }
 }
@@ -157,19 +181,220 @@ def zone(name: str, rates: list[dict]) -> dict:
     return z
 
 
-def flat(name: str, amount: str, description: str) -> dict:
-    return {
+def flat(name: str, amount: str, description: str, method_id: str | None = None) -> dict:
+    method = {
         "name": name,
         "description": description,
         "active": True,
         "rateDefinition": {"price": {"amount": amount, "currencyCode": "USD"}},
     }
+    if method_id:
+        method["id"] = method_id
+    return method
+
+
+def choose_location(gql: Shopify, selector: str | None) -> dict:
+    nodes = gql("{ locations(first:50){ nodes{ id name isActive } } }")["locations"]["nodes"]
+    active = [loc for loc in nodes if loc["isActive"]]
+    if selector:
+        wanted = selector.casefold()
+        matches = [
+            loc for loc in active
+            if loc["id"].casefold() == wanted or loc["name"].casefold() == wanted
+        ]
+        if len(matches) == 1:
+            return matches[0]
+        choices = ", ".join(f"{loc['name']} ({loc['id']})" for loc in active) or "none"
+        sys.exit(f"--location did not identify one active location; active locations: {choices}")
+    if len(active) == 1:
+        return active[0]
+    choices = ", ".join(f"{loc['name']} ({loc['id']})" for loc in active) or "none"
+    sys.exit(f"expected one active location; pass --location NAME_OR_ID. Active locations: {choices}")
+
+
+def all_zones(profile: dict) -> list[dict]:
+    return [
+        z
+        for group in profile["profileLocationGroups"]
+        for z in group["locationGroupZones"]["nodes"]
+    ]
+
+
+def location_group_for(profile: dict, location_id: str) -> dict | None:
+    groups = profile["profileLocationGroups"]
+    for group in groups:
+        locations = group["locationGroup"]["locations"]["nodes"]
+        if any(loc["id"] == location_id for loc in locations):
+            return group
+    if len(groups) == 1:
+        return groups[0]
+    if not groups:
+        return None
+    raise RuntimeError(f"{profile['name']}: selected location is not in any unambiguous location group")
+
+
+def profile_has_location(profile: dict, location_id: str) -> bool:
+    return any(
+        loc["id"] == location_id
+        for group in profile["profileLocationGroups"]
+        for loc in group["locationGroup"]["locations"]["nodes"]
+    )
+
+
+def domestic_zone(group: dict) -> dict | None:
+    zones = group["locationGroupZones"]["nodes"]
+    named = [z for z in zones if z["zone"]["name"].casefold() == "domestic"]
+    if len(named) == 1:
+        return named[0]
+    if len(zones) == 1:
+        return zones[0]
+    if not zones:
+        return None
+    raise RuntimeError("could not identify one Domestic delivery zone")
+
+
+def profile_variants(gql: Shopify, profile_id: str) -> set[str]:
+    variants = set()
+    cursor = None
+    while True:
+        profile = gql(PROFILE_ITEMS_Q, {"id": profile_id, "cursor": cursor})["deliveryProfile"]
+        conn = profile["profileItems"]
+        for item in conn["nodes"]:
+            variants.update(v["id"] for v in item["variants"]["nodes"])
+        if not conn["pageInfo"]["hasNextPage"]:
+            return variants
+        cursor = conn["pageInfo"]["endCursor"]
+
+
+def update_profile(gql: Shopify, profile_id: str, payload: dict, label: str) -> None:
+    res = gql(UPDATE, {"id": profile_id, "profile": payload})["deliveryProfileUpdate"]
+    if res["userErrors"]:
+        raise RuntimeError(f"{label}: {res['userErrors']}")
+
+
+def reconcile_variants(gql: Shopify, profile_id: str, desired: set[str], current: set[str]) -> None:
+    changes = (
+        ("variantsToDissociate", sorted(current - desired), "dissociated"),
+        ("variantsToAssociate", sorted(desired - current), "associated"),
+    )
+    for field, variants, verb in changes:
+        for i in range(0, len(variants), CHUNK):
+            chunk = variants[i:i + CHUNK]
+            update_profile(gql, profile_id, {field: chunk}, field)
+            print(f"  {verb} {min(i + CHUNK, len(variants))}/{len(variants)}")
+
+
+def managed_profile_payload(profile: dict, location: dict, name: str,
+                            price: str | None, description: str) -> dict:
+    payload = {"name": name}
+    group = location_group_for(profile, location["id"])
+    rates = [flat("Flat Rate Freight", price, description)] if price else []
+    if group is None:
+        create = {"locations": [location["id"]]}
+        if rates:
+            create["zonesToCreate"] = [zone("Domestic", rates)]
+        payload["locationGroupsToCreate"] = [create]
+        return payload
+
+    group_input = {"id": group["locationGroup"]["id"]}
+    locations = group["locationGroup"]["locations"]["nodes"]
+    if not any(loc["id"] == location["id"] for loc in locations):
+        group_input["locationsToAdd"] = [location["id"]]
+
+    zones = all_zones(profile)
+    if price is None:
+        if zones:
+            payload["zonesToDelete"] = [z["zone"]["id"] for z in zones]
+        if len(group_input) > 1:
+            payload["locationGroupsToUpdate"] = [group_input]
+        return payload
+
+    target = domestic_zone(group)
+    extras = [z["zone"]["id"] for z in zones if z is not target]
+    if extras:
+        payload["zonesToDelete"] = extras
+    if target is None:
+        group_input["zonesToCreate"] = [zone("Domestic", rates)]
+    else:
+        methods = target["methodDefinitions"]["nodes"]
+        matching = [m for m in methods if m["name"].casefold() == "flat rate freight"]
+        keep = matching[0] if matching else None
+        remove = [m["id"] for m in methods if m is not keep]
+        if remove:
+            payload["methodDefinitionsToDelete"] = remove
+        zone_input = {"id": target["zone"]["id"]}
+        if keep:
+            zone_input["methodDefinitionsToUpdate"] = [
+                flat("Flat Rate Freight", price, description, keep["id"])
+            ]
+        else:
+            zone_input["methodDefinitionsToCreate"] = rates
+        group_input["zonesToUpdate"] = [zone_input]
+    payload["locationGroupsToUpdate"] = [group_input]
+    return payload
+
+
+def default_profile_payload(profile: dict, location: dict) -> dict:
+    description = "Free shipping, 2-5 business days from Amite, LA."
+    group = location_group_for(profile, location["id"])
+    if group is None:
+        raise RuntimeError("default delivery profile has no location group")
+    target = domestic_zone(group)
+    group_input = {"id": group["locationGroup"]["id"]}
+    if not profile_has_location(profile, location["id"]):
+        group_input["locationsToAdd"] = [location["id"]]
+    if target is None:
+        group_input["zonesToCreate"] = [zone("Domestic", [flat("Free Shipping", "0.00", description)])]
+        return {"locationGroupsToUpdate": [group_input]}
+
+    methods = target["methodDefinitions"]["nodes"]
+    free = [m for m in methods if m["name"].casefold() == "free shipping"]
+    keep = free[0] if free else None
+    remove = [
+        m["id"]
+        for z in all_zones(profile)
+        for m in z["methodDefinitions"]["nodes"]
+        if m["name"].upper().startswith("FREIGHT")
+    ]
+    remove.extend(m["id"] for m in free[1:])
+    zone_input = {"id": target["zone"]["id"]}
+    if keep:
+        zone_input["methodDefinitionsToUpdate"] = [
+            flat("Free Shipping", "0.00", description, keep["id"])
+        ]
+    else:
+        zone_input["methodDefinitionsToCreate"] = [flat("Free Shipping", "0.00", description)]
+    payload = {"locationGroupsToUpdate": [{**group_input, "zonesToUpdate": [zone_input]}]}
+    if remove:
+        payload["methodDefinitionsToDelete"] = sorted(set(remove))
+    return payload
+
+
+def verify_rates(profile: dict, location: dict, price: str | None) -> None:
+    if not profile_has_location(profile, location["id"]):
+        raise RuntimeError(f"{profile['name']}: selected location is not assigned")
+    zones = all_zones(profile)
+    if price is None:
+        if zones:
+            raise RuntimeError(f"{profile['name']}: pickup-only profile still has shipping zones")
+        return
+    if len(zones) != 1:
+        raise RuntimeError(f"{profile['name']}: expected one shipping zone, found {len(zones)}")
+    methods = zones[0]["methodDefinitions"]["nodes"]
+    if len(methods) != 1 or methods[0]["name"] != "Flat Rate Freight":
+        raise RuntimeError(f"{profile['name']}: freight rate reconciliation failed")
+    provider = methods[0].get("rateProvider") or {}
+    amount = ((provider.get("price") or {}).get("amount"))
+    if amount is None or abs(float(amount) - float(price)) > 0.001:
+        raise RuntimeError(f"{profile['name']}: expected ${price}, found {amount}")
 
 
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--plan", action="store_true")
     ap.add_argument("--apply", action="store_true")
+    ap.add_argument("--location", default=os.environ.get("ABM_LOCATION"),
+                    help="active Shopify location name or GraphQL ID (or set ABM_LOCATION)")
     args = ap.parse_args()
     if not (args.plan or args.apply):
         ap.print_help()
@@ -182,8 +407,8 @@ def main() -> None:
     profiles = gql(PROFILES_Q)["deliveryProfiles"]["nodes"]
     by_name = {p["name"]: p for p in profiles}
     default = next(p for p in profiles if p["default"])
-
-    loc = gql("{ locations(first:5){ nodes{ id name isActive } } }")["locations"]["nodes"][0]
+    loc = choose_location(gql, args.location)
+    print(f"using location: {loc['name']} ({loc['id']})")
 
     print("scanning catalog…")
     buckets, counts = scan(gql, freight)
@@ -193,18 +418,6 @@ def main() -> None:
         label = {"ground": "free ground", "A": "freight $299.99",
                  "B": "freight $199.99", "PICKUP": "pickup only"}[g]
         print(f"    {label:<20}{counts[g]:>6}")
-
-    # What sits on the default profile today?
-    stale = []
-    for lg in default["profileLocationGroups"]:
-        for z in lg["locationGroupZones"]["nodes"]:
-            for m in z["methodDefinitions"]["nodes"]:
-                if m["name"].upper().startswith("FREIGHT"):
-                    stale.append((m["id"], m["name"], z["zone"]["name"]))
-
-    print(f"\ndefault profile {default['name']!r}")
-    print(f"  freight rates to remove from it: {[s[1] for s in stale] or 'none'}")
-    print("  free shipping rate to add: Free Shipping ($0.00)")
 
     plan = [
         ("Freight — Oversize", "A", "299.99",
@@ -216,44 +429,54 @@ def main() -> None:
     ]
     print("\nprofiles to create/update:")
     for name, group, price, _ in plan:
-        state = "exists" if name in by_name else "create"
+        profile = by_name.get(name)
+        current = profile_variants(gql, profile["id"]) if profile else set()
+        desired = set(buckets[group])
+        if profile:
+            managed_profile_payload(profile, loc, name, price, _)
+        state = "exists" if profile else "create"
         rate = f"${price}" if price else "no shipping rates (pickup only)"
         print(f"  {name:<30}{state:<8}{counts[group]:>5} products   {rate}")
+        print(f"    associate {len(desired - current)}, dissociate {len(current - desired)}")
+
+    default_rates = [
+        m["name"]
+        for z in all_zones(default)
+        for m in z["methodDefinitions"]["nodes"]
+    ]
+    print(f"\ndefault profile {default['name']!r}")
+    print(f"  reconcile one Free Shipping rate; existing rates: {default_rates or 'none'}")
+    default_profile_payload(default, loc)
 
     if args.plan:
         print("\nplan only — nothing changed")
         return
 
-    # 1. default profile: drop the freight rates, add free shipping
-    dz = None
-    for lg in default["profileLocationGroups"]:
-        for z in lg["locationGroupZones"]["nodes"]:
-            dz = z["zone"]
-            dlg = lg["locationGroup"]
-            break
-    payload = {
-        "methodDefinitionsToDelete": [s[0] for s in stale],
-        "locationGroupsToUpdate": [{
-            "id": dlg["id"],
-            "zonesToUpdate": [{
-                "id": dz["id"],
-                "methodDefinitionsToCreate": [
-                    flat("Free Shipping", "0.00", "Free shipping, 2-5 business days from Amite, LA.")
-                ],
-            }],
-        }],
+    # Local pickup must work before pickup-only variants enter a profile with no rates.
+    print("\nenabling local pickup at the yard…")
+    res = gql("""
+    mutation($id: ID!) {
+      locationLocalPickupEnable(localPickupSettings: {
+        locationId: $id,
+        pickupTime: TWENTY_FOUR_HOURS,
+        instructions: "Bring your order number. Counter hours Mon-Fri 8:00 AM - 5:00 PM Central, 59174 Hwy 51, Amite, LA 70422."
+      }) { localPickupSettings { instructions } userErrors { field message } }
     }
-    print("\nupdating default profile…")
-    res = gql(UPDATE, {"id": default["id"], "profile": payload})["deliveryProfileUpdate"]
-    print(f"  {'ERR ' + str(res['userErrors']) if res['userErrors'] else 'free shipping added, freight rates removed'}")
+    """, {"id": loc["id"]})["locationLocalPickupEnable"]
+    if res["userErrors"]:
+        raise RuntimeError(f"local pickup: {res['userErrors']}")
+    print("  local pickup enabled")
 
-    # 2. the three dedicated profiles
+    # Reconcile restrictive profiles before changing the default profile.
     for name, group, price, desc in plan:
-        variants = buckets[group]
+        desired = set(buckets[group])
         rates = [flat("Flat Rate Freight", price, desc)] if price else []
         if name in by_name:
-            pid = by_name[name]["id"]
-            print(f"\n{name}: exists, associating {len(variants)} products…")
+            profile = by_name[name]
+            pid = profile["id"]
+            current = profile_variants(gql, pid)
+            print(f"\n{name}: reconciling settings and {len(desired)} products…")
+            update_profile(gql, pid, managed_profile_payload(profile, loc, name, price, desc), name)
         else:
             body = {
                 "name": name,
@@ -264,35 +487,41 @@ def main() -> None:
             }
             res = gql(CREATE, {"profile": body})["deliveryProfileCreate"]
             if res["userErrors"]:
-                print(f"\n{name}: ERR {res['userErrors']}")
-                continue
+                raise RuntimeError(f"{name}: {res['userErrors']}")
             pid = res["profile"]["id"]
-            print(f"\n{name}: created ({len(variants)} products to associate)")
+            current = set()
+            print(f"\n{name}: created")
+        reconcile_variants(gql, pid, desired, current)
 
-        for i in range(0, len(variants), CHUNK):
-            chunk = variants[i:i + CHUNK]
-            res = gql(UPDATE, {"id": pid, "profile": {"variantsToAssociate": chunk}})["deliveryProfileUpdate"]
-            if res["userErrors"]:
-                print(f"  ! {res['userErrors']}")
-                break
-            print(f"  associated {min(i + CHUNK, len(variants))}/{len(variants)}")
+    print("\nreconciling default Free Shipping rate…")
+    update_profile(gql, default["id"], default_profile_payload(default, loc), default["name"])
 
-    # 3. local pickup at the yard, required for the pickup-only group to be buyable
-    print("\nenabling local pickup at the yard…")
-    try:
-        res = gql("""
-        mutation($id: ID!) {
-          locationLocalPickupEnable(localPickupSettings: {
-            locationId: $id,
-            pickupTime: TWENTY_FOUR_HOURS,
-            instructions: "Bring your order number. Counter hours Mon-Fri 8:00 AM - 5:00 PM Central, 59174 Hwy 51, Amite, LA 70422."
-          }) { localPickupSettings { instructions } userErrors { field message } }
-        }
-        """, {"id": loc["id"]})["locationLocalPickupEnable"]
-        print(f"  {'ERR ' + str(res['userErrors']) if res['userErrors'] else 'local pickup enabled'}")
-    except Exception as exc:
-        print(f"  ! could not enable local pickup: {exc}")
-        print("    set it by hand: Settings -> Shipping and delivery -> Local pickup")
+    print("\nverifying final delivery profiles…")
+    refreshed = gql(PROFILES_Q)["deliveryProfiles"]["nodes"]
+    refreshed_by_name = {p["name"]: p for p in refreshed}
+    for name, group, price, _ in plan:
+        profile = refreshed_by_name[name]
+        actual = profile_variants(gql, profile["id"])
+        desired = set(buckets[group])
+        if actual != desired:
+            raise RuntimeError(
+                f"{name}: verification failed ({len(desired - actual)} missing, "
+                f"{len(actual - desired)} stale)"
+            )
+        verify_rates(profile, loc, price)
+        print(f"  {name}: {len(actual)} products, rates correct")
+
+    refreshed_default = next(p for p in refreshed if p["default"])
+    target = domestic_zone(location_group_for(refreshed_default, loc["id"]))
+    free = [m for m in target["methodDefinitions"]["nodes"] if m["name"] == "Free Shipping"]
+    stale = [
+        m for z in all_zones(refreshed_default)
+        for m in z["methodDefinitions"]["nodes"]
+        if m["name"].upper().startswith("FREIGHT")
+    ]
+    if len(free) != 1 or stale:
+        raise RuntimeError("default profile rate verification failed")
+    print("  default profile: one Free Shipping rate, no stale freight rates")
 
 
 if __name__ == "__main__":

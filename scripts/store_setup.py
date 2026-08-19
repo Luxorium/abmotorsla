@@ -30,10 +30,10 @@ from concurrent.futures import ThreadPoolExecutor
 REPO = pathlib.Path(__file__).resolve().parent.parent
 CONTENT = REPO / "content"
 STATE_PATH = REPO / ".store_setup_state.json"
-API_VERSION = "2025-07"
+API_VERSION = "2026-07"
 
 DEFAULT_ENV = pathlib.Path(
-    os.environ.get("ABM_ENV", REPO.parent / "abmotors-to-shopify" / ".env")
+    os.environ.get("ABM_ENV", REPO.parent / "coreyard" / ".env")
 )
 
 REQUIRED_SCOPES = {

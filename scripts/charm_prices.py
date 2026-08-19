@@ -31,8 +31,8 @@ from concurrent.futures import ThreadPoolExecutor
 
 REPO = pathlib.Path(__file__).resolve().parent.parent
 STATE = REPO / ".charm_prices_state.json"
-API_VERSION = "2025-07"
-ENV = pathlib.Path(os.environ.get("ABM_ENV", REPO.parent / "abmotors-to-shopify" / ".env"))
+API_VERSION = "2026-07"
+ENV = pathlib.Path(os.environ.get("ABM_ENV", REPO.parent / "coreyard" / ".env"))
 MIN_PRICE = 0.99
 
 _lock = threading.Lock()

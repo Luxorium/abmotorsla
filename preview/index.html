@@ -116,7 +116,7 @@
       <div class="hero__content">
         <p class="eyebrow">Used OEM parts · Amite, Louisiana</p>
         <h1 class="h0">The part you need is already on our lot.</h1>
-        <p class="hero__sub">Search 25,000+ inspected parts pulled from our ten-acre yard. Save up to 50% off new, backed by a 90-day money-back warranty.</p>
+        <p class="hero__sub">Search 25,000+ parts on our ten-acre yard — 9,300+ listed online and growing. Save up to 50% off new, backed by a 90-day money-back warranty.</p>
         <div class="hero__search">
           <form class="search-field search-field--hero" onsubmit="return false">
             <input type="search" placeholder="Try &quot;2012 Silverado alternator&quot; or a stock number">
@@ -300,7 +300,6 @@
         <div class="product__flags">
           <span class="badge badge--dark">ABS Anti-Lock Brake Pump</span>
           <span class="badge badge--green">Used OEM</span>
-          <span class="badge badge--amber">Only 1 in stock</span>
         </div>
         <h1 class="product__title">2009-2014 Cadillac Escalade / Chevrolet Suburban 1500 / Tahoe &amp; 8 more — ABS Anti-Lock Brake Pump, OEM</h1>
         <div class="product__price-row">
@@ -502,12 +501,11 @@
       <h2 class="h3" style="margin-top:36px">Status badges</h2>
       <div class="cluster">
         <span class="badge badge--green">Used OEM</span>
-        <span class="badge badge--amber">Only 1 in stock</span>
         <span class="badge badge--dark">Alternator</span>
         <span class="badge badge--sold">Sold</span>
         <span class="badge">Grade A</span>
       </div>
-      <p class="pv-spec" style="margin-top:14px">Green means go — buy, in stock, warranted. Amber is scarcity only ("only one on the lot"), never decoration. Grey is a sold part. Nothing else earns color.</p>
+      <p class="pv-spec" style="margin-top:14px">Green means go — buy, in stock, warranted. Amber flags freight and shipping caveats, never decoration. Grey is a sold part. Nothing else earns color.</p>
     </div>
   </div>
 </div>
@@ -516,14 +514,14 @@
   /* Preview harness. Sample data mirrors what CoreYard actually pushes:
      long SEO titles, stock-number SKUs, one unit each. */
   var PARTS = [
-    { type: 'ABS Anti-Lock Brake Pump', title: '2009-2014 Cadillac Escalade / Chevrolet Suburban 1500 / Tahoe & 8 more ABS Anti-Lock Brake Pump', sku: '641-00118L', price: '$129.00', photos: 4, one: true },
-    { type: 'Engine Assembly', title: '2011-2016 Chevrolet Silverado 1500 5.3L V8 Engine Assembly, 118K Miles', sku: '512-04471', price: '$1,849.99', photos: 9, one: true, ship: '<span class="ship-line ship-line--freight">$299.99 freight &middot; commercial address</span>', flag: 'Freight' },
-    { type: 'Transmission', title: '2013-2018 Ford F-150 3.5L EcoBoost 6R80 Automatic Transmission', sku: '400-02219R', price: '$1,425.00', photos: 6, one: true },
-    { type: 'Alternator', title: '2007-2013 Toyota Tundra / Sequoia 4.6L 5.7L Alternator 130 Amp', sku: '601-00934', price: '$78.00', photos: 3, one: true },
-    { type: 'Tailgate', title: '2014-2018 GMC Sierra 1500 Tailgate Assembly – Summit White', sku: '210-01188', price: '$395.00', photos: 5, one: true },
-    { type: 'Front Door', title: '2012-2017 Nissan Altima Front Left Door Shell, Gun Metallic', sku: '124-00742L', price: '$214.99', photos: 4, one: true, ship: '<span class="ship-line ship-line--pickup">Pickup only &mdash; not shipped</span>', flag: 'Pickup only' },
-    { type: 'Wheel', title: '2015-2020 Ford F-150 18" Aluminum Wheel Rim 6-Lug', sku: '560-03310', price: '$142.00', photos: 3, one: true },
-    { type: 'Seat', title: '2010-2015 Chevrolet Camaro Front Right Bucket Seat – Black Cloth', sku: '317-00655R', price: '$260.00', photos: 6, one: false }
+    { type: 'ABS Anti-Lock Brake Pump', title: '2009-2014 Cadillac Escalade / Chevrolet Suburban 1500 / Tahoe & 8 more ABS Anti-Lock Brake Pump', sku: '641-00118L', price: '$129.00', photos: 4 },
+    { type: 'Engine Assembly', title: '2011-2016 Chevrolet Silverado 1500 5.3L V8 Engine Assembly, 118K Miles', sku: '512-04471', price: '$1,849.99', photos: 9, ship: '<span class="ship-line ship-line--freight">$299.99 freight &middot; commercial address</span>', flag: 'Freight' },
+    { type: 'Transmission', title: '2013-2018 Ford F-150 3.5L EcoBoost 6R80 Automatic Transmission', sku: '400-02219R', price: '$1,425.00', photos: 6 },
+    { type: 'Alternator', title: '2007-2013 Toyota Tundra / Sequoia 4.6L 5.7L Alternator 130 Amp', sku: '601-00934', price: '$78.00', photos: 3 },
+    { type: 'Tailgate', title: '2014-2018 GMC Sierra 1500 Tailgate Assembly – Summit White', sku: '210-01188', price: '$395.00', photos: 5 },
+    { type: 'Front Door', title: '2012-2017 Nissan Altima Front Left Door Shell, Gun Metallic', sku: '124-00742L', price: '$214.99', photos: 4, ship: '<span class="ship-line ship-line--pickup">Pickup only &mdash; not shipped</span>', flag: 'Pickup only' },
+    { type: 'Wheel', title: '2015-2020 Ford F-150 18" Aluminum Wheel Rim 6-Lug', sku: '560-03310', price: '$142.00', photos: 3 },
+    { type: 'Seat', title: '2010-2015 Chevrolet Camaro Front Right Bucket Seat – Black Cloth', sku: '317-00655R', price: '$260.00', photos: 6 }
   ];
 
   var PHOTO_SVG = '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2" fill="none" stroke="currentColor" stroke-width="1.3"/><circle cx="8.5" cy="10" r="1.6" fill="none" stroke="currentColor" stroke-width="1.3"/><path d="m4 17 5-4.5 4 3.2 3-2.4 4 3.4" fill="none" stroke="currentColor" stroke-width="1.3"/></svg>';
@@ -531,7 +529,7 @@
   function cardHTML(p) {
     return '<article class="card">' +
       '<div class="card__media"><div class="card__placeholder">' + PHOTO_SVG + '</div>' +
-        '<div class="card__flags">' + (p.flag ? '<span class="badge badge--' + (p.flag === 'Pickup only' ? 'pickup' : 'freight') + '">' + p.flag + '</span>' : '') + (p.one ? '<span class="badge badge--amber">Only 1</span>' : '') + '</div>' +
+        '<div class="card__flags">' + (p.flag ? '<span class="badge badge--' + (p.flag === 'Pickup only' ? 'pickup' : 'freight') + '">' + p.flag + '</span>' : '') + '</div>' +
         '<span class="card__count">' + p.photos + ' photos</span>' +
       '</div>' +
       '<div class="card__body">' +
@@ -624,7 +622,7 @@
     ['#5E686E', 'Steel', 'secondary text, icons'],
     ['#C9D0D4', 'Chrome', 'borders, hairlines'],
     ['#F6F8F8', 'Paper', 'alternating section bands'],
-    ['#E08A00', 'Amber', 'scarcity only — “only 1 in stock”']
+    ['#E08A00', 'Amber', 'freight and shipping caveats']
   ];
   document.getElementById('swatches').innerHTML = SWATCHES.map(function (s) {
     return '<div class="pv-swatch"><div class="pv-swatch__chip" style="background:' + s[0] +

@@ -26,8 +26,8 @@ from concurrent.futures import ThreadPoolExecutor
 
 REPO = pathlib.Path(__file__).resolve().parent.parent
 STATE = REPO / ".cleanup_state.json"
-ENV = pathlib.Path(os.environ.get("ABM_ENV", REPO.parent / "abmotors-to-shopify" / ".env"))
-API_VERSION = "2025-07"
+ENV = pathlib.Path(os.environ.get("ABM_ENV", REPO.parent / "coreyard" / ".env"))
+API_VERSION = "2026-07"
 
 # Matches " – OEM", " - OEM", " — OEM" and a bare trailing " OEM".
 OEM_SUFFIX = re.compile(r"\s*[–—-]?\s*OEM\s*$", re.IGNORECASE)
