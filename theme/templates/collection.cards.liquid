@@ -1,0 +1,23 @@
+{%- comment -%}
+  Cards-only view of a collection, used by the product page to pull "more parts
+  that fit this vehicle" from a tag-filtered URL:
+
+      /collections/all/chrysler-300?view=cards
+
+  Shopify's Section Rendering API returns 404 on this store, so this is how the
+  product page gets real, vehicle-matched cards without duplicating card markup
+  in JavaScript. `layout none` keeps the response to just the cards.
+
+  The current_tags guard matters: Shopify silently IGNORES a tag it does not
+  recognise and serves the whole collection instead of 404ing. 180 parts carry a
+  malformed vehicle tag from the yard system ("Dodge Dodge 1500"), and without
+  this they would pull the head of the catalogue under a "fits your vehicle"
+  heading — the exact bug this replaced. current_tags is empty in precisely that
+  case, so render nothing and let the caller keep its own fallback.
+{%- endcomment -%}
+{%- layout none -%}
+{%- if current_tags.size > 0 -%}
+  {%- for product in collection.products limit: 8 -%}
+    {% render 'card-product', card_product: product %}
+  {%- endfor -%}
+{%- endif -%}

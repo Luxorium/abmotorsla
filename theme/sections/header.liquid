@@ -11,10 +11,17 @@
 
     <a href="{{ routes.root_url }}" class="header__logo" aria-label="{{ shop.name }} — home">
       {%- if settings.logo != blank -%}
+        {%- comment -%}
+          Build the style string first. Piping `| append:` inside a filter argument
+          makes Liquid apply the append to image_tag's own output instead, which
+          throws "wrong number of arguments (given 3, expected 2)" and drops the
+          logo entirely — invisible for as long as no logo was set.
+        {%- endcomment -%}
+        {%- assign logo_style = 'max-height:' | append: settings.logo_height | append: 'px' -%}
         {{ settings.logo | image_url: width: 700 | image_tag:
             loading: 'eager',
             widths: '200,300,400,600,700',
-            style: 'max-height:' | append: settings.logo_height | append: 'px',
+            style: logo_style,
             alt: shop.name }}
       {%- else -%}
         <span class="header__logo-text"><span class="chrome-text">A&amp;B</span> MOTORS</span>

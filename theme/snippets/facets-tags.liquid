@@ -1,0 +1,106 @@
+{%- comment -%}
+  Tag-driven facets — the sidebar we use when no storefront filter app is installed.
+
+  Shopify filters a collection by tag natively: /collections/wheels/ford+ford-ranger
+  narrows to 42 parts with no app and no query string. CoreYard already writes the
+  tags that makes that work — "Ford", "Ford Ranger", "1994 Ford Ranger" — so the
+  vehicle side of this needs no catalog change at all.
+
+  Part type is deliberately NOT a tag facet. Only ~74% of parts carry their product
+  type as a tag (the retitle renamed types without rewriting tags), so filtering on
+  it would silently hide a quarter of the yard. The type collections are smart
+  collections keyed on TYPE itself, so they are complete — we switch collections
+  instead and carry the vehicle tags across.
+
+  These render alongside Shopify's built-in storefront filters, not instead of them.
+  Shopify already supplies Availability and Price on a real collection (though not on
+  the virtual /collections/all), and neither of those narrows 9,300 parts to one truck.
+{%- endcomment -%}
+
+{%- liquid
+  assign sort_qs = ''
+  if collection.sort_by != blank
+    assign sort_qs = '?sort_by=' | append: collection.sort_by
+  endif
+
+  assign tag_path = ''
+  for t in current_tags
+    assign h = t | handleize
+    if forloop.first
+      assign tag_path = '/' | append: h
+    else
+      assign tag_path = tag_path | append: '+' | append: h
+    endif
+  endfor
+
+  assign type_links = nil
+  assign menu = linklists['parts-by-type']
+  if menu != blank and menu.links.size > 0
+    assign type_links = menu.links
+  else
+    for link in linklists['main-menu'].links
+      if link.links.size > 0 and link.url contains '/collections'
+        assign type_links = link.links
+        break
+      endif
+    endfor
+  endif
+-%}
+
+<details class="facets__group" open
+         data-ymm-facet
+         data-src="{{ 'vehicles.json' | asset_url }}"
+         data-base="{{ collection.url }}"
+         data-facet-sort="{{ collection.sort_by }}"
+         data-tags="{{ current_tags | join: '~' | escape }}">
+  <summary>Vehicle</summary>
+  <div class="facets__ymm">
+    <label class="field">
+      <span>Make</span>
+      <select data-ymmf-make aria-label="Filter by make">
+        <option value="">Any make</option>
+      </select>
+    </label>
+    <label class="field">
+      <span>Model</span>
+      <select data-ymmf-model aria-label="Filter by model" disabled>
+        <option value="">Any model</option>
+      </select>
+    </label>
+    <label class="field">
+      <span>Year</span>
+      <select data-ymmf-year aria-label="Filter by year" disabled>
+        <option value="">Any year</option>
+      </select>
+    </label>
+    <button type="button" class="btn btn--sm btn--full" data-ymmf-apply disabled>Find parts</button>
+    <p class="small facets__note" data-ymmf-clear hidden>
+      <a class="link" href="#" data-ymmf-clear-link>Clear vehicle</a>
+    </p>
+    <p class="small muted facets__note" data-ymmf-note hidden></p>
+    <noscript>
+      <p class="small muted">
+        Pick a vehicle from the
+        <a class="link" href="{{ routes.root_url }}">year / make / model picker</a> on the home page.
+      </p>
+    </noscript>
+  </div>
+</details>
+
+{%- if type_links != nil and type_links.size > 0 -%}
+  <details class="facets__group" {% if collection.handle != 'all' %}open{% endif %}>
+    <summary>Part type</summary>
+    <div class="facets__list">
+      <a class="facets__link{% if collection.handle == 'all' %} is-active{% endif %}"
+         href="{{ routes.all_products_collection_url }}{{ tag_path }}{{ sort_qs }}"
+         {% if collection.handle == 'all' %}aria-current="true"{% endif %}>All parts</a>
+      {%- for link in type_links -%}
+        {%- assign is_active = false -%}
+        {%- if link.object.handle == collection.handle -%}{%- assign is_active = true -%}{%- endif -%}
+        <a class="facets__link{% if is_active %} is-active{% endif %}"
+           href="{{ link.url }}{{ tag_path }}{{ sort_qs }}"
+           {% if is_active %}aria-current="true"{% endif %}>{{ link.title }}</a>
+      {%- endfor -%}
+    </div>
+  </details>
+{%- endif -%}

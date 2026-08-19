@@ -46,10 +46,23 @@
         </div>
       {%- endif -%}
 
+      {%- comment -%}
+        The gallery falls back to a placeholder when a part has no photo, and this note
+        would then promise a photo the shopper cannot see.
+      {%- endcomment -%}
+      {%- if product.featured_media -%}
       <p class="gallery__note">
         {% render 'icon', name: 'check' %}
-        <span>These are photos of the actual part on our lot — not a stock image. What you see is what ships.</span>
+        {%- comment -%}
+          Body panels and glass are never shipped, so promising "what ships" on one
+          contradicts the pickup-only notice sitting directly below it.
+        {%- endcomment -%}
+        <span>These are photos of the actual part on our lot — not a stock image.
+          {%- if product.tags contains 'ship:pickup-only' %} What you see is what you pick up.
+          {%- else %} What you see is what ships.
+          {%- endif %}</span>
       </p>
+      {%- endif -%}
     </div>
 
     {%- comment -%} ------------------------------------------------ buybox {%- endcomment -%}
@@ -57,7 +70,6 @@
       <div class="product__flags">
         {%- if product.type != blank -%}<span class="badge badge--dark">{{ product.type }}</span>{%- endif -%}
         <span class="badge badge--green">Used OEM</span>
-        {%- if qty == 1 and product.available -%}<span class="badge badge--amber">Only 1 in stock</span>{%- endif -%}
         {%- unless product.available -%}<span class="badge badge--sold">Sold</span>{%- endunless -%}
       </div>
 
@@ -106,7 +118,7 @@
                        max="{{ variant.inventory_quantity | at_least: 1 }}" aria-label="Quantity">
                 <button type="button" data-qty-step="up" aria-label="Increase quantity">+</button>
               </div>
-              <span class="small muted">{{ qty }} available</span>
+              {%- if qty > 1 -%}<span class="small muted">{{ qty }} available</span>{%- endif -%}
             </div>
 
             <button type="submit" class="btn btn--lg btn--full" data-add-button>Add to cart</button>
@@ -148,7 +160,14 @@
       {%- comment -%} --------------------------------------- part details {%- endcomment -%}
       <dl class="spec-table">
         {%- if variant.sku != blank -%}
-          <div><dt>Stock number</dt><dd>{{ variant.sku }}</dd></div>
+          {%- comment -%}
+            "Part ID", not "Stock number". The SKU is the yard's R#, while the
+            description CoreYard writes calls a different number the stock number
+            (R# 53347 vs Stock # 261702). Both are real; labelling this one
+            "Stock number" put two different numbers under the same name on the
+            same page, so a customer could quote the wrong one on the phone.
+          {%- endcomment -%}
+          <div><dt>Part ID</dt><dd>{{ variant.sku }}</dd></div>
         {%- endif -%}
         {%- if product.type != blank -%}
           <div><dt>Part type</dt><dd>{{ product.type }}</dd></div>
@@ -166,7 +185,7 @@
 
       {%- if section.settings.show_share -%}
         <p class="small muted" style="margin-top:14px;">
-          Stock #{{ variant.sku }} &middot; Ask about this part: <a class="link" href="mailto:{{ settings.email }}?subject=Part%20{{ variant.sku | url_encode }}">{{ settings.email }}</a>
+          Part ID {{ variant.sku }} &middot; Ask about this part: <a class="link" href="mailto:{{ settings.email }}?subject=Part%20{{ variant.sku | url_encode }}">{{ settings.email }}</a>
         </p>
       {%- endif -%}
     </div>
@@ -224,25 +243,72 @@
 </div>
 
 {%- comment -%} ------------------------------------------ related parts {%- endcomment -%}
+{%- comment -%}
+  This used to look up collections[product.type | handle] and fall back to
+  collections.all.products. There are 224 product types and 11 collections, so the
+  lookup missed on nearly every part and the fallback served the head of the whole
+  catalogue — a Chrysler climate control page recommending Volvo starter motors
+  under the heading "More Temperature / Climate Control from the yard".
+
+  Server-side we can only iterate a collection, never filter it by tag, so the
+  honest baseline is the category collection the part genuinely belongs to (the
+  smart collections are keyed on TYPE, so membership is always correct). The
+  JavaScript then upgrades that to parts that fit the same vehicle, pulled from
+  the tag-filtered ?view=cards URL. If the fetch fails the baseline stands.
+{%- endcomment -%}
 {%- if section.settings.show_related -%}
-  <div class="section section--paper">
-    <div class="page-width">
-      <div class="section-head">
-        <h2 class="h2">More {{ product.type | default: 'parts' }} from the yard</h2>
-      </div>
-      <div class="grid grid--4">
-        {%- assign type_handle = product.type | handle -%}
-        {%- assign related = collections[type_handle].products | default: collections.all.products -%}
-        {%- assign shown = 0 -%}
-        {%- for item in related limit: 12 -%}
-          {%- if item.id != product.id and shown < 4 -%}
-            {% render 'card-product', card_product: item %}
-            {%- assign shown = shown | plus: 1 -%}
-          {%- endif -%}
-        {%- endfor -%}
+  {%- liquid
+    assign rel = nil
+    for c in product.collections
+      unless c.handle == 'just-pulled' or c.handle == 'home-page-picks' or c.handle == 'frontpage'
+        assign rel = c
+        break
+      endunless
+    endfor
+
+    comment
+      CoreYard tags every part "<year> <make> <model>". Strip the year off the
+      first one and we have the vehicle tag — "2017 Chrysler 300" -> "Chrysler 300",
+      which is a real tag on every part that fits that car. `plus: 0` on a
+      non-numeric string yields 0, so this only ever matches a genuine year.
+    endcomment
+    assign vehicle = ''
+    for t in product.tags
+      assign head = t | slice: 0, 4
+      assign year = head | plus: 0
+      if year > 1900 and year < 2100
+        assign vehicle = t | remove_first: head | strip
+        break
+      endif
+    endfor
+  -%}
+
+  {%- if rel != nil or vehicle != blank -%}
+    <div class="section section--paper"
+         data-related
+         data-related-exclude="{{ product.id }}"
+         {%- if vehicle != blank %}
+           data-related-url="{{ routes.all_products_collection_url }}/{{ vehicle | handleize }}?view=cards"
+           data-related-heading="More parts that fit the {{ vehicle | escape }}"
+         {%- endif %}>
+      <div class="page-width">
+        <div class="section-head">
+          <h2 class="h2" data-related-title>
+            More {{ rel.title | default: 'parts' }} from the yard
+          </h2>
+        </div>
+        <div class="grid grid--4" data-related-grid>
+          {%- assign shown = 0 -%}
+          {%- for item in rel.products limit: 12 -%}
+            {%- if item.id != product.id and shown < 4 -%}
+              {% render 'card-product', card_product: item %}
+              {%- assign shown = shown | plus: 1 -%}
+            {%- endif -%}
+          {%- endfor -%}
+        </div>
       </div>
     </div>
-  </div>
+  {%- endif -%}
 {%- endif -%}
 
 <div class="sticky-buy" data-sticky-buy>

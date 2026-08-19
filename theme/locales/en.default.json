@@ -1,18 +1,35 @@
 {
   "general": {
-    "search": { "title": "Search", "placeholder": "Search by part, year, make, model, or stock #", "submit": "Search" },
-    "cart": { "title": "Cart", "empty": "Nothing in the cart yet" },
-    "404": { "title": "That page isn't on the lot." },
-    "onboarding": { "product_title": "Example part" },
-    "meta": { "tags": "Tagged \"{{ tags }}\"", "page": "Page {{ page }}" },
-    "pagination": { "previous": "Previous", "next": "Next" }
+    "search": {
+      "title": "Search",
+      "placeholder": "Search by part, year, make, model, or stock #",
+      "submit": "Search"
+    },
+    "cart": {
+      "title": "Cart",
+      "empty": "Nothing in the cart yet"
+    },
+    "404": {
+      "title": "That page isn't on the lot."
+    },
+    "onboarding": {
+      "product_title": "Example part"
+    },
+    "meta": {
+      "tags": "Tagged \"{{ tags }}\"",
+      "page": "Page {{ page }}"
+    },
+    "pagination": {
+      "previous": "Previous",
+      "next": "Next"
+    }
   },
   "products": {
     "product": {
       "add_to_cart": "Add to cart",
       "sold_out": "Sold",
       "quantity": "Quantity",
-      "stock_number": "Stock number",
+      "stock_number": "Part ID",
       "warranty": "{{ days }}-day money-back warranty"
     }
   },

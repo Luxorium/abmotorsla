@@ -285,7 +285,6 @@ table { border-collapse: collapse; width: 100%; }
   white-space: nowrap;
 }
 .badge--green { background: var(--green-tint); color: var(--green-darker); border-color: var(--green-line); }
-.badge--amber { background: var(--amber-tint); color: #8a5300; border-color: #f3d9a4; }
 .badge--dark { background: var(--graphite); color: var(--chrome-3); border-color: var(--graphite-3); }
 .badge--sold { background: #f2f2f2; color: var(--steel); }
 
@@ -623,6 +622,23 @@ table { border-collapse: collapse; width: 100%; }
 .facets__item input { width: 17px; height: 17px; accent-color: var(--green); }
 .facets__item span { flex: 1; }
 .facets__item em { color: var(--steel); font-style: normal; font-size: 12px; }
+
+/* tag-driven facets (no filter app installed) */
+.facets__ymm { margin-top: 14px; }
+.facets__ymm .field { margin-bottom: 12px; }
+.facets__ymm .field select { padding: 10px 12px; font-size: 14px; }
+.facets__note { margin: 8px 0 0; }
+.facets__ymm .btn { margin-top: 4px; }
+.facets__list a.facets__link {
+  display: block; padding: 6px 0; font-size: 14px; color: var(--ink);
+}
+.facets__list a.facets__link:hover { color: var(--green-dark); }
+.facets__list a.facets__link.is-active { font-weight: 800; color: var(--green-dark); }
+.facets__help { margin: 16px 0 0; }
+.chip a {
+  color: inherit; font-size: 15px; line-height: 1; text-decoration: none;
+}
+.chip a:hover { opacity: 0.65; }
 
 .toolbar {
   display: flex; align-items: center; gap: 12px; flex-wrap: wrap;

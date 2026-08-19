@@ -1,3 +1,9 @@
+{%- liquid
+  assign sort_qs = ''
+  if collection.sort_by != blank
+    assign sort_qs = '?sort_by=' | append: collection.sort_by
+  endif
+-%}
 {%- paginate collection.products by section.settings.per_page -%}
   <div class="page-width">
     <nav class="breadcrumbs" aria-label="Breadcrumb">
@@ -15,6 +21,15 @@
     <div class="collection-layout">
       {%- comment -%} ------------------------------------------- facets {%- endcomment -%}
       <aside class="facets">
+        {%- comment -%}
+          Vehicle and part type always render: Shopify supplies Availability and Price
+          on a real collection but nothing that narrows the yard to one truck, and on
+          /collections/all it supplies no filters at all. The tag sidebar sits outside
+          the filter form so its selects never trip that form's auto-submit.
+        {%- endcomment -%}
+        {% render 'facets-tags' %}
+
+        {%- if collection.filters.size > 0 -%}
         <form data-facet-form method="get">
           {%- if collection.sort_by != blank -%}
             <input type="hidden" name="sort_by" value="{{ collection.sort_by }}">
@@ -56,19 +71,45 @@
                   <button type="submit" class="btn btn--sm btn--outline" style="margin-top:10px;">Apply price</button>
               {%- endcase -%}
             </details>
-          {%- else -%}
-            <p class="small muted">
-              Looking for a specific vehicle? Use the
-              <a class="link" href="{{ routes.root_url }}">year / make / model picker</a> on the home page,
-              or search a stock number directly. Sidebar filters switch on once the Search &amp; Discovery
-              app is installed — the year, make, and model tags are already on every part.
-            </p>
           {%- endfor -%}
         </form>
+        {%- endif -%}
+
+        <p class="small muted facets__help">
+          Can't find it? Call the yard at
+          <a class="link" href="tel:{{ settings.phone | remove: '-' | remove: ' ' }}">{{ settings.phone }}</a>
+          — not everything on the lot is listed yet.
+        </p>
       </aside>
 
       {%- comment -%} ------------------------------------------ results {%- endcomment -%}
       <div>
+        {%- if current_tags.size > 0 -%}
+          <div class="active-filters">
+            {%- for t in current_tags -%}
+              {%- liquid
+                assign rest = ''
+                for other in current_tags
+                  unless other == t
+                    assign oh = other | handleize
+                    if rest == ''
+                      assign rest = '/' | append: oh
+                    else
+                      assign rest = rest | append: '+' | append: oh
+                    endif
+                  endunless
+                endfor
+              -%}
+              <span class="chip">
+                {{ t }}
+                <a href="{{ collection.url }}{{ rest }}{{ sort_qs }}"
+                   aria-label="Remove filter: {{ t | escape }}">&times;</a>
+              </span>
+            {%- endfor -%}
+            <a class="link small" href="{{ collection.url }}{{ sort_qs }}">Clear all</a>
+          </div>
+        {%- endif -%}
+
         <div class="toolbar">
           <span class="toolbar__count">
             {{ collection.products_count }} part{% if collection.products_count != 1 %}s{% endif %}

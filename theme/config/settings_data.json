@@ -10,7 +10,7 @@
     "phone": "985-748-7195",
     "email": "abmotors@live.com",
     "address": "59174 Hwy 51\nAmite, Louisiana 70422",
-    "hours": "Monday \u2013 Friday: 8:00 AM \u2013 5:00 PM CST",
+    "hours": "Monday – Friday: 8:00 AM – 5:00 PM CST",
     "established": "1958",
     "warranty_days": "90",
     "ebay_url": "https://www.ebay.com/str/abmotorslouisana",
@@ -19,13 +19,14 @@
     "card_show_type": true,
     "card_show_sku": true,
     "card_show_grade": true,
-    "card_show_stock": true,
     "card_image_fit": "cover",
     "cart_type": "stay",
     "cart_notes": true,
     "ebay_feedback_count": "16,257",
     "ebay_feedback_pct": "99.2",
     "ebay_since": "2005",
-    "ebay_items_sold": "53,000"
+    "ebay_items_sold": "53,000",
+    "logo": "shopify://shop_images/ab-motors-logo-legacy.png",
+    "favicon": "shopify://shop_images/abfavicon_1.png"
   }
 }

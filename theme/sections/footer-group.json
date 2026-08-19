@@ -13,12 +13,12 @@
       "type": "footer",
       "settings": {
         "blurb": "Quality used OEM parts pulled, inspected, and warrantied from our 10-acre lot in Amite, Louisiana. Shipped nationwide, delivered free locally.",
-        "legal_menu": "footer"
+        "legal_menu": "legal"
       },
       "blocks": {
         "shop": {
           "type": "menu",
-          "settings": { "heading": "Shop Parts", "menu": "main-menu" }
+          "settings": { "heading": "Shop Parts", "menu": "shop-parts" }
         },
         "help": {
           "type": "menu",

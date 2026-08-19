@@ -15,12 +15,80 @@
       {%- endif -%}
     </div>
 
+    {%- comment -%}
+      The source collection is newest-first, and the yard photographs a whole car
+      in one sitting — so the raw first eight was six Chrysler 300s, three of them
+      the same $99.99 wheel. Scan deeper and spread the picks: one part per type,
+      at most two per vehicle. 50 is Liquid's ceiling for iterating a collection
+      without pagination, which is ample to fill eight tiles.
+    {%- endcomment -%}
     {%- assign products = section.settings.collection.products -%}
     <div class="grid grid--{{ section.settings.columns }}">
       {%- if products.size > 0 -%}
-        {%- for product in products limit: section.settings.count -%}
-          {% render 'card-product', card_product: product %}
+        {%- assign shown = 0 -%}
+        {%- assign seen_types = '|' -%}
+        {%- assign used_ids = '|' -%}
+        {%- assign vehicle_once = '|' -%}
+        {%- assign vehicle_twice = '|' -%}
+        {%- for product in products limit: 50 -%}
+          {%- if shown >= section.settings.count -%}{%- break -%}{%- endif -%}
+          {%- liquid
+            assign type_key = '|' | append: product.type | append: '|'
+
+            assign vehicle = ''
+            for t in product.tags
+              assign head = t | slice: 0, 4
+              assign year = head | plus: 0
+              if year > 1900 and year < 2100
+                assign vehicle = t | remove_first: head | strip
+                break
+              endif
+            endfor
+            assign vehicle_key = '|' | append: vehicle | append: '|'
+
+            assign take = true
+            if product.type != blank and seen_types contains type_key
+              assign take = false
+            endif
+            if vehicle != blank and vehicle_twice contains vehicle_key
+              assign take = false
+            endif
+          -%}
+          {%- if take -%}
+            {% render 'card-product', card_product: product %}
+            {%- liquid
+              assign shown = shown | plus: 1
+              assign used_ids = used_ids | append: product.id | append: '|'
+              assign seen_types = seen_types | append: product.type | append: '|'
+              if vehicle != blank
+                if vehicle_once contains vehicle_key
+                  assign vehicle_twice = vehicle_twice | append: vehicle | append: '|'
+                else
+                  assign vehicle_once = vehicle_once | append: vehicle | append: '|'
+                endif
+              endif
+            -%}
+          {%- endif -%}
         {%- endfor -%}
+
+        {%- comment -%}
+          The spread pass can come up short when the newest 50 are all one or two
+          cars. Top the grid back up with whatever is left, newest first, so the
+          row never renders with a hole in it.
+        {%- endcomment -%}
+        {%- if shown < section.settings.count -%}
+          {%- for product in products limit: 50 -%}
+            {%- if shown >= section.settings.count -%}{%- break -%}{%- endif -%}
+            {%- assign id_key = '|' | append: product.id | append: '|' -%}
+            {%- unless used_ids contains id_key -%}
+              {% render 'card-product', card_product: product %}
+              {%- liquid
+                assign shown = shown | plus: 1
+                assign used_ids = used_ids | append: product.id | append: '|'
+              -%}
+            {%- endunless -%}
+          {%- endfor -%}
+        {%- endif -%}
       {%- else -%}
         {%- for i in (1..section.settings.count) -%}
           {% render 'card-product' %}

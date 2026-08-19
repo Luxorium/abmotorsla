@@ -201,12 +201,6 @@
         "default": true
       },
       {
-        "type": "checkbox",
-        "id": "card_show_stock",
-        "label": "Show \"1 in stock\" flag",
-        "default": true
-      },
-      {
         "type": "select",
         "id": "card_image_fit",
         "label": "Image fit",

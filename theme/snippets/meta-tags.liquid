@@ -1,7 +1,15 @@
 {%- comment -%}
   Open Graph + JSON-LD. Parts get LocalBusiness context so a search for
   "alternator Amite LA" can connect the listing to the yard.
+
+  shop.name and product.description arrive HTML-escaped ("A&amp;B MOTORS"). That is
+  right for a meta tag, but a <script> body is raw text, so the entity survives the
+  JSON string and Google indexes the literal "A&amp;B MOTORS". Liquid has no unescape
+  filter, so undo the entities by hand — &amp; last, or "&amp;lt;" would decode twice.
 {%- endcomment -%}
+{%- liquid
+  assign shop_name = shop.name | replace: '&#39;', "'" | replace: '&quot;', '"' | replace: '&gt;', '>' | replace: '&lt;', '<' | replace: '&amp;', '&'
+-%}
 <meta property="og:site_name" content="{{ shop.name }}">
 <meta property="og:url" content="{{ canonical_url }}">
 <meta property="og:title" content="{{ page_title | escape }}">
@@ -23,7 +31,10 @@
 <meta name="twitter:card" content="summary_large_image">
 
 {%- if request.page_type == 'product' -%}
-  {%- assign variant = product.selected_or_first_available_variant -%}
+  {%- liquid
+    assign variant = product.selected_or_first_available_variant
+    assign ld_description = product.description | strip_html | replace: '&#39;', "'" | replace: '&quot;', '"' | replace: '&gt;', '>' | replace: '&lt;', '<' | replace: '&amp;', '&' | truncate: 600
+  -%}
   <script type="application/ld+json">
     {
       "@context": "https://schema.org",
@@ -31,7 +42,7 @@
       "name": {{ product.title | strip_html | json }},
       "url": {{ shop.url | append: product.url | json }},
       {% if product.featured_media %}"image": [{{ product.featured_media | image_url: width: 1200 | prepend: "https:" | json }}],{% endif %}
-      "description": {{ product.description | strip_html | truncate: 600 | json }},
+      "description": {{ ld_description | json }},
       "sku": {{ variant.sku | json }},
       "brand": { "@type": "Brand", "name": {{ product.vendor | json }} },
       "itemCondition": "https://schema.org/UsedCondition",
@@ -41,8 +52,122 @@
         "priceCurrency": {{ cart.currency.iso_code | json }},
         "availability": "{% if product.available %}https://schema.org/InStock{% else %}https://schema.org/OutOfStock{% endif %}",
         "url": {{ shop.url | append: product.url | json }},
-        "seller": { "@type": "AutoPartsStore", "name": {{ shop.name | json }} }
+        {%- comment -%}
+          Google drops the price from a rich result once priceValidUntil lapses, and
+          omitting it warns in Search Console. Every part is a one-off, so a rolling
+          year is the honest answer: the price holds until the part sells.
+        {%- endcomment -%}
+        "priceValidUntil": "{{ 'now' | date: '%s' | plus: 31536000 | date: '%Y-%m-%d' }}",
+        {%- comment -%}
+          Straight off /policies/refund-policy: 90 days from delivery, by mail. The
+          yard pays return shipping when the part is defective, misdescribed or
+          damaged, but the buyer pays it when they simply changed their mind — so
+          ReturnFeesCustomerResponsibility is the claim we can always stand behind.
+        {%- endcomment -%}
+        "hasMerchantReturnPolicy": {
+          "@type": "MerchantReturnPolicy",
+          "applicableCountry": "US",
+          "returnPolicyCategory": "https://schema.org/MerchantReturnFiniteReturnWindow",
+          "merchantReturnDays": {{ settings.warranty_days | default: 90 }},
+          "returnMethod": "https://schema.org/ReturnByMail",
+          "returnFees": "https://schema.org/ReturnFeesCustomerResponsibility"
+        },
+        {%- comment -%}
+          Shipping mirrors the ship:* tag, which is what the delivery profile charges
+          at checkout. Body panels and glass are never shipped, so they get no
+          shippingDetails at all rather than a rate we would refuse to honour.
+        {%- endcomment -%}
+        {%- liquid
+          assign ship_rate = 0
+          assign handle_min = 1
+          assign handle_max = 2
+          assign transit_min = 2
+          assign transit_max = 5
+          assign ships = true
+          if product.tags contains 'ship:pickup-only'
+            assign ships = false
+          elsif product.tags contains 'ship:freight-299'
+            assign ship_rate = 299.99
+            assign handle_min = 2
+            assign handle_max = 4
+            assign transit_min = 3
+            assign transit_max = 7
+          elsif product.tags contains 'ship:freight-199'
+            assign ship_rate = 199.99
+            assign handle_min = 2
+            assign handle_max = 4
+            assign transit_min = 3
+            assign transit_max = 7
+          endif
+        -%}
+        {%- if ships -%}
+        "shippingDetails": {
+          "@type": "OfferShippingDetails",
+          "shippingRate": {
+            "@type": "MonetaryAmount",
+            "value": "{{ ship_rate }}",
+            "currency": {{ cart.currency.iso_code | json }}
+          },
+          "shippingDestination": {
+            "@type": "DefinedRegion",
+            "addressCountry": "US"
+          },
+          "deliveryTime": {
+            "@type": "ShippingDeliveryTime",
+            "handlingTime": {
+              "@type": "QuantitativeValue",
+              "minValue": {{ handle_min }}, "maxValue": {{ handle_max }}, "unitCode": "DAY"
+            },
+            "transitTime": {
+              "@type": "QuantitativeValue",
+              "minValue": {{ transit_min }}, "maxValue": {{ transit_max }}, "unitCode": "DAY"
+            }
+          }
+        },
+        {%- endif -%}
+        "seller": { "@type": "AutoPartsStore", "name": {{ shop_name | json }} }
       }
+    }
+  </script>
+
+  {%- comment -%}
+    Mirrors the breadcrumb the page actually renders, so the trail Google shows
+    matches the one a visitor can click.
+  {%- endcomment -%}
+  <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        {
+          "@type": "ListItem",
+          "position": 1,
+          "name": "Home",
+          "item": {{ shop.url | json }}
+        },
+        {%- if collection -%}
+        {
+          "@type": "ListItem",
+          "position": 2,
+          "name": {{ collection.title | json }},
+          "item": {{ shop.url | append: collection.url | json }}
+        },
+        {%- elsif product.type != blank -%}
+        {%- assign type_query = product.type | url_encode -%}
+        {
+          "@type": "ListItem",
+          "position": 2,
+          "name": {{ product.type | json }},
+          "item": {{ shop.url | append: routes.search_url | append: '?q=' | append: type_query | json }}
+        },
+        {%- endif -%}
+        {
+          "@type": "ListItem",
+          "position": {% if collection or product.type != blank %}3{% else %}2{% endif %},
+          "name": {{ product.title | json }},
+          "item": {{ shop.url | append: product.url | json }}
+        }
+      ]
     }
   </script>
 {%- endif -%}
@@ -52,7 +177,7 @@
     {
       "@context": "https://schema.org",
       "@type": "AutoPartsStore",
-      "name": {{ shop.name | json }},
+      "name": {{ shop_name | json }},
       "url": {{ shop.url | json }},
       {% if settings.logo %}"logo": {{ settings.logo | image_url: width: 600 | prepend: "https:" | json }},{% endif %}
       "telephone": {{ settings.phone | json }},

@@ -7,7 +7,7 @@
           "type": "stat",
           "settings": {
             "value": "25,000+",
-            "label": "Parts in stock"
+            "label": "On the yard"
           }
         },
         "s2": {
@@ -20,8 +20,8 @@
         "s3": {
           "type": "stat",
           "settings": {
-            "value": "10 acres",
-            "label": "Of inventory"
+            "value": "9,300+",
+            "label": "Listed online"
           }
         },
         "s4": {
@@ -34,14 +34,14 @@
       },
       "block_order": [
         "s1",
-        "s2",
         "s3",
+        "s2",
         "s4"
       ],
       "settings": {
-        "eyebrow": "Used OEM parts \u00b7 Amite, Louisiana",
+        "eyebrow": "Used OEM parts · Amite, Louisiana",
         "heading": "The part you need is already on our lot.",
-        "subheading": "Search 25,000+ inspected parts pulled from our ten-acre yard. Save up to 50% off new, backed by a 90-day money-back warranty.",
+        "subheading": "Search 25,000+ parts on our ten-acre yard — 9,300+ listed online and growing. Save up to 50% off new, backed by a 90-day money-back warranty.",
         "search_placeholder": "Try \"2012 Silverado alternator\" or a stock number",
         "button_label": "Find My Part",
         "examples": "Engine, Transmission, Alternator, Tailgate, Wheel, Seat",
@@ -80,7 +80,7 @@
           "settings": {
             "icon": "phone",
             "title": "Talk to the yard",
-            "text": "985-748-7195, Mon\u2013Fri"
+            "text": "985-748-7195, Mon–Fri"
           }
         }
       },
@@ -202,7 +202,7 @@
       "settings": {
         "eyebrow": "Fresh inventory",
         "heading": "Just pulled",
-        "subheading": "New off the lot this week \u2014 every one photographed on our own racks.",
+        "subheading": "The newest parts on our racks — every one photographed here, never a stock photo.",
         "count": 8,
         "columns": 4,
         "background": "section--paper",
@@ -336,7 +336,7 @@
           "type": "step",
           "settings": {
             "title": "Find it",
-            "text": "Search by part, vehicle, or stock number \u2014 or call the yard and we'll look for you."
+            "text": "Search by part, vehicle, or stock number — or call the yard and we'll look for you."
           }
         },
         "s2": {
@@ -377,7 +377,7 @@
         "c2": {
           "type": "check",
           "settings": {
-            "text": "Photographed on our racks \u2014 you buy the part in the picture"
+            "text": "Photographed on our racks — you buy the part in the picture"
           }
         },
         "c3": {
@@ -402,18 +402,19 @@
       "settings": {
         "eyebrow": "A&B Motors Auto Recycling",
         "heading": "Family run since 1958.",
-        "text": "<p>We're a working salvage yard on ten acres of Highway 51, forty-five minutes east of Baton Rouge and an hour north of New Orleans. New parts cost what they cost \u2014 recycled OEM parts do the same job for up to half the price, and keep a good vehicle out of the crusher.</p>",
+        "text": "<p>We're a working salvage yard on ten acres of Highway 51, forty-five minutes east of Baton Rouge and an hour north of New Orleans. New parts cost what they cost — recycled OEM parts do the same job for up to half the price, and keep a good vehicle out of the crusher.</p>",
         "button_label": "About the yard",
         "button_url": "/pages/about",
         "button2_label": "Take the tour",
-        "button2_url": "/pages/tour"
+        "button2_url": "/pages/tour",
+        "image": "shopify://shop_images/ab_cover.jpg"
       }
     },
     "sell": {
       "type": "cta-banner",
       "settings": {
         "eyebrow": "Cash for cars",
-        "heading": "We buy cars and trucks \u2014 any year, any condition.",
+        "heading": "We buy cars and trucks — any year, any condition.",
         "text": "Wrecked, dead, or just done with it. Tell us what you've got and we'll make a cash offer, then haul it off ourselves.",
         "button_label": "Get a cash offer",
         "button_url": "/pages/sell-your-car",
@@ -427,7 +428,7 @@
         "heading": "Shop by your vehicle",
         "subheading": "Pick your make, model, and year. We'll show only the parts we actually have for it.",
         "button_label": "Find parts",
-        "hint": "Don't see your vehicle? Call 985-748-7195 \u2014 not everything on the lot is listed yet.",
+        "hint": "Don't see your vehicle? Call 985-748-7195 — not everything on the lot is listed yet.",
         "background": "section--paper"
       }
     }

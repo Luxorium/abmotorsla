@@ -25,7 +25,7 @@
     </div>
   </div>
 {%- else -%}
-  <article class="card">
+  <article class="card" data-product-id="{{ p.id }}">
     <div class="card__media{% if fit == 'contain' %} card__media--contain{% endif %}">
       {%- if img -%}
         {{ img | image_url: width: 800 | image_tag:
@@ -45,10 +45,6 @@
         {%- endif -%}
         {%- unless p.available -%}
           <span class="badge badge--sold">Sold</span>
-        {%- else -%}
-          {%- if settings.card_show_stock and p.selected_or_first_available_variant.inventory_quantity == 1 -%}
-            <span class="badge badge--amber">Only 1</span>
-          {%- endif -%}
         {%- endunless -%}
         {%- if settings.card_show_grade -%}
           {%- assign grade = p.metafields.abm.grade | default: p.metafields.custom.grade -%}
@@ -78,7 +74,7 @@
 
       <div class="card__meta">
         {%- if settings.card_show_sku and p.selected_or_first_available_variant.sku != blank -%}
-          <span>Stock&nbsp;<b>{{ p.selected_or_first_available_variant.sku }}</b></span>
+          <span>Part&nbsp;ID&nbsp;<b>{{ p.selected_or_first_available_variant.sku }}</b></span>
         {%- endif -%}
         {%- assign miles = p.metafields.abm.mileage -%}
         {%- if miles != blank -%}<span>{{ miles }} mi</span>{%- endif -%}

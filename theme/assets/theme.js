@@ -78,6 +78,7 @@
     }
     var rows = products.map(function (p) {
       var v = (p.variants && p.variants[0]) || {};
+      var price = parseFloat(p.price);
       var sku = v.sku ? '<b>' + esc(v.sku) + '</b>' : '';
       var type = p.type ? esc(p.type) : '';
       var meta = [type, sku].filter(Boolean).join(' &middot; ');
@@ -88,7 +89,7 @@
         '<span class="predictive__thumb">' + thumb + '</span>' +
         '<span><span class="predictive__title">' + esc(p.title) + '</span>' +
         (meta ? '<span class="predictive__meta">' + meta + '</span>' : '') + '</span>' +
-        '<span class="predictive__price">' + esc(p.price ? money(p.price) : '') + '</span>' +
+        '<span class="predictive__price">' + esc(isNaN(price) ? '' : money(Math.round(price * 100))) + '</span>' +
         '</a>';
     }).join('');
 
@@ -214,6 +215,180 @@
     }
   });
 
+  /* ------------------------------------- collection vehicle facet (YMM) */
+  // Same vehicles.json the home-page picker uses, driving Shopify's native tag
+  // filtering — /collections/all/ford+ford-ranger — so narrowing needs no filter
+  // app. Make/model/year cascade client-side; only "Find parts" navigates, so
+  // picking a vehicle costs one page load instead of three.
+  $$('[data-ymm-facet]').forEach(function (root) {
+    var makeSel = $('[data-ymmf-make]', root);
+    var modelSel = $('[data-ymmf-model]', root);
+    var yearSel = $('[data-ymmf-year]', root);
+    var applyBtn = $('[data-ymmf-apply]', root);
+    var clearWrap = $('[data-ymmf-clear]', root);
+    var clearLink = $('[data-ymmf-clear-link]', root);
+    var note = $('[data-ymmf-note]', root);
+    if (!makeSel || !modelSel || !yearSel || !applyBtn || !window.fetch) return;
+
+    var base = root.getAttribute('data-base') || '';
+    var sort = root.getAttribute('data-facet-sort') || '';
+    var current = (root.getAttribute('data-tags') || '').split('~').filter(Boolean);
+    var makes = [];
+    var data = null;
+    var hasActive = false;
+    var busy = false;
+
+    // Mirrors Shopify's own tag handleizing, which is what tag URLs are keyed on.
+    function handleize(s) {
+      return String(s).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+    }
+
+    function fill(sel, values, placeholder, selected) {
+      sel.innerHTML = '<option value="">' + placeholder + '</option>' +
+        values.map(function (v) {
+          return '<option value="' + esc(v) + '"' + (v === selected ? ' selected' : '') +
+            '>' + esc(v) + '</option>';
+        }).join('');
+    }
+
+    // "1994 Ford Ranger" / "Ford Ranger" / "Ford" -> parts, if we stock that vehicle.
+    // Longest make first, so "Land Rover" is not mistaken for a make called "Land".
+    function parseVehicle(tag) {
+      if (!data) return null;
+      var year = '';
+      var rest = tag;
+      var m = /^(\d{4})\s+(.+)$/.exec(tag);
+      if (m) { year = m[1]; rest = m[2]; }
+      for (var i = 0; i < makes.length; i++) {
+        var make = makes[i];
+        if (rest === make) return year ? null : { make: make, model: '', year: '' };
+        if (rest.indexOf(make + ' ') === 0) {
+          var model = rest.slice(make.length + 1);
+          if (data[make][model]) return { make: make, model: model, year: year };
+        }
+      }
+      return null;
+    }
+
+    // Keep every non-vehicle tag already on the URL, swap in the chosen vehicle.
+    function urlFor(vehicleTag) {
+      var keep = current.filter(function (t) { return !parseVehicle(t); });
+      var tags = keep.concat(vehicleTag ? [vehicleTag] : []).map(handleize);
+      return base + (tags.length ? '/' + tags.join('+') : '') +
+        (sort ? '?sort_by=' + encodeURIComponent(sort) : '');
+    }
+
+    function chosen() {
+      if (makeSel.value && modelSel.value && yearSel.value) {
+        return yearSel.value + ' ' + makeSel.value + ' ' + modelSel.value;
+      }
+      if (makeSel.value && modelSel.value) return makeSel.value + ' ' + modelSel.value;
+      if (makeSel.value) return makeSel.value;
+      return '';
+    }
+
+    function sync() { applyBtn.disabled = !(makeSel.value || hasActive); }
+
+    function models(make) { return Object.keys(data[make]).sort(); }
+    function years(make, model) {
+      return ((data[make] || {})[model] || []).slice().reverse().map(String);
+    }
+
+    on(makeSel, 'change', function () {
+      var make = makeSel.value;
+      yearSel.innerHTML = '<option value="">Any year</option>';
+      yearSel.disabled = true;
+      if (!make || !data || !data[make]) {
+        modelSel.innerHTML = '<option value="">Any model</option>';
+        modelSel.disabled = true;
+      } else {
+        fill(modelSel, models(make), 'Any model', '');
+        modelSel.disabled = false;
+      }
+      sync();
+    });
+
+    on(modelSel, 'change', function () {
+      var list = (data && modelSel.value) ? years(makeSel.value, modelSel.value) : [];
+      fill(yearSel, list, 'Any year', '');
+      yearSel.disabled = !list.length;
+      sync();
+    });
+
+    on(yearSel, 'change', sync);
+
+    on(applyBtn, 'click', function () {
+      if (busy) return;
+      busy = true;
+      applyBtn.disabled = true;
+      window.location.href = urlFor(chosen());
+    });
+
+    fetch(root.getAttribute('data-src'), { headers: { Accept: 'application/json' } })
+      .then(function (r) { return r.json(); })
+      .then(function (json) {
+        data = json.makes || {};
+        // Longest first for prefix matching; the <select> itself stays alphabetical.
+        makes = Object.keys(data).sort(function (a, b) { return b.length - a.length; });
+
+        var active = null;
+        for (var i = 0; i < current.length && !active; i++) active = parseVehicle(current[i]);
+        hasActive = Boolean(active);
+
+        fill(makeSel, Object.keys(data).sort(), 'Any make', active ? active.make : '');
+        if (active) {
+          fill(modelSel, models(active.make), 'Any model', active.model);
+          modelSel.disabled = false;
+          if (active.model) {
+            fill(yearSel, years(active.make, active.model), 'Any year', active.year);
+            yearSel.disabled = false;
+          }
+          if (clearWrap && clearLink) {
+            clearLink.href = urlFor('');
+            clearWrap.hidden = false;
+          }
+        }
+        sync();
+      })
+      .catch(function () {
+        if (note) {
+          note.hidden = false;
+          note.textContent = 'Vehicle list unavailable — use the search box, or call the yard.';
+        }
+      });
+  });
+
+  /* --------------------------------------------------- related parts */
+  // The page ships with the part's own category collection already rendered.
+  // If the part names a vehicle, upgrade that to parts which actually fit it,
+  // fetched from the tag-filtered cards view. Any failure leaves the baseline.
+  $$('[data-related]').forEach(function (root) {
+    var url = root.getAttribute('data-related-url');
+    var heading = root.getAttribute('data-related-heading');
+    var exclude = root.getAttribute('data-related-exclude');
+    var grid = $('[data-related-grid]', root);
+    var title = $('[data-related-title]', root);
+    if (!url || !grid || !window.fetch) return;
+
+    fetch(url, { headers: { Accept: 'text/html' } })
+      .then(function (r) { return r.ok ? r.text() : Promise.reject(); })
+      .then(function (html) {
+        var holder = document.createElement('div');
+        holder.innerHTML = html;
+        var cards = $$('.card', holder).filter(function (c) {
+          return c.getAttribute('data-product-id') !== exclude;
+        }).slice(0, 4);
+
+        // One lonely card is worse than the category row we already have.
+        if (cards.length < 2) return;
+
+        grid.innerHTML = '';
+        cards.forEach(function (c) { grid.appendChild(c); });
+        if (title && heading) title.textContent = heading;
+      })
+      .catch(function () { /* keep the server-rendered category row */ });
+  });
+
   /* ------------------------------------------------------------ gallery */
   $$('[data-gallery]').forEach(function (gallery) {
     var main = $('[data-gallery-main]', gallery);
@@ -258,6 +433,9 @@
     });
   }
   $$('[data-sort]').forEach(function (sel) {
+    // Only the <select> itself. A change event from any control inside a container
+    // that also carried data-sort would bubble up and read .value off the container.
+    if (sel.tagName !== 'SELECT') return;
     on(sel, 'change', function () {
       var url = new URL(window.location.href);
       url.searchParams.set('sort_by', sel.value);
@@ -413,16 +591,19 @@
       e.preventDefault();
       var btn = $('[data-add-button]', form);
       var label = btn ? btn.textContent : '';
+      var ship = $('[name="properties[_ship]"]', form);
+      var item = {
+        id: Number($('[name="id"]', form).value),
+        quantity: Number(($('[name="quantity"]', form) || { value: 1 }).value)
+      };
+      if (ship) item.properties = { _ship: ship.value };
       if (btn) { btn.setAttribute('aria-disabled', 'true'); btn.textContent = 'Adding…'; }
 
       fetch('/cart/add.js', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
         body: JSON.stringify({
-          items: [{
-            id: Number($('[name="id"]', form).value),
-            quantity: Number(($('[name="quantity"]', form) || { value: 1 }).value)
-          }]
+          items: [item]
         })
       })
         .then(function (r) { return r.json().then(function (b) { return { ok: r.ok, body: b }; }); })
