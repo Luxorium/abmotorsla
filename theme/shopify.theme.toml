@@ -3,7 +3,12 @@
 #
 #   shopify theme push -e live -f      publish changes to the storefront customers see
 #   shopify theme push -e staging      upload to a preview copy, leaving live alone
-#   shopify theme dev  -e live         local server rendering real products, touches nothing
+#   shopify theme dev  -e live         local server rendering real products
+#
+# WARNING: `theme dev -e live` is NOT a sandbox. This environment pins the
+# published theme and sets allow-live, so the CLI attaches to theme 160056508613
+# and syncs every local edit straight to it as you type — including broken
+# intermediate states. Use `-e staging` to develop against an unpublished copy.
 
 [environments.live]
 store = "5faf0h-z1.myshopify.com"

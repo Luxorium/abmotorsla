@@ -1,7 +1,7 @@
 # abmotorsla.com — A&B Motors storefront
 
 The Shopify theme for **abmotorsla.com** (store `5faf0h-z1.myshopify.com`), built to sell the
-salvage inventory that [CoreYard](../abmotors-to-shopify) publishes from the yard system.
+salvage inventory that [CoreYard](../coreyard) publishes from the yard system.
 
 Plain **Liquid + CSS + JavaScript**. No framework, no build step, no npm install.
 
@@ -60,7 +60,7 @@ product page, in the cart, and in the cart drawer. Change `freight.json`, then r
 ```bash
 # 1. link the local folder to the store (once)
 cd theme
-shopify theme dev --store 5faf0h-z1.myshopify.com
+shopify theme dev -e staging
 #    → serves http://127.0.0.1:9292 rendering REAL products through this theme,
 #      hot-reloading as files change. Nothing on the live site is touched.
 
