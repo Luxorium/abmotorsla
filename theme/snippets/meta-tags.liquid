@@ -147,15 +147,38 @@
 {%- endif -%}
 
 {%- if request.page_type == 'index' -%}
+  {%- comment -%}
+    sameAs is how Google connects this website to the same business it already knows
+    from eBay, Facebook and the map listing. Each one is a setting, so a link that
+    changes never needs a code change — and an empty setting drops out of the array
+    rather than publishing an empty string.
+  {%- endcomment -%}
+  {%- liquid
+    assign profiles = ''
+    if settings.ebay_url != blank
+      assign profiles = profiles | append: settings.ebay_url | append: '~'
+    endif
+    if settings.facebook_url != blank
+      assign profiles = profiles | append: settings.facebook_url | append: '~'
+    endif
+    if settings.gbp_url != blank
+      assign profiles = profiles | append: settings.gbp_url | append: '~'
+    endif
+    assign profiles = profiles | split: '~'
+  -%}
   <script type="application/ld+json">
     {
       "@context": "https://schema.org",
       "@type": "AutoPartsStore",
       "name": {{ shop_name | json }},
       "url": {{ shop.url | json }},
-      {% if settings.logo %}"logo": {{ settings.logo | image_url: width: 600 | prepend: "https:" | json }},{% endif %}
+      {% if settings.logo %}"logo": {{ settings.logo | image_url: width: 600 | prepend: "https:" | json }},
+      "image": {{ settings.logo | image_url: width: 1200 | prepend: "https:" | json }},{% endif %}
       "telephone": {{ settings.phone | json }},
       "email": {{ settings.email | json }},
+      {%- if settings.established != blank %}
+      "foundingDate": {{ settings.established | json }},{% endif %}
+      "priceRange": "$$",
       "address": {
         "@type": "PostalAddress",
         "streetAddress": "59174 Hwy 51",
@@ -164,7 +187,40 @@
         "postalCode": "70422",
         "addressCountry": "US"
       },
-      "openingHours": "Mo-Fr 08:00-17:00"
+      {%- comment -%}
+        Both halves or neither. A coordinate with one side missing puts the yard on
+        the equator, which is worse than publishing no coordinate at all.
+      {%- endcomment -%}
+      {%- if settings.geo_lat != blank and settings.geo_lng != blank %}
+      "geo": {
+        "@type": "GeoCoordinates",
+        "latitude": {{ settings.geo_lat | json }},
+        "longitude": {{ settings.geo_lng | json }}
+      },{% endif %}
+      {%- comment -%}
+        The towns the yard actually delivers to free, straight off the shipping page.
+        Claiming a wider area than the truck goes is the kind of thing Google's local
+        results and an annoyed customer both catch.
+      {%- endcomment -%}
+      "areaServed": [
+        { "@type": "AdministrativeArea", "name": "Tangipahoa Parish, Louisiana" },
+        { "@type": "City", "name": "Amite, LA" },
+        { "@type": "City", "name": "Hammond, LA" },
+        { "@type": "City", "name": "Independence, LA" },
+        { "@type": "City", "name": "Kentwood, LA" },
+        { "@type": "City", "name": "Ponchatoula, LA" },
+        { "@type": "City", "name": "Roseland, LA" },
+        { "@type": "City", "name": "Tickfaw, LA" }
+      ],
+      {%- if profiles.size > 0 %}
+      "sameAs": [{% for url in profiles %}{{ url | json }}{% unless forloop.last %}, {% endunless %}{% endfor %}],{% endif %}
+      "openingHours": "Mo-Fr 08:00-17:00",
+      "openingHoursSpecification": {
+        "@type": "OpeningHoursSpecification",
+        "dayOfWeek": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"],
+        "opens": "08:00",
+        "closes": "17:00"
+      }
     }
   </script>
 {%- endif -%}
