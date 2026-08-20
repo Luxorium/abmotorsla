@@ -37,7 +37,7 @@
         <div class="grid grid--{{ section.settings.columns }}">
           {%- for item in search.results -%}
             {%- if item.object_type == 'product' -%}
-              {% render 'card-product', card_product: item, lazy: forloop.first %}
+              {% render 'card-product', card_product: item, eager: forloop.first %}
             {%- else -%}
               <article class="card">
                 <div class="card__body">

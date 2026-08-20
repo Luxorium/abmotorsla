@@ -175,6 +175,37 @@
         <div><dt>Warranty</dt><dd>{{ warranty }}-day money back</dd></div>
       </dl>
 
+      {%- comment -%}
+        Links to the vehicle collections this part belongs to. A shopper who has found the
+        wrong alternator for their Ranger is one click from every other Ranger part, which
+        is the question they actually came with.
+
+        It is also how those 92 collections get internal links: nothing else on the site
+        points at them except the /collections index, and a page reachable only from one
+        index is a page search engines treat as an afterthought.
+
+        Categories are excluded by name so this lists vehicles only — same shared list the
+        breadcrumb uses.
+      {%- endcomment -%}
+      {%- capture category_handles -%}{%- render 'category-handles' -%}{%- endcapture -%}
+      {%- assign categories = category_handles | strip | split: ',' -%}
+      {%- assign internal = 'all,just-pulled,home-page-picks' | split: ',' -%}
+      {%- assign vehicle_links = '' -%}
+      {%- for c in product.collections -%}
+        {%- unless categories contains c.handle or internal contains c.handle -%}
+          {%- capture vehicle_links -%}{{ vehicle_links }}<a class="link" href="{{ c.url }}">{{ c.title }}</a>~{%- endcapture -%}
+        {%- endunless -%}
+      {%- endfor -%}
+      {%- assign vehicle_list = vehicle_links | split: '~' -%}
+      {%- if vehicle_list.size > 0 -%}
+        <p class="small muted" style="margin-top:14px;">
+          More from this vehicle:
+          {%- for link in vehicle_list -%}
+            {{ link }}{%- unless forloop.last %} &middot; {% endunless -%}
+          {%- endfor -%}
+        </p>
+      {%- endif -%}
+
       {%- if section.settings.show_share -%}
         <p class="small muted" style="margin-top:14px;">
           Part ID {{ variant.sku }} &middot; Ask about this part: <a class="link" href="mailto:{{ settings.email }}?subject=Part%20{{ variant.sku | url_encode }}">{{ settings.email }}</a>

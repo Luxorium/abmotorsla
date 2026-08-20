@@ -1,6 +1,13 @@
 {%- comment -%}
   Product card for a one-of-a-kind salvage part.
-  Accepts: card_product (product), lazy (boolean, default true)
+  Accepts: card_product (product), eager (boolean, default false)
+
+  Pass eager: true for the one image likely to be the largest thing in the first
+  screenful — the LCP candidate — and leave every other card lazy. This used to take a
+  `lazy` boolean and the two grid callers passed `lazy: forloop.first`, which inverted
+  it: the first card, the one above the fold, was the only lazy image on the page, and
+  all twenty-three below it loaded eagerly. Naming the flag after the exception rather
+  than the default makes that mistake harder to make again.
 
   Every part is a single unit with its own stock number, so the card leads with
   what a yard buyer actually compares: part type, the vehicle it came off,
@@ -11,7 +18,7 @@
   assign img = p.featured_media
   assign fit = settings.card_image_fit | default: 'cover'
   assign loading = 'lazy'
-  if lazy == false
+  if eager
     assign loading = 'eager'
   endif
 -%}

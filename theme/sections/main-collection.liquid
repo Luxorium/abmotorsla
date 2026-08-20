@@ -130,7 +130,7 @@
         {%- if collection.products.size > 0 -%}
           <div class="grid grid--{{ section.settings.columns }}">
             {%- for product in collection.products -%}
-              {% render 'card-product', card_product: product, lazy: forloop.first %}
+              {% render 'card-product', card_product: product, eager: forloop.first %}
             {%- endfor -%}
           </div>
           {% render 'pagination', paginate: paginate %}

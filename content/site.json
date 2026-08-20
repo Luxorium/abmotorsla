@@ -1265,5 +1265,120 @@
       "description": "Used Toyota Sienna parts on the shelf at our yard in Amite, Louisiana covering model years 1998 to 2025. Mostly engines and transmissions, interior parts, body panels and doors. A part that came off a Toyota Sienna often fits several other vehicles on the same platform — the fitment list on every listing spells out exactly which ones, and the photos show the actual part on our rack, casting numbers and all. Every part carries the 90-day money-back warranty. Most ship free in the lower 48; body panels and glass are pickup or free local delivery only. If you want fitment confirmed before you order, call 985-748-7195 with your VIN and we will check it against the interchange for you — no charge."
     }
   ],
-  "_vehicle_comment": "Vehicle collections for search. Tag rules, matched EQUALS against the year/make/model tags CoreYard already writes. Cut lines: makes with 10+ parts, models with 100+, measured 2026-08-20 — see docs/vehicle-collection-candidates.md. Create them with store_setup.py --vehicles (--dry-run first). Copy is per-vehicle on purpose: the models and categories named in each one are that vehicle's real stock, not a template with the name swapped."
+  "_vehicle_comment": "Vehicle collections for search. Tag rules, matched EQUALS against the year/make/model tags CoreYard already writes. Cut lines: makes with 10+ parts, models with 100+, measured 2026-08-20 — see docs/vehicle-collection-candidates.md. Create them with store_setup.py --vehicles (--dry-run first). Copy is per-vehicle on purpose: the models and categories named in each one are that vehicle's real stock, not a template with the name swapped.",
+  "redirects": [
+    {
+      "path": "/About.html",
+      "target": "/pages/about"
+    },
+    {
+      "path": "/ContactUs.html",
+      "target": "/pages/contact"
+    },
+    {
+      "path": "/Home.html",
+      "target": "/"
+    },
+    {
+      "path": "/Location.html",
+      "target": "/pages/contact"
+    },
+    {
+      "path": "/SellaCar.html",
+      "target": "/pages/sell-your-car"
+    },
+    {
+      "path": "/Staff.html",
+      "target": "/pages/about"
+    },
+    {
+      "path": "/Tour.html",
+      "target": "/pages/tour"
+    },
+    {
+      "path": "/Ebay.html",
+      "target": "/pages/about"
+    },
+    {
+      "path": "/Specialty.html",
+      "target": "/collections"
+    },
+    {
+      "path": "/about/",
+      "target": "/pages/about"
+    },
+    {
+      "path": "/contact/",
+      "target": "/pages/contact"
+    },
+    {
+      "path": "/sell-a-car/",
+      "target": "/pages/sell-your-car"
+    },
+    {
+      "path": "/tour/",
+      "target": "/pages/tour"
+    },
+    {
+      "path": "/about",
+      "target": "/pages/about"
+    },
+    {
+      "path": "/contact",
+      "target": "/pages/contact"
+    },
+    {
+      "path": "/tour",
+      "target": "/pages/tour"
+    },
+    {
+      "path": "/sell-your-car",
+      "target": "/pages/sell-your-car"
+    },
+    {
+      "path": "/sell-a-car",
+      "target": "/pages/sell-your-car"
+    },
+    {
+      "path": "/junk-cars",
+      "target": "/pages/sell-your-car"
+    },
+    {
+      "path": "/warranty",
+      "target": "/pages/warranty-returns"
+    },
+    {
+      "path": "/returns",
+      "target": "/pages/warranty-returns"
+    },
+    {
+      "path": "/shipping",
+      "target": "/pages/shipping"
+    },
+    {
+      "path": "/freight",
+      "target": "/pages/freight"
+    },
+    {
+      "path": "/shipping-policy",
+      "target": "/policies/shipping-policy"
+    },
+    {
+      "path": "/parts",
+      "target": "/collections"
+    },
+    {
+      "path": "/inventory",
+      "target": "/collections"
+    },
+    {
+      "path": "/used-auto-parts",
+      "target": "/collections"
+    },
+    {
+      "path": "/blog",
+      "target": "/blogs/news"
+    }
+  ],
+  "_redirects_comment": "Legacy URLs that 404 today. The .html and trailing-slash paths are real: they came out of the Wayback Machine's index of the two previous abmotorsla.com sites (a static .html site, then WordPress), so anything still linking to them — directories, Facebook, old listings — currently lands on a 404 and its link equity is thrown away. The bare short forms are what people type. Apply with store_setup.py --redirects."
 }

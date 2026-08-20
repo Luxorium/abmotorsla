@@ -10,6 +10,7 @@ empty manual collection so it can become a smart one) is opt-in.
     python3 scripts/store_setup.py --collections --pages --policies --menus
     python3 scripts/store_setup.py --vehicles --dry-run   # what the vehicle pages would do
     python3 scripts/store_setup.py --vehicles             # create/update them
+    python3 scripts/store_setup.py --redirects --dry-run  # legacy URL redirects
     python3 scripts/store_setup.py --activate --dry-run
     python3 scripts/store_setup.py --activate            # the 9.4k flip, resumable
 
@@ -40,6 +41,7 @@ DEFAULT_ENV = pathlib.Path(
 
 REQUIRED_SCOPES = {
     "collections": ["write_products"],
+    "redirects": ["write_content"],
     "pages": ["write_online_store_pages"],
     "menus": ["write_online_store_navigation"],
     "policies": ["write_legal_policies"],
@@ -417,6 +419,54 @@ def cmd_menus(gql: Shopify, site: dict) -> None:
 
 
 # ──────────────────────────────────────────────────────────────── activate ──
+# ────────────────────────────────────────────────────────────── redirects ──
+def cmd_redirects(gql: Shopify, site: dict, dry_run: bool = False) -> None:
+    """Point the old site's URLs at the new ones.
+
+    abmotorsla.com has had two lives before this one — a static .html site and a
+    WordPress build — and their URLs are still indexed and still linked from directories
+    and old listings. Every one of them 404s today, which throws away whatever authority
+    those links carry. A redirect is the whole fix.
+    """
+    specs = site.get("redirects") or []
+    if not specs:
+        print("  ! none defined in site.json")
+        return
+
+    for spec in specs:
+        path, target = spec["path"], spec["target"]
+        d = gql(
+            "query($q:String!){ urlRedirects(first:1, query:$q){ nodes{ id path target } } }",
+            {"q": f"path:{path}"},
+        )
+        nodes = [n for n in d["urlRedirects"]["nodes"] if n["path"] == path]
+        existing = nodes[0] if nodes else None
+
+        if existing and existing["target"] == target:
+            print(f"    {path:<22} -> {target:<28} already set")
+            continue
+        if dry_run:
+            verb = "would update" if existing else "would create"
+            print(f"    {path:<22} -> {target:<28} {verb}")
+            continue
+
+        if existing:
+            d = gql(
+                "mutation($id:ID!,$r:UrlRedirectInput!){ urlRedirectUpdate(id:$id, urlRedirect:$r){ userErrors{ field message } } }",
+                {"id": existing["id"], "r": {"path": path, "target": target}},
+            )
+            res, verb = d["urlRedirectUpdate"], "updated"
+        else:
+            d = gql(
+                "mutation($r:UrlRedirectInput!){ urlRedirectCreate(urlRedirect:$r){ userErrors{ field message } } }",
+                {"r": {"path": path, "target": target}},
+            )
+            res, verb = d["urlRedirectCreate"], "created"
+
+        print(f"  ! {path}: {res['userErrors']}" if res["userErrors"]
+              else f"    {path:<22} -> {target:<28} {verb}")
+
+
 def online_store_publication(gql: Shopify) -> str | None:
     d = gql("{ publications(first:20){ nodes{ id name } } }")
     for p in d["publications"]["nodes"]:
@@ -506,6 +556,7 @@ def main() -> None:
     ap.add_argument("--check", action="store_true", help="print scopes and current store state")
     ap.add_argument("--collections", action="store_true")
     ap.add_argument("--vehicles", action="store_true", help="the make/model vehicle collections in site.json")
+    ap.add_argument("--redirects", action="store_true", help="legacy URL redirects from the old sites")
     ap.add_argument("--pages", action="store_true")
     ap.add_argument("--policies", action="store_true")
     ap.add_argument("--menus", action="store_true")
@@ -517,7 +568,7 @@ def main() -> None:
     ap.add_argument("--workers", type=int, default=4)
     args = ap.parse_args()
 
-    if not any([args.check, args.collections, args.vehicles, args.pages, args.policies, args.menus, args.activate, args.all]):
+    if not any([args.check, args.collections, args.vehicles, args.redirects, args.pages, args.policies, args.menus, args.activate, args.all]):
         ap.print_help()
         return
 
@@ -542,6 +593,10 @@ def main() -> None:
             print("  ! none defined in site.json")
         elif require(scopes, "collections"):
             cmd_collections(gql, specs, args.replace_empty, args.dry_run)
+    if args.redirects or args.all:
+        print("redirects:" + (" (dry run, nothing written)" if args.dry_run else ""))
+        if require(scopes, "redirects"):
+            cmd_redirects(gql, site, args.dry_run)
     if args.pages or args.all:
         print("pages:")
         if require(scopes, "pages"):
