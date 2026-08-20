@@ -37,15 +37,62 @@
       The home page, /collections/all and search have no page_description, so without a
       fallback they shipped no meta description at all — the home page most of all, which
       is the one Google quotes for the business.
+
+      One shared fallback is its own problem, though. Every tag view, every search and
+      every paginated page inherited the same shop.description, so a single string was
+      repeated across thousands of URLs. Compose from what the page actually is first,
+      and fall back to the store description only when there is nothing better to say.
+
+      Tags are checked before page_description on purpose: a tag view of a real
+      collection inherits that collection's description, so /collections/wheels and
+      /collections/wheels/ford would otherwise ship the identical description.
     {%- endcomment -%}
+    {%- liquid
+      assign meta_description = ''
+
+      if current_tags.size > 0
+        assign tag_list = current_tags | join: ', ' | truncate: 60
+        if collection.title != blank and collection.handle != 'all'
+          assign meta_description = 'Used ' | append: tag_list | append: ' ' | append: collection.title | append: ' in stock at A&B Motors, Amite LA. Photographed on our own racks, 90-day warranty.'
+        else
+          assign meta_description = 'Used ' | append: tag_list | append: ' parts in stock at A&B Motors, Amite LA. Pulled, inspected and photographed on our own racks. 90-day warranty.'
+        endif
+      elsif request.page_type == 'search' and search.performed
+        assign meta_description = 'Used OEM parts matching "' | append: search.terms | append: '" at A&B Motors in Amite, LA. Real photos of the actual part, 90-day warranty, most ship free.'
+      endif
+
+      if meta_description == blank
+        assign meta_description = page_description
+      endif
+
+      if meta_description == blank and collection.title != blank
+        assign meta_description = 'Used ' | append: collection.title | append: ' from A&B Motors in Amite, LA — recycled OEM parts with a 90-day warranty. Most ship free in the lower 48.'
+      endif
+
+      assign meta_description = meta_description | default: shop.description | default: shop.name
+
+      if current_page != 1
+        assign meta_description = meta_description | append: ' Page ' | append: current_page | append: '.'
+      endif
+    -%}
     {%- comment -%}
       escape_once, not escape: shop.description already stores "&amp;", so escaping it a
       second time shipped "A&amp;amp;B Motors" — which Google would print literally.
-      escape_once leaves an existing entity alone and still escapes a bare "&".
+      escape_once leaves an existing entity alone and still escapes a bare "&", which is
+      what the composed strings above rely on for "A&B Motors".
     {%- endcomment -%}
-    {%- assign meta_description = page_description | default: shop.description | default: shop.name -%}
     {%- if meta_description != blank -%}
       <meta name="description" content="{{ meta_description | strip_html | escape_once }}">
+    {%- endif -%}
+
+    {%- comment -%}
+      Indexation policy. A tag view is the same products behind a filter and a search
+      page is generated on demand, so neither earns its own entry in the index — the
+      real collections carry that value. "follow" keeps them crawlable so link equity
+      still reaches the products.
+    {%- endcomment -%}
+    {%- if current_tags.size > 0 or request.page_type == 'search' -%}
+      <meta name="robots" content="noindex,follow">
     {%- endif -%}
 
     {% render 'meta-tags' %}
