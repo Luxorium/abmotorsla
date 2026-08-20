@@ -1,0 +1,75 @@
+{%- comment -%}
+  The product breadcrumb, resolved once and rendered two ways, so the trail Google is
+  shown and the trail a visitor can click cannot drift apart.
+
+    {% render 'product-crumb', format: 'json', product: product, collection: collection %}
+    {% render 'product-crumb', format: 'html', product: product, collection: collection %}
+
+  Rung 2 used to point at /search?q=<type>. Google treats internal search results as low
+  value, and the click sent shoppers to a slower, worse page than the category collection
+  that already exists. The search URL survives only as a last resort, so a part whose type
+  matches no category still gets a trail.
+
+  Rung 2 names a CATEGORY, so it matches against the part-type collections by name rather
+  than taking whatever product.collections happens to list first. A part is in its vehicle
+  collections too — a Ford Ranger alternator is in "Used Ford Parts" and "Used Ford Ranger
+  Parts" as well as "Electrical & Modules" — and "Home / Used Ford Parts / alternator" is
+  the wrong trail: it says where the part came from, not what it is.
+
+  The category list lives in the category-handles snippet, shared with /collections.
+{%- endcomment -%}
+{%- capture category_handles -%}{%- render 'category-handles' -%}{%- endcapture -%}
+{%- liquid
+  assign categories = category_handles | strip | split: ','
+  assign crumb_title = ''
+  assign crumb_url = ''
+
+  if collection and categories contains collection.handle
+    assign crumb_title = collection.title
+    assign crumb_url = collection.url
+  else
+    for c in product.collections
+      if categories contains c.handle
+        assign crumb_title = c.title
+        assign crumb_url = c.url
+        break
+      endif
+    endfor
+  endif
+
+  if crumb_url == blank and product.type != blank
+    assign type_query = product.type | url_encode
+    assign crumb_title = product.type
+    assign crumb_url = routes.search_url | append: '?q=' | append: type_query
+  endif
+-%}
+{%- if format == 'html' -%}
+  <nav class="breadcrumbs" aria-label="Breadcrumb">
+    <a href="{{ routes.root_url }}">Home</a><span>/</span>
+    {%- if crumb_url != blank -%}
+      <a href="{{ crumb_url }}">{{ crumb_title }}</a><span>/</span>
+    {%- endif -%}
+    <span class="muted">{{ product.title | truncate: 60 }}</span>
+  </nav>
+{%- else -%}
+        {
+          "@type": "ListItem",
+          "position": 1,
+          "name": "Home",
+          "item": {{ shop.url | json }}
+        },
+        {%- if crumb_url != blank -%}
+        {
+          "@type": "ListItem",
+          "position": 2,
+          "name": {{ crumb_title | json }},
+          "item": {{ shop.url | append: crumb_url | json }}
+        },
+        {%- endif -%}
+        {
+          "@type": "ListItem",
+          "position": {% if crumb_url != blank %}3{% else %}2{% endif %},
+          "name": {{ product.title | json }},
+          "item": {{ shop.url | append: product.url | json }}
+        }
+{%- endif -%}

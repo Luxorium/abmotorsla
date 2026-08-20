@@ -117,7 +117,7 @@
         "type": "textarea",
         "id": "hours",
         "label": "Business hours",
-        "default": "Monday – Friday: 8:00 AM – 5:00 PM CST"
+        "default": "Monday – Friday: 8:00 AM – 5:00 PM Central"
       },
       {
         "type": "text",
@@ -147,6 +147,30 @@
         "id": "map_query",
         "label": "Google Maps query",
         "default": "A%26B+Motors+59174+Hwy+51+Amite+LA+70422"
+      },
+      {
+        "type": "url",
+        "id": "gbp_url",
+        "label": "Google Business Profile URL",
+        "info": "The public link to your Google listing. Feeds the sameAs on the home page, which is how Google ties this site to the map listing."
+      },
+      {
+        "type": "header",
+        "content": "Map coordinates"
+      },
+      {
+        "type": "paragraph",
+        "content": "Optional. Right-click the yard in Google Maps and choose the lat/long it shows. Both must be filled or neither is published — a wrong coordinate is worse than none."
+      },
+      {
+        "type": "text",
+        "id": "geo_lat",
+        "label": "Latitude"
+      },
+      {
+        "type": "text",
+        "id": "geo_lng",
+        "label": "Longitude"
       },
       {
         "type": "header",
@@ -242,6 +266,21 @@
         "id": "cart_notes",
         "label": "Enable order notes",
         "default": true
+      }
+    ]
+  },
+  {
+    "name": "Search engines",
+    "settings": [
+      {
+        "type": "paragraph",
+        "content": "Verify the domain in Search Console with a DNS TXT record instead where you can — that covers www, non-www and http/https at once, and it survives publishing a different theme. This field is only needed for a URL-prefix property."
+      },
+      {
+        "type": "text",
+        "id": "google_site_verification",
+        "label": "Google site verification token",
+        "info": "The token only, not the whole meta tag."
       }
     ]
   },

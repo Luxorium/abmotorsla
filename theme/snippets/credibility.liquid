@@ -2,10 +2,19 @@
   Why a stranger should trust a brand-new website: because the business behind it
   has a two-decade public record somewhere else. Every number here is a setting,
   so it stays accurate without a code change.
+
+  Every figure here is eBay's, so the badge says so itself rather than leaving it
+  to the link at the end — five stars beside a store name read as a rating OF that
+  store. These numbers must never become AggregateRating markup: review markup for
+  ratings earned on another marketplace is self-serving, and it is a manual-action
+  risk rather than a rich result.
 {%- endcomment -%}
 {%- if settings.ebay_feedback_count != blank -%}
   <div class="cred">
-    <span class="stars" aria-hidden="true">★★★★★</span>
+    <span class="cred__rating">
+      <span class="cred__source">eBay seller rating</span>
+      <span class="stars" aria-hidden="true">★★★★★</span>
+    </span>
     <span class="cred__stat">
       <b>{{ settings.ebay_feedback_pct }}%</b>
       <span>positive feedback</span>

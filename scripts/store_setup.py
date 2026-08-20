@@ -8,6 +8,8 @@ empty manual collection so it can become a smart one) is opt-in.
 
     python3 scripts/store_setup.py --check
     python3 scripts/store_setup.py --collections --pages --policies --menus
+    python3 scripts/store_setup.py --vehicles --dry-run   # what the vehicle pages would do
+    python3 scripts/store_setup.py --vehicles             # create/update them
     python3 scripts/store_setup.py --activate --dry-run
     python3 scripts/store_setup.py --activate            # the 9.4k flip, resumable
 
@@ -193,25 +195,50 @@ def find_collection(gql: Shopify, handle: str) -> dict | None:
 def collection_input(spec: dict) -> dict:
     if spec.get("in_stock_only"):
         rules = [{"column": "VARIANT_INVENTORY", "relation": "GREATER_THAN", "condition": "0"}]
+    elif spec.get("tag"):
+        # Vehicle collections. CoreYard already writes "Ford" and "Ford Ranger" as tags,
+        # so an exact TAG match is the whole rule — no catalog change needed. EQUALS, not
+        # CONTAINS: "Ford" CONTAINS would also sweep in every Ford Ranger and Ford Fusion,
+        # and the make collection is supposed to be the union, not a duplicate of it.
+        rules = [{"column": "TAG", "relation": "EQUALS", "condition": spec["tag"]}]
     else:
         # Shopify calls the product-type column TYPE, not PRODUCT_TYPE.
         rules = [
             {"column": "TYPE", "relation": "CONTAINS", "condition": term}
             for term in spec["contains"]
         ]
-    return {
+    payload = {
         "handle": spec["handle"],
         "title": spec["title"],
         "descriptionHtml": f"<p>{spec['description']}</p>",
         "sortOrder": spec.get("sort", "CREATED_DESC"),
         "ruleSet": {"appliedDisjunctively": True, "rules": rules},
     }
+    # Without this the body copy becomes the meta description, which is far past the
+    # ~160 characters Google will show. Set it explicitly where the spec says so.
+    if spec.get("seo_title") or spec.get("seo_description"):
+        payload["seo"] = {
+            "title": spec.get("seo_title", spec["title"]),
+            "description": spec.get("seo_description", ""),
+        }
+    return payload
 
 
-def cmd_collections(gql: Shopify, site: dict, replace_empty: bool) -> None:
-    for spec in site["collections"]:
+def cmd_collections(gql: Shopify, specs: list[dict], replace_empty: bool, dry_run: bool = False) -> None:
+    for spec in specs:
         existing = find_collection(gql, spec["handle"])
         payload = collection_input(spec)
+
+        if dry_run:
+            rules = payload["ruleSet"]["rules"]
+            verb = "would update" if existing else "would create"
+            if existing and not existing.get("ruleSet"):
+                verb = "manual collection in the way — would skip"
+            rule_text = ", ".join(f"{r['column']} {r['relation']} {r['condition']!r}" for r in rules[:3])
+            if len(rules) > 3:
+                rule_text += f", +{len(rules) - 3} more"
+            print(f"    {spec['handle']:<34} {verb:<14} {rule_text}")
+            continue
 
         if existing and not existing.get("ruleSet"):
             count = existing["productsCount"]["count"]
@@ -270,6 +297,17 @@ def cmd_pages(gql: Shopify, site: dict) -> None:
         }
         if spec.get("template_suffix"):
             fields["templateSuffix"] = spec["template_suffix"]
+        # Without an explicit description Shopify derives one from the body text and does
+        # NOT decode entities on the way, so a page whose copy opens "A&amp;B Motors" ships
+        # a meta description containing the literal "&amp;" — which the theme then escapes
+        # again, and Google prints "A&amp;B Motors". /pages/about and /pages/warranty-returns
+        # both did exactly that. Setting the description explicitly is also just better SEO
+        # than a truncated first paragraph.
+        if spec.get("seo_description") or spec.get("seo_title"):
+            fields["seo"] = {
+                "title": spec.get("seo_title", spec["title"]),
+                "description": spec.get("seo_description", ""),
+            }
 
         if existing:
             d = gql(
@@ -439,6 +477,7 @@ def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--check", action="store_true", help="print scopes and current store state")
     ap.add_argument("--collections", action="store_true")
+    ap.add_argument("--vehicles", action="store_true", help="the make/model vehicle collections in site.json")
     ap.add_argument("--pages", action="store_true")
     ap.add_argument("--policies", action="store_true")
     ap.add_argument("--menus", action="store_true")
@@ -450,7 +489,7 @@ def main() -> None:
     ap.add_argument("--workers", type=int, default=4)
     args = ap.parse_args()
 
-    if not any([args.check, args.collections, args.pages, args.policies, args.menus, args.activate, args.all]):
+    if not any([args.check, args.collections, args.vehicles, args.pages, args.policies, args.menus, args.activate, args.all]):
         ap.print_help()
         return
 
@@ -465,9 +504,16 @@ def main() -> None:
     scopes = granted_scopes(gql)
 
     if args.collections or args.all:
-        print("collections:")
+        print("collections:" + (" (dry run, nothing written)" if args.dry_run else ""))
         if require(scopes, "collections"):
-            cmd_collections(gql, site, args.replace_empty)
+            cmd_collections(gql, site["collections"], args.replace_empty, args.dry_run)
+    if args.vehicles:
+        specs = site.get("vehicle_collections") or []
+        print(f"vehicle collections: {len(specs)}" + (" (dry run, nothing written)" if args.dry_run else ""))
+        if not specs:
+            print("  ! none defined in site.json")
+        elif require(scopes, "collections"):
+            cmd_collections(gql, specs, args.replace_empty, args.dry_run)
     if args.pages or args.all:
         print("pages:")
         if require(scopes, "pages"):
