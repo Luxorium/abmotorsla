@@ -297,6 +297,17 @@ def cmd_pages(gql: Shopify, site: dict) -> None:
         }
         if spec.get("template_suffix"):
             fields["templateSuffix"] = spec["template_suffix"]
+        # Without an explicit description Shopify derives one from the body text and does
+        # NOT decode entities on the way, so a page whose copy opens "A&amp;B Motors" ships
+        # a meta description containing the literal "&amp;" — which the theme then escapes
+        # again, and Google prints "A&amp;B Motors". /pages/about and /pages/warranty-returns
+        # both did exactly that. Setting the description explicitly is also just better SEO
+        # than a truncated first paragraph.
+        if spec.get("seo_description") or spec.get("seo_title"):
+            fields["seo"] = {
+                "title": spec.get("seo_title", spec["title"]),
+                "description": spec.get("seo_description", ""),
+            }
 
         if existing:
             d = gql(

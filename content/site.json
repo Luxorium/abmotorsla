@@ -226,43 +226,51 @@
     {
       "handle": "about",
       "title": "About A&B Motors",
-      "file": "pages/about.html"
+      "file": "pages/about.html",
+      "seo_description": "A&B Motors has recycled vehicles in Amite, Louisiana since 1958. Three generations, ten acres on Highway 51, and a 90-day warranty on every used part."
     },
     {
       "handle": "tour",
       "title": "Tour the Yard",
-      "file": "pages/tour.html"
+      "file": "pages/tour.html",
+      "seo_description": "Ten acres, a stock number on every part, and photos taken on our own racks. A look behind the used parts A&B Motors sells out of Amite, Louisiana."
     },
     {
       "handle": "sell-your-car",
       "title": "Sell Your Car for Cash",
-      "file": "pages/sell-your-car.html"
+      "file": "pages/sell-your-car.html",
+      "seo_description": "We buy cars and trucks in any condition, running or not. Cash offer over the phone, free towing, and we handle the paperwork. Call 985-748-7195."
     },
     {
       "handle": "warranty-returns",
       "title": "90-Day Warranty & Returns",
-      "file": "pages/warranty-returns.html"
+      "file": "pages/warranty-returns.html",
+      "seo_description": "Every used part from A&B Motors carries a 90-day money-back warranty from the day it arrives. What is covered, what is not, and how to start a return."
     },
     {
       "handle": "shipping",
       "title": "Shipping & Delivery",
-      "file": "pages/shipping.html"
+      "file": "pages/shipping.html",
+      "seo_description": "Most used parts ship free in the lower 48. Freight is a flat $299.99 or $199.99 to a commercial address. Body panels and glass are pickup or local delivery."
     },
     {
       "handle": "freight",
       "title": "Freight & Pickup Rules",
-      "file": "pages/freight.html"
+      "file": "pages/freight.html",
+      "seo_description": "Which parts ship free, which go LTL freight at a flat rate, and why we do not ship body panels or glass. Read this before ordering a heavy part."
     },
     {
       "handle": "will-it-fit",
       "title": "Will It Fit My Vehicle?",
-      "file": "pages/will-it-fit.html"
+      "file": "pages/will-it-fit.html",
+      "seo_description": "How to tell whether a used part fits your vehicle: interchange lists, casting numbers, and a free VIN check. Call 985-748-7195 and we will confirm it."
     },
     {
       "handle": "contact",
       "title": "Contact the Yard",
       "file": "pages/contact.html",
-      "template_suffix": "contact"
+      "template_suffix": "contact",
+      "seo_description": "Call the yard at 985-748-7195, Monday to Friday 8-5 Central. A&B Motors, 59174 Hwy 51, Amite, Louisiana. Send your VIN and we will check the racks."
     }
   ],
   "policies": [
