@@ -132,41 +132,15 @@
 
   {%- comment -%}
     Mirrors the breadcrumb the page actually renders, so the trail Google shows
-    matches the one a visitor can click.
+    matches the one a visitor can click. Both come out of product-crumb, which is
+    the only place the rungs are worked out.
   {%- endcomment -%}
   <script type="application/ld+json">
     {
       "@context": "https://schema.org",
       "@type": "BreadcrumbList",
       "itemListElement": [
-        {
-          "@type": "ListItem",
-          "position": 1,
-          "name": "Home",
-          "item": {{ shop.url | json }}
-        },
-        {%- if collection -%}
-        {
-          "@type": "ListItem",
-          "position": 2,
-          "name": {{ collection.title | json }},
-          "item": {{ shop.url | append: collection.url | json }}
-        },
-        {%- elsif product.type != blank -%}
-        {%- assign type_query = product.type | url_encode -%}
-        {
-          "@type": "ListItem",
-          "position": 2,
-          "name": {{ product.type | json }},
-          "item": {{ shop.url | append: routes.search_url | append: '?q=' | append: type_query | json }}
-        },
-        {%- endif -%}
-        {
-          "@type": "ListItem",
-          "position": {% if collection or product.type != blank %}3{% else %}2{% endif %},
-          "name": {{ product.title | json }},
-          "item": {{ shop.url | append: product.url | json }}
-        }
+{% render 'product-crumb', format: 'json', product: product, collection: collection %}
       ]
     }
   </script>

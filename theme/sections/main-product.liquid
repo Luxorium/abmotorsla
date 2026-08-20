@@ -7,15 +7,7 @@
 -%}
 
 <div class="page-width">
-  <nav class="breadcrumbs" aria-label="Breadcrumb">
-    <a href="{{ routes.root_url }}">Home</a><span>/</span>
-    {%- if collection -%}
-      <a href="{{ collection.url }}">{{ collection.title }}</a><span>/</span>
-    {%- elsif product.type != blank -%}
-      <a href="{{ routes.search_url }}?q={{ product.type | url_encode }}">{{ product.type }}</a><span>/</span>
-    {%- endif -%}
-    <span class="muted">{{ product.title | truncate: 60 }}</span>
-  </nav>
+  {% render 'product-crumb', format: 'html', product: product, collection: collection %}
 
   <div class="product">
     {%- comment -%} ---------------------------------------------- gallery {%- endcomment -%}
