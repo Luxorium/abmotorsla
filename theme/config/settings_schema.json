@@ -270,6 +270,21 @@
     ]
   },
   {
+    "name": "Search engines",
+    "settings": [
+      {
+        "type": "paragraph",
+        "content": "Verify the domain in Search Console with a DNS TXT record instead where you can — that covers www, non-www and http/https at once, and it survives publishing a different theme. This field is only needed for a URL-prefix property."
+      },
+      {
+        "type": "text",
+        "id": "google_site_verification",
+        "label": "Google site verification token",
+        "info": "The token only, not the whole meta tag."
+      }
+    ]
+  },
+  {
     "name": "Analytics",
     "settings": [
       {

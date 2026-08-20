@@ -95,6 +95,14 @@
       <meta name="robots" content="noindex,follow">
     {%- endif -%}
 
+    {%- comment -%}
+      Backup verification only. The DNS TXT record on the domain is the real one and
+      it keeps working when a different theme is published; this tag does not.
+    {%- endcomment -%}
+    {%- if settings.google_site_verification != blank -%}
+      <meta name="google-site-verification" content="{{ settings.google_site_verification | strip | escape }}">
+    {%- endif -%}
+
     {% render 'meta-tags' %}
 
     {{ content_for_header }}
