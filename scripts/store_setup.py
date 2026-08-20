@@ -225,6 +225,15 @@ def collection_input(spec: dict) -> dict:
 
 
 def cmd_collections(gql: Shopify, specs: list[dict], replace_empty: bool, dry_run: bool = False) -> None:
+    # collectionCreate does NOT list a collection on any sales channel. A collection that
+    # exists but is unpublished 404s on the storefront, which is exactly what the first 92
+    # vehicle collections did. Publishing is idempotent, so it also repairs anything that
+    # was created before this ran.
+    pub = None if dry_run else online_store_publication(gql)
+    if not dry_run and not pub:
+        print("  ! no Online Store publication found — is the sales channel enabled?")
+        return
+
     for spec in specs:
         existing = find_collection(gql, spec["handle"])
         payload = collection_input(spec)
@@ -258,14 +267,14 @@ def cmd_collections(gql: Shopify, specs: list[dict], replace_empty: bool, dry_ru
         if existing:
             payload["id"] = existing["id"]
             d = gql(
-                "mutation($input:CollectionInput!){ collectionUpdate(input:$input){ collection{ handle productsCount{count} } userErrors{ field message } } }",
+                "mutation($input:CollectionInput!){ collectionUpdate(input:$input){ collection{ id handle productsCount{count} } userErrors{ field message } } }",
                 {"input": payload},
             )
             res = d["collectionUpdate"]
             verb = "updated"
         else:
             d = gql(
-                "mutation($input:CollectionInput!){ collectionCreate(input:$input){ collection{ handle productsCount{count} } userErrors{ field message } } }",
+                "mutation($input:CollectionInput!){ collectionCreate(input:$input){ collection{ id handle productsCount{count} } userErrors{ field message } } }",
                 {"input": payload},
             )
             res = d["collectionCreate"]
@@ -273,9 +282,15 @@ def cmd_collections(gql: Shopify, specs: list[dict], replace_empty: bool, dry_ru
 
         if res["userErrors"]:
             print(f"  ! {spec['handle']}: {res['userErrors']}")
-        else:
-            n = res["collection"]["productsCount"]["count"]
-            print(f"    {spec['handle']:<26} {verb}, matches {n} products (still indexing if 0)")
+            continue
+
+        cid = res["collection"].get("id")
+        pub_note = ""
+        if cid:
+            perr = gql(PUBLISH, {"id": cid, "pub": pub})["publishablePublish"]["userErrors"]
+            pub_note = f"  ! publish: {perr}" if perr else ", published"
+        n = res["collection"]["productsCount"]["count"]
+        print(f"    {spec['handle']:<30} {verb}{pub_note}, matches {n} products (still indexing if 0)")
 
 
 # ─────────────────────────────────────────────────────────────────── pages ──
@@ -297,36 +312,49 @@ def cmd_pages(gql: Shopify, site: dict) -> None:
         }
         if spec.get("template_suffix"):
             fields["templateSuffix"] = spec["template_suffix"]
-        # Without an explicit description Shopify derives one from the body text and does
-        # NOT decode entities on the way, so a page whose copy opens "A&amp;B Motors" ships
-        # a meta description containing the literal "&amp;" — which the theme then escapes
-        # again, and Google prints "A&amp;B Motors". /pages/about and /pages/warranty-returns
-        # both did exactly that. Setting the description explicitly is also just better SEO
-        # than a truncated first paragraph.
-        if spec.get("seo_description") or spec.get("seo_title"):
-            fields["seo"] = {
-                "title": spec.get("seo_title", spec["title"]),
-                "description": spec.get("seo_description", ""),
-            }
 
         if existing:
             d = gql(
-                "mutation($id:ID!,$page:PageUpdateInput!){ pageUpdate(id:$id,page:$page){ page{handle} userErrors{ field message } } }",
+                "mutation($id:ID!,$page:PageUpdateInput!){ pageUpdate(id:$id,page:$page){ page{id handle} userErrors{ field message } } }",
                 {"id": existing["id"], "page": fields},
             )
             res, verb = d["pageUpdate"], "updated"
         else:
             d = gql(
-                "mutation($page:PageCreateInput!){ pageCreate(page:$page){ page{handle} userErrors{ field message } } }",
+                "mutation($page:PageCreateInput!){ pageCreate(page:$page){ page{id handle} userErrors{ field message } } }",
                 {"page": fields},
             )
             res, verb = d["pageCreate"], "created"
 
-        print(
-            f"  ! {spec['handle']}: {res['userErrors']}"
-            if res["userErrors"]
-            else f"    /pages/{spec['handle']:<22} {verb} ({len(body)} chars)"
-        )
+        if res["userErrors"]:
+            print(f"  ! {spec['handle']}: {res['userErrors']}")
+            continue
+
+        # Page SEO is not a field on PageUpdateInput — it lives in the global.title_tag and
+        # global.description_tag metafields. It matters: without an explicit description
+        # Shopify derives one from the body HTML without decoding entities, so a page whose
+        # copy opens "A&amp;B Motors" shipped a meta description holding the literal "&amp;",
+        # which the theme then escaped again and Google printed as "A&amp;B Motors".
+        # /pages/about and /pages/warranty-returns both did exactly that.
+        # metafieldsSet upserts on ownerId+namespace+key, so re-running is safe.
+        seo_note = ""
+        if spec.get("seo_description") or spec.get("seo_title"):
+            pid = res["page"]["id"]
+            mf = []
+            if spec.get("seo_title"):
+                mf.append({"ownerId": pid, "namespace": "global", "key": "title_tag",
+                           "type": "single_line_text_field", "value": spec["seo_title"]})
+            if spec.get("seo_description"):
+                mf.append({"ownerId": pid, "namespace": "global", "key": "description_tag",
+                           "type": "single_line_text_field", "value": spec["seo_description"]})
+            d = gql(
+                "mutation($mf:[MetafieldsSetInput!]!){ metafieldsSet(metafields:$mf){ userErrors{ field message } } }",
+                {"mf": mf},
+            )
+            errs = d["metafieldsSet"]["userErrors"]
+            seo_note = f"  ! seo: {errs}" if errs else ", seo set"
+
+        print(f"    /pages/{spec['handle']:<22} {verb} ({len(body)} chars){seo_note}")
 
 
 # ──────────────────────────────────────────────────────────────── policies ──
