@@ -1089,3 +1089,17 @@ table { border-collapse: collapse; width: 100%; }
   font-size: 11px; font-weight: 700; letter-spacing: .06em;
   text-transform: uppercase; color: var(--steel);
 }
+
+/* Vehicle index on /collections. Links, not cards: these collections have no artwork,
+   and a shopper hunting for their own truck scans a list faster than a grid. */
+.veh-index {
+  list-style: none; margin: 0; padding: 0;
+  columns: 4 190px; column-gap: 28px;
+}
+.veh-index li {
+  display: flex; align-items: baseline; justify-content: space-between; gap: 8px;
+  break-inside: avoid; padding: 5px 0; border-bottom: var(--hair);
+}
+.veh-index a { font-weight: 600; text-decoration: none; }
+.veh-index a:hover { text-decoration: underline; }
+.veh-index small { color: var(--steel); font-variant-numeric: tabular-nums; font-size: 12px; }

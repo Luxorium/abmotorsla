@@ -1,0 +1,18 @@
+{%- comment -%}
+  The part-type collections, and only those. One source of truth for the two places that
+  have to tell a category apart from a vehicle: the product breadcrumb, and the grouping
+  on /collections.
+
+  Why a list and not a rule: Liquid cannot see a smart collection's rule set, so it has no
+  way to know that these are keyed on TYPE while the vehicle collections are keyed on TAG.
+  Handle shape cannot decide it either — "body-parts" and "interior-parts" are categories,
+  "ford-parts" is a vehicle, and they all end in "-parts".
+
+  Add a category collection to content/site.json and it belongs here too, or it will be
+  filed under vehicles and stop showing up as a product's category.
+
+  Usage:
+    {%- capture category_handles -%}{%- render 'category-handles' -%}{%- endcapture -%}
+    {%- assign categories = category_handles | strip | split: ',' -%}
+{%- endcomment -%}
+engines-transmissions,body-parts,lights,wheels,interior-parts,suspension-steering,brakes,cooling-a-c,electrical,fuel-system

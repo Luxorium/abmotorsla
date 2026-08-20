@@ -2,11 +2,24 @@
   <div class="section">
     <div class="section-head">
       <h1 class="h1">{{ page_title | default: 'Shop by part type' }}</h1>
-      <p class="lede">Every part on this site was pulled from a vehicle on our own lot in Amite.</p>
+      <p class="lede">Every part on this site was pulled from a vehicle on our own lot in Amite. Browse by what the part is, or scroll down and browse by what it came off.</p>
     </div>
+
+    {%- comment -%}
+      Two audiences, two groups. Someone who knows they need an alternator wants the part
+      type; someone with a dead Ranger in the driveway wants the vehicle. Listing all of
+      them flat put ten categories in a wall of a hundred and did neither any favours.
+
+      Categories come from the category-handles snippet, shared with the product
+      breadcrumb. Everything else that is not an internal collection is a vehicle.
+    {%- endcomment -%}
+    {%- capture category_handles -%}{%- render 'category-handles' -%}{%- endcapture -%}
+    {%- assign categories = category_handles | strip | split: ',' -%}
+    {%- assign internal = 'home-page-picks,just-pulled' | split: ',' -%}
 
     <div class="grid grid--{{ section.settings.columns }}">
       {%- for collection in collections -%}
+        {%- unless categories contains collection.handle -%}{%- continue -%}{%- endunless -%}
         <a href="{{ collection.url }}" class="cat-card">
           {%- if collection.featured_image -%}
             {{ collection.featured_image | image_url: width: 700 | image_tag:
@@ -21,6 +34,38 @@
       {%- endfor -%}
     </div>
   </div>
+
+  {%- comment -%}
+    Vehicles render as links, not cards. They carry no artwork, so a hundred image-less
+    cards would be a hundred empty boxes — and a shopper scanning for their own truck
+    reads a list far faster than a grid.
+  {%- endcomment -%}
+  {%- assign vehicle_count = 0 -%}
+  {%- for collection in collections -%}
+    {%- unless categories contains collection.handle or internal contains collection.handle -%}
+      {%- assign vehicle_count = vehicle_count | plus: 1 -%}
+    {%- endunless -%}
+  {%- endfor -%}
+
+  {%- if vehicle_count > 0 -%}
+  <div class="section">
+    <div class="section-head">
+      <h2 class="h2">Shop by vehicle</h2>
+      <p class="lede">Every make and model we currently have parts for on the lot. Not seeing yours? Call 985-748-7195 — plenty of the yard is not listed online yet.</p>
+    </div>
+
+    <ul class="veh-index">
+      {%- for collection in collections -%}
+        {%- unless categories contains collection.handle or internal contains collection.handle -%}
+          <li>
+            <a href="{{ collection.url }}">{{ collection.title | remove: 'Used ' | remove: ' Parts' }}</a>
+            <small>{{ collection.products_count }}</small>
+          </li>
+        {%- endunless -%}
+      {%- endfor -%}
+    </ul>
+  </div>
+  {%- endif -%}
 </div>
 
 {% schema %}

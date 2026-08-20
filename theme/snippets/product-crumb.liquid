@@ -7,30 +7,33 @@
 
   Rung 2 used to point at /search?q=<type>. Google treats internal search results as low
   value, and the click sent shoppers to a slower, worse page than the category collection
-  that already exists. Prefer the collection actually being browsed, then the product's
-  own category collection — the type collections are smart collections keyed on TYPE, so
-  membership resolves with no lookup table — and keep the search URL only as a last
-  resort, so a product in no collection at all still gets a trail.
+  that already exists. The search URL survives only as a last resort, so a part whose type
+  matches no category still gets a trail.
 
-  crumb_skip holds the collections that are not categories. Anything added to site.json
-  that groups products by something other than part type — the vehicle collections, for
-  one — belongs in this list, or it starts showing up as a product's category.
+  Rung 2 names a CATEGORY, so it matches against the part-type collections by name rather
+  than taking whatever product.collections happens to list first. A part is in its vehicle
+  collections too — a Ford Ranger alternator is in "Used Ford Parts" and "Used Ford Ranger
+  Parts" as well as "Electrical & Modules" — and "Home / Used Ford Parts / alternator" is
+  the wrong trail: it says where the part came from, not what it is.
+
+  The category list lives in the category-handles snippet, shared with /collections.
 {%- endcomment -%}
+{%- capture category_handles -%}{%- render 'category-handles' -%}{%- endcapture -%}
 {%- liquid
-  assign crumb_skip = 'all,just-pulled,home-page-picks' | split: ','
+  assign categories = category_handles | strip | split: ','
   assign crumb_title = ''
   assign crumb_url = ''
 
-  if collection and collection.handle != 'all'
+  if collection and categories contains collection.handle
     assign crumb_title = collection.title
     assign crumb_url = collection.url
   else
     for c in product.collections
-      unless crumb_skip contains c.handle
+      if categories contains c.handle
         assign crumb_title = c.title
         assign crumb_url = c.url
         break
-      endunless
+      endif
     endfor
   endif
 
