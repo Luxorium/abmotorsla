@@ -1308,10 +1308,6 @@
       "target": "/pages/about"
     },
     {
-      "path": "/contact/",
-      "target": "/pages/contact"
-    },
-    {
       "path": "/sell-a-car/",
       "target": "/pages/sell-your-car"
     },
@@ -1322,10 +1318,6 @@
     {
       "path": "/about",
       "target": "/pages/about"
-    },
-    {
-      "path": "/contact",
-      "target": "/pages/contact"
     },
     {
       "path": "/tour",
@@ -1380,5 +1372,5 @@
       "target": "/blogs/news"
     }
   ],
-  "_redirects_comment": "Legacy URLs that 404 today. The .html and trailing-slash paths are real: they came out of the Wayback Machine's index of the two previous abmotorsla.com sites (a static .html site, then WordPress), so anything still linking to them — directories, Facebook, old listings — currently lands on a 404 and its link equity is thrown away. The bare short forms are what people type. Apply with store_setup.py --redirects."
+  "_redirects_comment": "Legacy URLs that 404 today. The .html and trailing-slash paths are real: they came out of the Wayback Machine's index of the two previous abmotorsla.com sites (a static .html site, then WordPress), so anything still linking to them — directories, Facebook, old listings — currently lands on a 404 and its link equity is thrown away. The bare short forms are what people type. Apply with store_setup.py --redirects. Note: /contact is NOT in this list and cannot be. Shopify reserves that route for the contact-form handler — the form on /pages/contact posts to /contact#contact_form — so a redirect on it is accepted by the API and then never fires. The real archived URLs /ContactUs.html and /Location.html both reach the contact page, which is what the old inbound links actually point at. Shopify also lowercases paths and strips trailing slashes, so /About.html and /about/ collapse onto the same record: 26 definitions here become 24 stored redirects."
 }
