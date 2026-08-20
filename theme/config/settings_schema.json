@@ -117,7 +117,7 @@
         "type": "textarea",
         "id": "hours",
         "label": "Business hours",
-        "default": "Monday – Friday: 8:00 AM – 5:00 PM CST"
+        "default": "Monday – Friday: 8:00 AM – 5:00 PM Central"
       },
       {
         "type": "text",
