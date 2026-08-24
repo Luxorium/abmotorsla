@@ -15,6 +15,9 @@ held 10k products. This asks both sides directly and reports four buckets:
     create    listable, absent from Shopify altogether
     retire    ACTIVE in Shopify, no longer listable in the yard
 
+`retire` zeroes the part's stock before it archives, so a part pulled offline is
+unbuyable by quantity as well as by status and cannot come back carrying stale stock.
+
     python3 scripts/reconcile_catalog.py            # plan
     python3 scripts/reconcile_catalog.py --apply    # publish / revive / archive
     python3 scripts/reconcile_catalog.py --apply --no-retire
@@ -32,6 +35,7 @@ import sys
 import time
 import urllib.error
 import urllib.request
+import uuid
 
 REPO = pathlib.Path(__file__).resolve().parent.parent
 SYNC_REPO = REPO.parent / "coreyard"
@@ -101,7 +105,13 @@ SCAN = """
 query($cursor: String) {
   products(first: 250, after: $cursor) {
     pageInfo { hasNextPage endCursor }
-    nodes { id status variants(first: 1) { nodes { sku } } }
+    nodes {
+      id
+      status
+      variants(first: 1) {
+        nodes { sku inventoryQuantity inventoryItem { id tracked } }
+      }
+    }
   }
 }
 """
@@ -109,6 +119,16 @@ query($cursor: String) {
 SET_STATUS = """
 mutation($id: ID!, $status: ProductStatus!) {
   productUpdate(product: {id: $id, status: $status}) { userErrors { field message } }
+}
+"""
+
+LOCATION = """{ locations(first: 1, query: "active:true") { nodes { id name } } }"""
+
+SET_QUANTITIES = """
+mutation($input: InventorySetQuantitiesInput!, $idempotencyKey: String!) {
+  inventorySetQuantities(input: $input) @idempotent(key: $idempotencyKey) {
+    userErrors { field message }
+  }
 }
 """
 
@@ -142,7 +162,11 @@ def main() -> None:
             v = n["variants"]["nodes"]
             sku = (v[0].get("sku") or "").strip() if v else ""
             if sku:
-                shop[sku] = {"id": n["id"], "status": n["status"]}
+                item = v[0].get("inventoryItem") or {}
+                shop[sku] = {"id": n["id"], "status": n["status"],
+                             "inventory_item": item.get("id"),
+                             "tracked": item.get("tracked"),
+                             "qty": v[0].get("inventoryQuantity")}
         if not conn["pageInfo"]["hasNextPage"]:
             break
         cursor = conn["pageInfo"]["endCursor"]
@@ -193,11 +217,60 @@ def main() -> None:
                 done += 1
         print(f"  {label}: {done}/{len(skus)}")
 
+    def zero_stock(skus):
+        """Take the stock off a part before it is archived. The order matters.
+
+        Archiving alone hides a product but leaves its quantity sitting on it, so the
+        part is unbuyable only for as long as the status holds. Anything that puts it
+        back to ACTIVE -- the revive bucket above, or a click in the admin -- returns it
+        to sale carrying a number nobody rechecked against the yard. Zeroing first makes
+        it unbuyable by stock as well, which is what run_sync's retire() does.
+
+        Unlike retire(), a failure here does not stop the archive. A part that could not
+        be zeroed is still safer hidden than left ACTIVE with stock on it.
+        """
+        nodes = (gql(url, headers, LOCATION).get("locations") or {}).get("nodes") or []
+        if not nodes:
+            print("    ! no active location; archiving without zeroing the stock")
+            return
+        location_id = nodes[0]["id"]
+        done = 0
+        for s in skus:
+            prod = shop[s]
+            if not (prod.get("inventory_item") and prod.get("tracked")
+                    and (prod.get("qty") or 0)):
+                continue
+            res = gql(url, headers, SET_QUANTITIES, {
+                "idempotencyKey": str(uuid.uuid4()),
+                "input": {
+                    "name": "available",
+                    "reason": "correction",
+                    "quantities": [{
+                        "inventoryItemId": prod["inventory_item"],
+                        "locationId": location_id,
+                        "quantity": 0,
+                        # Required by 2026-07 even when deliberately opting out of
+                        # compare-and-swap: the yard decides what is available, not
+                        # Shopify's previously cached number.
+                        "changeFromQuantity": None,
+                    }],
+                },
+            })
+            errs = ((res.get("inventorySetQuantities") or {}).get("userErrors")
+                    or res.get("__errors"))
+            if errs:
+                print(f"    ! {s}: stock not zeroed: {json.dumps(errs)[:120]}")
+            else:
+                done += 1
+        if done:
+            print(f"  zeroed: {done}")
+
     if publish:
         set_status(publish, "ACTIVE", "published")
     if revive:
         set_status(revive, "ACTIVE", "revived")
     if retire and not args.no_retire:
+        zero_stock(retire)
         set_status(retire, "ARCHIVED", "archived")
     if create:
         print(f"\n  {len(create)} listable part(s) are absent from Shopify. "
