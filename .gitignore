@@ -14,6 +14,10 @@
 # Built preview bundle (regenerate with preview/build.py)
 preview/dist/
 
+# Live theme files saved before scripts/deploy_theme.py overwrote them. Local undo
+# history for a deploy, meaningless to anyone else.
+.theme-backups/
+
 # Never commit credentials. This repository reads .env here (or wherever ABM_ENV points);
 # CoreYard keeps its own, separately.
 .env
