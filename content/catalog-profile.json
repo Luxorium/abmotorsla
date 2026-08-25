@@ -1,0 +1,80 @@
+{
+  "_comment": [
+    "A&B Motors' merchandising policy, read by CoreYard through STORE_PROFILE_FILE.",
+    "",
+    "CoreYard renders every product's title, description, SEO metadata and tags, but it",
+    "ships neutral defaults that claim only what the yard database can prove. The claims",
+    "below are ours: we do pull parts onto racks, inspect them, and test what can be tested,",
+    "and the site says so in four other places. A yard that does not do that must not",
+    "inherit the wording, which is why it lives here and not in CoreYard.",
+    "",
+    "Every string is TEXT, never HTML \u2014 CoreYard escapes what it is given and owns the",
+    "markup. {part_type} and {origin} are substituted; {origin} is 'A&B Motors, <city>',",
+    "built from SHOPIFY_VENDOR and STORE_CITY in the backend's .env.",
+    "",
+    "CHANGING ANY OF THIS REPUBLISHES THE CATALOG. These strings are part of the rendered",
+    "product, and the rendered product is what the sync fingerprints, so an edit here makes",
+    "the next run rewrite every product it touches. Run `bin/coreyard --sink api --dry-run`",
+    "first to see the count."
+  ],
+  "condition": "Used, tested",
+  "condition_graded": "Grade {grade}",
+  "body_lead": "Genuine OEM {part_type}, removed from an inventoried donor vehicle and inspected.",
+  "sold_by": "Sold by {origin}.",
+  "availability": "In stock and tested at {origin}.",
+  "availability_plain": "In stock and tested.",
+  "fitment_note": "Verify fitment by year, options, and part/casting numbers where shown in the photos.",
+  "_title": [
+    "OEM stays out of the customer-facing title on purpose. It is a high-intent search term,",
+    "but the title is already carrying four vehicles and a part type, and Google reads the",
+    "SEO description and the tags too \u2014 where OEM appears either way."
+  ],
+  "title_include_oem": false,
+  "title_max_models": 4,
+  "tags": [
+    "Used OEM"
+  ],
+  "tag_vendor": true,
+  "_tags": [
+    "ship:* tags are written by scripts/tag_shipping.py and read by the theme to warn a",
+    "shopper before checkout. CoreYard preserves any namespaced tag automatically, so they",
+    "survive every catalog update without being named here; the list below is belt and",
+    "braces, and documents the ownership boundary for anyone reading this file."
+  ],
+  "preserved_tag_prefixes": [
+    "ship:"
+  ],
+  "preserve_namespaced_tags": true,
+  "_audit": [
+    "Thresholds for `bin/coreyard audit catalog`. Audit-only: none of these reach the",
+    "rendered product, so editing them never republishes anything.",
+    "",
+    "min_price is 5 because nothing in the yard is genuinely worth less than that, so a",
+    "sub-$5 listing is a data error rather than a bargain. min_description_chars matches",
+    "the shortest description CoreYard produces for a part with no fitment rows.",
+    "",
+    "min_title_chars is 15, not 25. A real title here is '<year> <make> <part type>' and",
+    "the shortest legitimate ones run 18 characters ('2007 Cadillac Glove Box'). At 25 the",
+    "audit flagged 64 perfectly good listings, and an audit that cries wolf is one nobody",
+    "reads. A genuinely broken title -- one that lost its fitment -- is far shorter."
+  ],
+  "audit": {
+    "min_price": 5,
+    "min_description_chars": 120,
+    "min_tags": 3,
+    "min_title_chars": 15,
+    "require_photos": true,
+    "require_alt_text": true,
+    "require_weight": true,
+    "require_seo": true,
+    "require_product_type": true,
+    "require_vendor": true,
+    "require_sku": true,
+    "flag_active_zero_inventory": true,
+    "suspicious_title_words": [
+      "example product",
+      "test product",
+      "asset-pack"
+    ]
+  }
+}

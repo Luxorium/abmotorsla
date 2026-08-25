@@ -1,8 +1,56 @@
 {
-  "_comment": "Packed shipping weights in POUNDS, keyed by product type. Rules are matched IN ORDER, first match wins, case-insensitive substring \u2014 so specific patterns must come before general ones ('Engine Assembly' before 'Engine'). Values include packaging and are deliberately rounded UP: under-declaring weight costs money at the carrier, over-declaring costs a little margin. A safety_multiplier is applied on top and the result rounded UP to a whole pound. Covers all 201 types in the catalog via 'default'.",
+  "_comment": "Packed shipping weights in POUNDS, keyed by product type. Rules are matched IN ORDER, first match wins, case-insensitive substring \u2014 so specific patterns must come before general ones ('Engine Assembly' before 'Engine'). Values include packaging and are deliberately rounded UP: under-declaring weight costs money at the carrier, over-declaring costs a little margin. A safety_multiplier is applied on top and the result rounded UP to a whole pound. Covers all 201 types in the catalog via 'default'. Patterns are matched against BOTH the shopper-facing product type CoreYard publishes and the yard system's own wording, so either spelling works; the first four rules are expanded-name aliases for part types whose published name shares no words with the yard's abbreviation.",
   "unit": "POUNDS",
   "default": 15,
   "rules": [
+    [
+      "engine motor assembly",
+      550
+    ],
+    [
+      "tail light lamp",
+      11
+    ],
+    [
+      "side view door mirror",
+      8
+    ],
+    [
+      "fuel filler gas door",
+      4
+    ],
+    [
+      "coolant overflow reservoir",
+      6
+    ],
+    [
+      "chassis control module",
+      6
+    ],
+    [
+      "front door window master switch",
+      2
+    ],
+    [
+      "heater temperature climate control",
+      8
+    ],
+    [
+      "anti lock brake",
+      16
+    ],
+    [
+      "air conditioning compressor",
+      30
+    ],
+    [
+      "radio stereo audio",
+      10
+    ],
+    [
+      "gear shifter",
+      8
+    ],
     [
       "engine assembly",
       550

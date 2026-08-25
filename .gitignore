@@ -1,17 +1,21 @@
 # Per-machine run state for the scripts. These are resume checkpoints holding
 # thousands of product GIDs — useful locally, meaningless in version control.
+.store_setup_state.json
+.tag_shipping_state.json
+# Left by scripts that have since moved into CoreYard; ignored so an existing checkout
+# does not start reporting them as untracked after the move.
 .charm_prices_state.json
 .cleanup_state.json
 .orders_state.json
-.store_setup_state.json
-.tag_shipping_state.json
 .weights_state.json
 .retitle_rollback.json
+.retitle_state.json
 
 # Built preview bundle (regenerate with preview/build.py)
 preview/dist/
 
-# Never commit credentials. They live in the CoreYard .env, outside this repo.
+# Never commit credentials. This repository reads .env here (or wherever ABM_ENV points);
+# CoreYard keeps its own, separately.
 .env
 *.pem
 
