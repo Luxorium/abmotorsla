@@ -180,8 +180,9 @@
       <p>Add <span class="path">read_orders</span> (plus <span class="path">write_orders</span> for work-order
         write-back) to the app, release <b>0.1.7</b>, approve. Shopify also gates order payloads behind
         protected customer data access — a toggle on the app in the dev dashboard.</p>
-      <p>The moment that's on, <span class="path">scripts/poll_orders.py</span> fetches new orders and prints
-        CoreYard pull tickets with bin locations. It's written and tested up to the permission wall.</p>
+      <p>The moment that's on, <span class="path">coreyard orders poll</span> fetches new orders and prints
+        CoreYard pull tickets with bin locations, through the same queue and worker the webhook
+        receiver uses. It's written and tested up to the permission wall.</p>
     </div>
   </div>
 

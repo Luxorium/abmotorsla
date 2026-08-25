@@ -4,6 +4,11 @@ Baseline taken before the first Merchant Center sync, so feed rejections can be 
 apart from problems that were already there. Read-only: `scripts/audit_listings.py`
 plus targeted follow-up queries. Nothing was changed.
 
+> Kept as the record of that date. The commands named below have since moved into
+> CoreYard — the audit is `bin/coreyard audit catalog`, the publish/revive/archive
+> reconciliation is `bin/coreyard reconcile`, and shipping weights are published on
+> every sync from `content/weights.json` rather than backfilled by a script.
+
 **Catalogue:** 10,221 products — 9,326 ACTIVE, 761 DRAFT, 134 ARCHIVED.
 Only ACTIVE products reach the storefront and the feed, so every count below is
 re-checked against ACTIVE alone. That distinction matters: the raw audit numbers look
@@ -57,4 +62,4 @@ Missing SKU, thin or empty description, missing SEO meta, zero or absurd price, 
 inventory while ACTIVE, duplicate SKUs. All clean across the whole catalogue.
 
 ---
-*Re-run with `python3 scripts/audit_listings.py`. Read-only, safe any time.*
+*Re-run with `bin/coreyard audit catalog` from the CoreYard checkout. Read-only, safe any time.*
