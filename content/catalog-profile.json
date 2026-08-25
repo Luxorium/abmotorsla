@@ -24,6 +24,17 @@
   "availability": "In stock and tested at {origin}.",
   "availability_plain": "In stock and tested.",
   "fitment_note": "Verify fitment by year, options, and part/casting numbers where shown in the photos.",
+  "_metafields": [
+    "CoreYard publishes the structured half of a listing as metafields in this",
+    "namespace: grade, mileage, condition, and fitment. The theme reads them as",
+    "product.metafields.abm.* \u2014 the spec table renders every non-fitment key it",
+    "finds, and the 'Fits these vehicles' table reads abm.fitment. Renaming this",
+    "orphans every metafield already on the store, so it is chosen once.",
+    "",
+    "CoreYard's own default is 'coreyard'; 'abm' is ours because the theme was",
+    "written against it before CoreYard published anything here."
+  ],
+  "metafield_namespace": "abm",
   "_title": [
     "OEM stays out of the customer-facing title on purpose. It is a high-intent search term,",
     "but the title is already carrying four vehicles and a part type, and Google reads the",

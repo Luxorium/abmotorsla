@@ -1,60 +1,103 @@
 {
-  "_comment": "Shipping classification by product type. Matched in order within each group, first hit wins, case-insensitive substring. PICKUP is checked first, then A, then B; anything unmatched ships free ground. Keep the freight lists tight — a freight charge on a part that could have gone ground loses the sale outright.",
-
+  "_comment": [
+    "THE shipping contract for A&B Motors. One file decides four things that used to be",
+    "spelled out separately and were free to disagree: what checkout charges (delivery",
+    "profiles, scripts/setup_shipping.py), what the product page warns (the ship:* tag on",
+    "the product), which parts fall in which group, and who closes an invoiced order out.",
+    "",
+    "CoreYard reads this through STORE_SHIPPING_POLICY_FILE and applies each part's tag",
+    "during the publish that creates the product \u2014 so a part is never live and sellable",
+    "wearing the wrong shipping, or none. It understands the schema generically; it knows",
+    "nothing about A&B.",
+    "",
+    "Groups are tried in 'match_order', first substring hit wins, case-insensitive against",
+    "the part type. So a specific pattern must come before a general one. GROUND carries",
+    "\"default\": true and catches everything unmatched.",
+    "",
+    "'fulfillment' says who ships it: 'external' means ShipStation buys the label and will",
+    "close the fulfillment order itself, so `coreyard orders sync-status` must NOT fulfill",
+    "it early or the buyer loses their tracking email. 'yard' means nobody else ever will.",
+    "",
+    "Keep the freight lists tight \u2014 a freight charge on a part that could have gone ground",
+    "loses the sale outright.",
+    "",
+    "CHANGING A TAG REPUBLISHES THE PARTS IT COVERS: the tag is part of the rendered",
+    "product, so the sync sees them as changed. Run `bin/coreyard --sink api --dry-run`",
+    "first. After changing rates or patterns, re-run scripts/setup_shipping.py --apply so",
+    "the delivery profiles still agree, and scripts/check_contracts.py to confirm the theme",
+    "still matches."
+  ],
   "groups": {
     "PICKUP": {
-      "price": null,
+      "tag": "ship:pickup-only",
       "label": "Pickup only",
       "handle": "pickup-only",
-      "note": "Body panels and glass. We do not ship these at any price — they arrive damaged and cost more to crate than they are worth. Local pickup at the yard only."
+      "price": null,
+      "note": "Body panels and glass. We do not ship these at any price \u2014 they arrive damaged and cost more to crate than they are worth. Local pickup at the yard only.",
+      "fulfillment": "yard",
+      "match": [
+        "pickup box",
+        "door assembly",
+        "dr assm",
+        "hood",
+        "bumper assembly",
+        "bumper rein",
+        "bumper filler",
+        "quarter panel assembly",
+        "decklid tailgate",
+        "fender",
+        "fender flare",
+        "running board",
+        "radiator core supp",
+        "cowl vent panel",
+        "roof glass",
+        "back glass",
+        "quarter glass",
+        "door glass",
+        "door vent glass",
+        "glass"
+      ]
     },
     "A": {
-      "price": "299.99",
-      "label": "Freight — oversize",
+      "tag": "ship:freight-299",
+      "label": "Freight \u2014 oversize",
       "handle": "freight-oversize",
-      "note": "Engines, transmissions, axles, and K-frames. Ships by LTL freight to a commercial address."
+      "price": "299.99",
+      "note": "Engines, transmissions, axles, and K-frames. Ships by LTL freight to a commercial address.",
+      "fulfillment": "yard",
+      "match": [
+        "engine assembly",
+        "short cyl block",
+        "transmission / transaxle",
+        "axle assembly",
+        "susp crossm k-frame"
+      ]
     },
     "B": {
-      "price": "199.99",
-      "label": "Freight — heavy",
+      "tag": "ship:freight-199",
+      "label": "Freight \u2014 heavy",
       "handle": "freight-heavy",
-      "note": "Transfer cases and differential carriers. Ships by LTL freight to a commercial address."
+      "price": "199.99",
+      "note": "Transfer cases and differential carriers. Ships by LTL freight to a commercial address.",
+      "fulfillment": "yard",
+      "match": [
+        "transfer case",
+        "carrier assembly"
+      ]
+    },
+    "GROUND": {
+      "tag": "ship:free",
+      "label": "Free ground",
+      "handle": "free-ground",
+      "price": "0.00",
+      "note": "Ships free anywhere in the lower 48, with UPS calculated offered as a paid option. Free local delivery around Amite.",
+      "fulfillment": "external",
+      "default": true
     }
   },
-
-  "PICKUP": [
-    "pickup box",
-    "door assembly",
-    "dr assm",
-    "hood",
-    "bumper assembly",
-    "bumper rein",
-    "bumper filler",
-    "quarter panel assembly",
-    "decklid tailgate",
-    "fender",
-    "fender flare",
-    "running board",
-    "radiator core supp",
-    "cowl vent panel",
-    "roof glass",
-    "back glass",
-    "quarter glass",
-    "door glass",
-    "door vent glass",
-    "glass"
-  ],
-
-  "A": [
-    "engine assembly",
-    "short cyl block",
-    "transmission / transaxle",
-    "axle assembly",
-    "susp crossm k-frame"
-  ],
-
-  "B": [
-    "transfer case",
-    "carrier assembly"
+  "match_order": [
+    "PICKUP",
+    "A",
+    "B"
   ]
 }

@@ -1,20 +1,22 @@
 #!/usr/bin/env bash
-# Finish newly published listings on the storefront side: delivery profile and ship:* tag.
+# Put newly published variants into the right Shopify delivery profile.
 #
-# CoreYard publishes a product with its title, price, photos, SEO, inventory, shipping
-# weight, and (with STORE_PUBLICATIONS set) its Online Store publication. What it cannot
-# know is how *this* yard ships a given part type — that classification lives in
-# content/freight.json and is A&B's own commercial policy, so the two steps below stay here.
+# This used to also write the ship:* tag, which meant a part was live and sellable wearing
+# no shipping classification until the next run. CoreYard now reads content/freight.json
+# itself and applies the tag during the publish that creates the product, so the storefront
+# warns correctly from the first second a part is buyable.
 #
-# Publishing is continuous, so finishing has to be too. Each step re-scans the catalog and
-# writes only what is missing, so running this repeatedly is cheap and idempotent.
+# What is left is genuinely Shopify's: a delivery profile is a set of variants, and a new
+# variant lands in the default profile until something moves it. Until this runs, a freight
+# part is correctly LABELLED as freight but would be CHARGED the ground rate at checkout, so
+# keep it on a schedule.
 #
 #   scripts/finish_listings.sh --plan    # report drift, write nothing
 #   scripts/finish_listings.sh --apply
 #
 # The catalog side of "unfinished" is CoreYard's:
 #   coreyard reconcile --apply --activate   drafts that should be live, parts that came back
-#   coreyard repair weights --apply         products published before weights were owned
+#   coreyard repair tags --apply            products published before a policy was configured
 #   coreyard audit catalog                  what is still missing, across the whole catalog
 set -uo pipefail
 
@@ -39,12 +41,6 @@ run() {
   fi
 }
 
-# The profile decides what checkout charges; the tag is what the theme can see, so it can
-# warn a shopper on the product page instead of at a dead checkout. Profile first: a wrong
-# charge costs a sale immediately, a missing warning only costs a phone call.
 run "delivery profile" scripts/setup_shipping.py "$MODE"
-run "shipping tags"    scripts/tag_shipping.py   "$MODE"
 
-# A failure in one step must not hide the other: they are independent, and the next run
-# retries whatever did not land. Exit non-zero so a health check notices.
 exit "$status"

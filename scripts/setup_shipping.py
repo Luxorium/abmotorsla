@@ -1,12 +1,13 @@
 #!/usr/bin/env python3
 """Configure Shopify shipping to match how the yard actually ships.
 
-Three groups, from content/freight.json:
+Every group, its rate and the parts it covers come from content/freight.json — the one file
+that decides shipping. CoreYard reads the same file to put the ship:* tag on each product,
+so what checkout charges and what the product page promises cannot disagree.
 
-  PICKUP  body panels and glass — never shipped, pickup or local delivery only
-  A       engines, transmissions, axles, K-frames — $299.99 flat rate freight
-  B       transfer cases, differential carriers — $199.99 flat rate freight
-  ground  everything else (about 90%) — free shipping
+This owns the Shopify side: which delivery profile each variant belongs to, and what each
+profile charges. That is storefront configuration, which is why it lives here and not in the
+backend.
 
 The store started with FREIGHT and FREIGHT LIGHT rates sitting on the *default*
 profile, which offered $299.99 freight as a choice on a $50 alternator and left
@@ -26,6 +27,26 @@ import os
 from _shopify import REPO, Shopify
 
 CHUNK = 200
+
+# The delivery-profile names that already exist in the store, per freight.json group. Kept
+# here rather than in freight.json because they are Shopify bookkeeping, not shipping policy,
+# and renaming one duplicates a profile rather than renaming it.
+PROFILE_NAMES = {
+    "A": "Freight — Oversize",
+    "B": "Freight — Heavy",
+    "PICKUP": "Local Pickup Only",
+}
+
+
+def profile_name(freight: dict, group_id: str) -> str:
+    name = PROFILE_NAMES.get(group_id)
+    if not name:
+        raise RuntimeError(
+            f"content/freight.json declares group {group_id!r}, but no delivery profile "
+            f"name is mapped for it in {__file__}. Add one to PROFILE_NAMES (and create "
+            f"the profile in Shopify admin under that exact name)."
+        )
+    return name
 
 
 PROFILES_Q = """
@@ -101,13 +122,35 @@ mutation($id: ID!, $profile: DeliveryProfileInput!) {
 """
 
 
+def match_order(freight: dict) -> list[str]:
+    """Group ids to try, in order. Same reading CoreYard's shipping policy takes."""
+    order = freight.get("match_order") or []
+    groups = freight.get("groups") or {}
+    return [g for g in order if g in groups]
+
+
+def default_group(freight: dict) -> str:
+    """The group that catches everything unmatched."""
+    for gid, body in (freight.get("groups") or {}).items():
+        if isinstance(body, dict) and body.get("default"):
+            return gid
+    raise RuntimeError("content/freight.json has no group marked \"default\": true")
+
+
 def classify(freight: dict, product_type: str) -> str:
+    """Which group a part type falls in.
+
+    Deliberately the same rule CoreYard applies when it writes the ship:* tag — first
+    substring hit in declared order, else the default. If these two ever disagree, a part is
+    labelled one way on the page and charged another at checkout.
+    """
     t = (product_type or "").lower()
-    for group in ("PICKUP", "A", "B"):
-        for pattern in freight[group]:
+    groups = freight["groups"]
+    for gid in match_order(freight):
+        for pattern in groups[gid].get("match") or []:
             if pattern in t:
-                return group
-    return "ground"
+                return gid
+    return default_group(freight)
 
 
 def scan(gql: Shopify, freight: dict):
@@ -368,22 +411,22 @@ def main() -> None:
     buckets, counts = scan(gql, freight)
     total = sum(counts.values())
     print(f"  {total} products")
-    for g in ("ground", "A", "B", "PICKUP"):
-        label = {"ground": "free ground", "A": "freight $299.99",
-                 "B": "freight $199.99", "PICKUP": "pickup only"}[g]
-        print(f"    {label:<20}{counts[g]:>6}")
+    for gid, body in freight["groups"].items():
+        price = body.get("price")
+        rate = f"${price}" if price and price != "0.00" else (
+            "free" if price == "0.00" else "not shipped")
+        print(f"    {body.get('label', gid):<24}{rate:<12}{counts[gid]:>6}")
 
+    # The rates, the names and which parts they cover all come from freight.json. Restating
+    # them here is how the profile that charges and the tag that promises drift apart.
+    #
+    # PROFILE NAMES MUST MATCH THE STORE. Profiles are looked up by name, so a prettier one
+    # silently *creates a duplicate* and splits its products across the two. The names are
+    # admin-internal — shoppers see rate names — so matching what exists costs nothing.
     plan = [
-        ("Freight — Oversize", "A", "299.99",
-         "Flat Rate Freight. Must ship to a commercial/business address with a forklift."),
-        ("Freight — Heavy", "B", "199.99",
-         "Flat Rate Freight. Must ship to a commercial/business address with a forklift."),
-        # Must match the profile name that exists in the store, not a prettier one:
-        # profiles are looked up by name, so a mismatch silently *creates a duplicate*
-        # pickup profile and splits the pickup products across the two. The name is
-        # admin-internal — shoppers see rate names — so matching the store costs nothing.
-        ("Local Pickup Only", "PICKUP", None,
-         "Local pickup in Amite, Louisiana only. These parts are not shipped."),
+        (profile_name(freight, gid), gid, freight["groups"][gid].get("price"),
+         freight["groups"][gid].get("note") or "")
+        for gid in match_order(freight)
     ]
     print("\nprofiles to create/update:")
     for name, group, price, _ in plan:

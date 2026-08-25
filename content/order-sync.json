@@ -1,35 +1,22 @@
 {
   "_comment": [
-    "How a storefront order should be marked once the yard system has invoiced it. Read by",
+    "How a storefront order is marked once the yard system has invoiced it. Read by",
     "CoreYard through STORE_ORDER_POLICY_FILE and applied by `bin/coreyard orders",
     "sync-status`.",
     "",
-    "The interesting decision is fulfillment, and it is ours rather than CoreYard's because",
-    "it depends on who buys the shipping label.",
+    "There is deliberately no 'fulfillment' block here. Which shipping groups exist, what",
+    "their tags are, and who ships them all live in content/freight.json \u2014 the one file",
+    "that decides shipping \u2014 and CoreYard derives the fulfillment rules from it. Two copies",
+    "of that answer would be free to drift, and the drifting one decides whether a parcel",
+    "order gets closed before ShipStation has bought the label, which costs the buyer their",
+    "tracking email.",
     "",
-    "Shopify has no 'picked but not shipped' state: creating a fulfillment CLOSES the",
-    "fulfillment order. ShipStation needs it left open so it can attach the UPS tracking",
-    "number when it buys the label — fulfilling a parcel order here would leave the buyer",
-    "with no tracking email at all. Freight and pickup-only orders never get a UPS label, so",
-    "ShipStation never sees them and nothing else would ever close them out; those we",
-    "fulfill.",
-    "",
-    "A mixed order is left open: it still has parcel lines for ShipStation to ship, and",
-    "closing it early costs the buyer their tracking.",
-    "",
-    "The groups are the ship:* tags scripts/tag_shipping.py writes from content/freight.json.",
-    "Keep the two files in step: a group named here that tag_shipping no longer writes will",
-    "silently fall through to the default."
+    "Adding a 'fulfillment' object here overrides the derivation, and the contract check",
+    "will then verify every group it names still exists in freight.json."
   ],
-
-  "tags": ["invoiced"],
+  "tags": [
+    "invoiced"
+  ],
   "reference_tag": "wo-{reference}",
-  "note": "Yard work order {reference} invoiced",
-
-  "fulfillment": {
-    "groups": ["ship:pickup-only", "ship:freight-299", "ship:freight-199", "ship:free"],
-    "default_group": "ship:free",
-    "defer_groups": ["ship:free"],
-    "notify_customer": false
-  }
+  "note": "Yard work order {reference} invoiced"
 }
