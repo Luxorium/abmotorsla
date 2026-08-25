@@ -21,23 +21,14 @@ from __future__ import annotations
 
 import argparse
 import json
-import os
-import pathlib
-import sys
 import threading
 import time
-import urllib.error
-import urllib.request
 from concurrent.futures import ThreadPoolExecutor
 
-REPO = pathlib.Path(__file__).resolve().parent.parent
+from _shopify import REPO, Shopify
+
 CONTENT = REPO / "content"
 STATE_PATH = REPO / ".store_setup_state.json"
-API_VERSION = "2026-07"
-
-DEFAULT_ENV = pathlib.Path(
-    os.environ.get("ABM_ENV", REPO.parent / "coreyard" / ".env")
-)
 
 REQUIRED_SCOPES = {
     "collections": ["write_products"],
@@ -47,79 +38,6 @@ REQUIRED_SCOPES = {
     "policies": ["write_legal_policies"],
     "activate": ["write_products", "write_publications"],
 }
-
-
-# ─────────────────────────────────────────────────────────────── transport ──
-class Shopify:
-    def __init__(self, store: str, token: str):
-        self.url = f"https://{store}/admin/api/{API_VERSION}/graphql.json"
-        self.headers = {
-            "Content-Type": "application/json",
-            "X-Shopify-Access-Token": token,
-        }
-        self._lock = threading.Lock()
-        self._pause_until = 0.0
-
-    def __call__(self, query: str, variables: dict | None = None, tries: int = 6) -> dict:
-        body = json.dumps({"query": query, "variables": variables or {}}).encode()
-        for attempt in range(tries):
-            wait = self._pause_until - time.monotonic()
-            if wait > 0:
-                time.sleep(wait)
-            req = urllib.request.Request(self.url, data=body, headers=self.headers)
-            try:
-                with urllib.request.urlopen(req, timeout=90) as r:
-                    payload = json.loads(r.read())
-            except urllib.error.HTTPError as e:
-                if e.code in (429, 500, 502, 503, 504) and attempt < tries - 1:
-                    time.sleep(2 ** attempt)
-                    continue
-                raise
-            except (urllib.error.URLError, TimeoutError):
-                if attempt < tries - 1:
-                    time.sleep(2 ** attempt)
-                    continue
-                raise
-
-            self._throttle(payload)
-            errors = payload.get("errors") or []
-            if errors:
-                throttled = any(
-                    (e.get("extensions") or {}).get("code") == "THROTTLED" for e in errors
-                )
-                if throttled and attempt < tries - 1:
-                    time.sleep(1.5 * (attempt + 1))
-                    continue
-                raise RuntimeError(json.dumps(errors)[:500])
-            return payload.get("data") or {}
-        raise RuntimeError("exhausted retries")
-
-    def _throttle(self, payload: dict) -> None:
-        cost = ((payload.get("extensions") or {}).get("cost") or {}).get("throttleStatus")
-        if not cost:
-            return
-        available = cost.get("currentlyAvailable", 1000)
-        restore = cost.get("restoreRate", 100) or 100
-        if available < 200:
-            with self._lock:
-                self._pause_until = max(
-                    self._pause_until, time.monotonic() + (250 - available) / restore
-                )
-
-
-def load_env(path: pathlib.Path) -> dict:
-    if not path.exists():
-        sys.exit(f"no .env at {path} — set ABM_ENV to point at one")
-    cfg = {}
-    for line in path.read_text().splitlines():
-        line = line.strip()
-        if line and not line.startswith("#") and "=" in line:
-            k, v = line.split("=", 1)
-            cfg[k.strip()] = v.strip().strip('"').strip("'")
-    missing = [k for k in ("SHOPIFY_STORE", "SHOPIFY_ADMIN_TOKEN") if not cfg.get(k)]
-    if missing:
-        sys.exit(f"{path} is missing {', '.join(missing)}")
-    return cfg
 
 
 def load_state() -> dict:
@@ -572,8 +490,7 @@ def main() -> None:
         ap.print_help()
         return
 
-    cfg = load_env(DEFAULT_ENV)
-    gql = Shopify(cfg["SHOPIFY_STORE"], cfg["SHOPIFY_ADMIN_TOKEN"])
+    gql = Shopify.from_env()
     site = json.loads((CONTENT / "site.json").read_text())
 
     if args.check:

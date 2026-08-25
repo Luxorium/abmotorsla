@@ -20,19 +20,13 @@ from __future__ import annotations
 import argparse
 import collections
 import json
-import os
-import pathlib
-import sys
 import threading
 import time
-import urllib.error
-import urllib.request
 from concurrent.futures import ThreadPoolExecutor
 
-REPO = pathlib.Path(__file__).resolve().parent.parent
-ENV = pathlib.Path(os.environ.get("ABM_ENV", REPO.parent / "coreyard" / ".env"))
+from _shopify import REPO, Shopify
+
 STATE = REPO / ".tag_shipping_state.json"
-API_VERSION = "2026-07"
 
 TAGS = {
     "PICKUP": "ship:pickup-only",
@@ -43,53 +37,6 @@ TAGS = {
 ALL_TAGS = set(TAGS.values())
 
 _lock = threading.Lock()
-
-
-def load_env() -> dict:
-    if not ENV.exists():
-        sys.exit(f"no .env at {ENV}")
-    cfg = {}
-    for line in ENV.read_text().splitlines():
-        line = line.strip()
-        if line and not line.startswith("#") and "=" in line:
-            k, v = line.split("=", 1)
-            cfg[k.strip()] = v.strip().strip('"').strip("'")
-    return cfg
-
-
-class Shopify:
-    def __init__(self, store: str, token: str):
-        self.url = f"https://{store}/admin/api/{API_VERSION}/graphql.json"
-        self.headers = {"Content-Type": "application/json", "X-Shopify-Access-Token": token}
-        self._pause = 0.0
-
-    def __call__(self, query, variables=None, tries=6):
-        body = json.dumps({"query": query, "variables": variables or {}}).encode()
-        for attempt in range(tries):
-            wait = self._pause - time.monotonic()
-            if wait > 0:
-                time.sleep(wait)
-            try:
-                req = urllib.request.Request(self.url, data=body, headers=self.headers)
-                with urllib.request.urlopen(req, timeout=90) as r:
-                    payload = json.loads(r.read())
-            except (urllib.error.HTTPError, urllib.error.URLError, TimeoutError):
-                if attempt < tries - 1:
-                    time.sleep(2 ** attempt)
-                    continue
-                raise
-            cost = ((payload.get("extensions") or {}).get("cost") or {}).get("throttleStatus") or {}
-            if cost.get("currentlyAvailable", 1000) < 200:
-                with _lock:
-                    self._pause = max(self._pause, time.monotonic() + 1.0)
-            errors = payload.get("errors") or []
-            if errors:
-                if any((e.get("extensions") or {}).get("code") == "THROTTLED" for e in errors) and attempt < tries - 1:
-                    time.sleep(2 * (attempt + 1))
-                    continue
-                raise RuntimeError(json.dumps(errors)[:400])
-            return payload.get("data") or {}
-        raise RuntimeError("exhausted retries")
 
 
 SCAN = """
@@ -133,8 +80,7 @@ def main() -> None:
         ap.print_help()
         return
 
-    cfg = load_env()
-    gql = Shopify(cfg["SHOPIFY_STORE"], cfg["SHOPIFY_ADMIN_TOKEN"])
+    gql = Shopify.from_env()
     freight = json.loads((REPO / "content" / "freight.json").read_text())
 
     print("scanning…")

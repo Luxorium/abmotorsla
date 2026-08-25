@@ -22,55 +22,10 @@ import argparse
 import collections
 import json
 import os
-import pathlib
-import sys
-import time
-import urllib.error
-import urllib.request
 
-REPO = pathlib.Path(__file__).resolve().parent.parent
-ENV = pathlib.Path(os.environ.get("ABM_ENV", REPO.parent / "coreyard" / ".env"))
-API_VERSION = "2026-07"
+from _shopify import REPO, Shopify
+
 CHUNK = 200
-
-
-def load_env() -> dict:
-    if not ENV.exists():
-        sys.exit(f"no .env at {ENV}")
-    cfg = {}
-    for line in ENV.read_text().splitlines():
-        line = line.strip()
-        if line and not line.startswith("#") and "=" in line:
-            k, v = line.split("=", 1)
-            cfg[k.strip()] = v.strip().strip('"').strip("'")
-    return cfg
-
-
-class Shopify:
-    def __init__(self, store: str, token: str):
-        self.url = f"https://{store}/admin/api/{API_VERSION}/graphql.json"
-        self.headers = {"Content-Type": "application/json", "X-Shopify-Access-Token": token}
-
-    def __call__(self, query: str, variables: dict | None = None, tries: int = 6) -> dict:
-        body = json.dumps({"query": query, "variables": variables or {}}).encode()
-        for attempt in range(tries):
-            try:
-                req = urllib.request.Request(self.url, data=body, headers=self.headers)
-                with urllib.request.urlopen(req, timeout=120) as r:
-                    payload = json.loads(r.read())
-            except (urllib.error.HTTPError, urllib.error.URLError, TimeoutError):
-                if attempt < tries - 1:
-                    time.sleep(2 ** attempt)
-                    continue
-                raise
-            errors = payload.get("errors") or []
-            if errors:
-                if any((e.get("extensions") or {}).get("code") == "THROTTLED" for e in errors) and attempt < tries - 1:
-                    time.sleep(2 * (attempt + 1))
-                    continue
-                raise RuntimeError(json.dumps(errors)[:500])
-            return payload.get("data") or {}
-        raise RuntimeError("exhausted retries")
 
 
 PROFILES_Q = """
@@ -400,8 +355,7 @@ def main() -> None:
         ap.print_help()
         return
 
-    cfg = load_env()
-    gql = Shopify(cfg["SHOPIFY_STORE"], cfg["SHOPIFY_ADMIN_TOKEN"])
+    gql = Shopify.from_env()
     freight = json.loads((REPO / "content" / "freight.json").read_text())
 
     profiles = gql(PROFILES_Q)["deliveryProfiles"]["nodes"]
@@ -424,7 +378,11 @@ def main() -> None:
          "Flat Rate Freight. Must ship to a commercial/business address with a forklift."),
         ("Freight — Heavy", "B", "199.99",
          "Flat Rate Freight. Must ship to a commercial/business address with a forklift."),
-        ("Pickup Only — Body & Glass", "PICKUP", None,
+        # Must match the profile name that exists in the store, not a prettier one:
+        # profiles are looked up by name, so a mismatch silently *creates a duplicate*
+        # pickup profile and splits the pickup products across the two. The name is
+        # admin-internal — shoppers see rate names — so matching the store costs nothing.
+        ("Local Pickup Only", "PICKUP", None,
          "Local pickup in Amite, Louisiana only. These parts are not shipped."),
     ]
     print("\nprofiles to create/update:")
