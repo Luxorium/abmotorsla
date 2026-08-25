@@ -77,6 +77,7 @@
           at checkout. Body panels and glass are never shipped, so they get no
           shippingDetails at all rather than a rate we would refuse to honour.
         {%- endcomment -%}
+        {%- capture meta_ship -%}{%- render 'shipping-class', product: product -%}{%- endcapture -%}
         {%- liquid
           assign ship_rate = 0
           assign handle_min = 1
@@ -84,16 +85,17 @@
           assign transit_min = 2
           assign transit_max = 5
           assign ships = true
-          if product.tags contains 'ship:pickup-only'
+          if meta_ship == 'pickup'
             assign ships = false
-          elsif product.tags contains 'ship:freight-299'
+          elsif meta_ship == 'freight299'
             assign ship_rate = 299.99
-            assign handle_min = 2
-            assign handle_max = 4
-            assign transit_min = 3
-            assign transit_max = 7
-          elsif product.tags contains 'ship:freight-199'
+          elsif meta_ship == 'freight199'
             assign ship_rate = 199.99
+          endif
+          comment
+            Freight moves on a truck, not a parcel network, so both windows widen.
+          endcomment
+          if ship_rate > 0
             assign handle_min = 2
             assign handle_max = 4
             assign transit_min = 3

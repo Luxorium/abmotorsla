@@ -456,15 +456,32 @@
      ship:* tag) is what lets the drawer warn about a mixed cart without a second
      request for tags, which /cart.js does not return. */
 
+  /* Wording comes from snippets/shipping-config.liquid, which is rendered from the same
+     contract the Liquid notices use. The literals below are only a fallback for a page
+     that somehow rendered without it. */
+  var SHIP_FALLBACK = {
+    pickup: 'Pickup only',
+    freight299: '$299.99 freight',
+    freight199: '$199.99 freight',
+    free: 'Free shipping'
+  };
+
+  function shipText(group) {
+    var config = (window.ABM_SHIP && window.ABM_SHIP.labels) || SHIP_FALLBACK;
+    return config[group] || config.free || SHIP_FALLBACK.free;
+  }
+
   function shipLabel(group) {
-    if (group === 'pickup') return '<span class="ship-line ship-line--pickup">Pickup only</span>';
-    if (group === 'freight299') return '<span class="ship-line ship-line--freight">$299.99 freight</span>';
-    if (group === 'freight199') return '<span class="ship-line ship-line--freight">$199.99 freight</span>';
-    return '<span class="ship-line ship-line--free">Free shipping</span>';
+    var kind = group === 'pickup' ? 'pickup' : (group === 'free' ? 'free' : 'freight');
+    return '<span class="ship-line ship-line--' + kind + '">' + shipText(group) + '</span>';
   }
 
   function shipOf(line) {
     return (line.properties && line.properties._ship) || 'free';
+  }
+
+  function isFreight(group) {
+    return group !== 'pickup' && group !== 'free';
   }
 
   function cartAlert(cart) {
@@ -483,7 +500,7 @@
         '<div><b>Pickup only — Amite, Louisiana</b>' +
         '<p>Choose <b>Pickup</b> at checkout. Ready at the counter within one business day.</p></div></div>';
     }
-    if (groups.indexOf('freight299') > -1 || groups.indexOf('freight199') > -1) {
+    if (groups.filter(isFreight).length) {
       return '<div class="cart-alert">' +
         '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h11v10H3zM14 9h3.6l2.4 3v4h-6" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"/></svg>' +
         '<div><b>Freight order — commercial address required</b>' +

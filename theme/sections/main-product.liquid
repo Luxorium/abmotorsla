@@ -5,6 +5,11 @@
   assign phone_href = phone | remove: '-' | remove: ' '
   assign warranty = settings.warranty_days | default: '90'
 -%}
+{%- comment -%}
+  Resolved once and reused: the gallery note, the hidden cart property and the notices all
+  need the same answer, and the tag chain that produces it lives in one snippet.
+{%- endcomment -%}
+{%- capture ship_group -%}{%- render 'shipping-class', product: product -%}{%- endcapture -%}
 
 <div class="page-width">
   {% render 'product-crumb', format: 'html', product: product, collection: collection %}
@@ -50,7 +55,7 @@
           contradicts the pickup-only notice sitting directly below it.
         {%- endcomment -%}
         <span>These are photos of the actual part on our lot — not a stock image.
-          {%- if product.tags contains 'ship:pickup-only' %} What you see is what you pick up.
+          {%- if ship_group == 'pickup' %} What you see is what you pick up.
           {%- else %} What you see is what ships.
           {%- endif %}</span>
       </p>
@@ -61,7 +66,7 @@
     <div>
       <div class="product__flags">
         {%- if product.type != blank -%}<span class="badge badge--dark">{{ product.type }}</span>{%- endif -%}
-        <span class="badge badge--green">Used OEM</span>
+        {%- if product.tags contains 'Used OEM' -%}<span class="badge badge--green">Used OEM</span>{%- endif -%}
         {%- unless product.available -%}<span class="badge badge--sold">Sold</span>{%- endunless -%}
       </div>
 
@@ -90,16 +95,6 @@
             and they DO come back from /cart.js — which is how the cart drawer knows a
             line is pickup-only without a second round trip for tags.
           {%- endcomment -%}
-          {%- liquid
-            assign ship_group = 'free'
-            if product.tags contains 'ship:pickup-only'
-              assign ship_group = 'pickup'
-            elsif product.tags contains 'ship:freight-299'
-              assign ship_group = 'freight299'
-            elsif product.tags contains 'ship:freight-199'
-              assign ship_group = 'freight199'
-            endif
-          -%}
           <input type="hidden" name="properties[_ship]" value="{{ ship_group }}">
 
           {%- if product.available -%}
@@ -134,16 +129,7 @@
             Say the right thing for THIS part. A blanket "free shipping" line on a
             pickup-only door contradicts the banner directly above it.
           {%- endcomment -%}
-          {%- if product.tags contains 'ship:pickup-only' -%}
-            <div>{% render 'icon', name: 'pin' %}<span><b>Pickup or local delivery only.</b> We don't ship body parts or glass.</span></div>
-          {%- elsif product.tags contains 'ship:freight-299' -%}
-            <div>{% render 'icon', name: 'truck' %}<span><b>$299.99 flat rate freight</b> to a commercial address, or free pickup at the yard.</span></div>
-          {%- elsif product.tags contains 'ship:freight-199' -%}
-            <div>{% render 'icon', name: 'truck' %}<span><b>$199.99 flat rate freight</b> to a commercial address, or free pickup at the yard.</span></div>
-          {%- else -%}
-            <div>{% render 'icon', name: 'truck' %}<span><b>Free shipping</b> in the lower 48. Free local delivery around Amite.</span></div>
-          {%- endif -%}
-          <div>{% render 'icon', name: 'check' %}<span>Inspected and basic-refurbished before it leaves the yard.</span></div>
+          {% render 'shipping-group', product: product, style: 'assure' %}
         </div>
       </div>
 
@@ -171,7 +157,6 @@
             <div><dt>{{ key | replace: '_', ' ' | capitalize }}</dt><dd>{{ value }}</dd></div>
           {%- endunless -%}
         {%- endfor -%}
-        <div><dt>Condition</dt><dd>Used &mdash; inspected OEM</dd></div>
         <div><dt>Warranty</dt><dd>{{ warranty }}-day money back</dd></div>
       </dl>
 
@@ -290,20 +275,35 @@
     endfor
 
     comment
-      CoreYard tags every part "<year> <make> <model>". Strip the year off the
-      first one and we have the vehicle tag — "2017 Chrysler 300" -> "Chrysler 300",
-      which is a real tag on every part that fits that car. `plus: 0` on a
-      non-numeric string yields 0, so this only ever matches a genuine year.
+      Which vehicle to offer more parts for. It comes from the structured fitment
+      metafield: each row carries a `label` that is exactly the vehicle tag CoreYard
+      also writes ("Chrysler 300"), so the collection URL below filters on a real tag
+      without anyone having to take a title apart to find it.
+
+      The fallback reads the tags the old way, and exists only for a product published
+      before CoreYard started writing the metafield. Once a full sync has run it never
+      fires; it is cheap enough to leave as a safety net during the migration.
     endcomment
     assign vehicle = ''
-    for t in product.tags
-      assign head = t | slice: 0, 4
-      assign year = head | plus: 0
-      if year > 1900 and year < 2100
-        assign vehicle = t | remove_first: head | strip
-        break
-      endif
-    endfor
+    assign fitment_rows = product.metafields.abm.fitment.value
+    if fitment_rows != blank
+      for row in fitment_rows
+        if row.label != blank
+          assign vehicle = row.label
+          break
+        endif
+      endfor
+    endif
+    if vehicle == blank
+      for t in product.tags
+        assign head = t | slice: 0, 4
+        assign year = head | plus: 0
+        if year > 1900 and year < 2100
+          assign vehicle = t | remove_first: head | strip
+          break
+        endif
+      endfor
+    endif
   -%}
 
   {%- if rel != nil or vehicle != blank -%}

@@ -45,9 +45,14 @@
       {%- endif -%}
 
       <div class="card__flags">
-        {%- if p.tags contains 'ship:pickup-only' -%}
+        {%- comment -%}
+          A card is a dense grid tile, so it says "Freight" without the rate — but it asks
+          the same snippet everything else does, rather than testing tags itself.
+        {%- endcomment -%}
+        {%- capture card_ship -%}{%- render 'shipping-class', product: p -%}{%- endcapture -%}
+        {%- if card_ship == 'pickup' -%}
           <span class="badge badge--pickup">Pickup only</span>
-        {%- elsif p.tags contains 'ship:freight-299' or p.tags contains 'ship:freight-199' -%}
+        {%- elsif card_ship != 'free' -%}
           <span class="badge badge--freight">Freight</span>
         {%- endif -%}
         {%- unless p.available -%}

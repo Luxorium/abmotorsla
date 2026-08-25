@@ -1,0 +1,32 @@
+{%- comment -%}
+  Outputs ONE word: the shipping group a product belongs to.
+
+      {%- capture ship_group -%}{%- render 'shipping-class', product: product -%}{%- endcapture -%}
+
+  This snippet and 'shipping-group' are the only two files in the theme that know a ship:*
+  tag exists. Everything else — the buybox, the card badge, the cart, the structured data —
+  asks here instead of testing tags itself. Before that, six files each carried their own
+  copy of the same if/elsif chain, so adding a shipping group meant finding all six and
+  changing a rate meant finding the four that quoted it.
+
+  The tags come from content/freight.json and are written by CoreYard during the publish
+  that creates the product, so a part is never live wearing the wrong one. scripts/
+  check_contracts.py verifies the group ids and tags below still match that file.
+
+  The ids are pickup | freight299 | freight199 | free. They are STABLE IDENTIFIERS, not
+  rate declarations: they travel in the hidden _ship cart line property and sit inside
+  shopper carts right now, so renaming one would make an in-flight cart fall back to the
+  free-shipping wording. If a rate changes, change the rate in 'shipping-group' and in
+  content/freight.json; leave the id alone.
+{%- endcomment -%}
+{%- liquid
+  assign group = 'free'
+  if product.tags contains 'ship:pickup-only'
+    assign group = 'pickup'
+  elsif product.tags contains 'ship:freight-299'
+    assign group = 'freight299'
+  elsif product.tags contains 'ship:freight-199'
+    assign group = 'freight199'
+  endif
+  echo group
+-%}

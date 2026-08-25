@@ -1,0 +1,25 @@
+{%- comment -%}
+  Hands the shipping contract to JavaScript.
+
+  The cart drawer is built client-side from /cart.js, which does not return product tags —
+  it returns the hidden `_ship` line property the product form set. So the drawer needs the
+  group→wording map too, and it used to carry its own copy of the rates in theme.js. That
+  was a third place a rate could be changed in, and the only one a Liquid grep would miss.
+
+  Rendered once in the layout as `window.ABM_SHIP`. theme.js falls back to its own defaults
+  if this is ever absent, so the drawer degrades rather than breaking.
+
+  Group ids match snippets/shipping-class.liquid. Rates match content/freight.json, which
+  scripts/check_contracts.py enforces.
+{%- endcomment -%}
+<script>
+  window.ABM_SHIP = {
+    "freight": { "rates": { "freight299": "$299.99", "freight199": "$199.99" } },
+    "labels": {
+      "pickup": "Pickup only",
+      "freight299": "$299.99 freight",
+      "freight199": "$199.99 freight",
+      "free": "Free shipping"
+    }
+  };
+</script>

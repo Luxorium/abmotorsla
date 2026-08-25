@@ -1,58 +1,72 @@
 {%- comment -%}
-  Resolves how a part ships from its ship:* tag and renders the right notice.
-  Tags are written by scripts/tag_shipping.py from content/freight.json, so the
-  storefront and the delivery profiles always agree.
+  Renders the shipping notice for a part, in one of four shapes.
 
   Accepts:
     product (required)
-    style: 'badge' | 'banner' | 'line'   (default 'badge')
+    style: 'badge' | 'banner' | 'line' | 'assure'   (default 'badge')
 
-  Sets nothing globally — call it wherever the notice belongs.
+  This file owns the customer-facing wording and the rates. 'shipping-class' owns the
+  tag→group mapping. Together they are the only two places in the theme that encode the
+  shipping contract in content/freight.json, and scripts/check_contracts.py fails the build
+  if the rates or tags here drift from it.
 
-  'banner' is the important one. A shopper in another state must learn a door is
-  pickup-only on the product page, not by hitting a checkout with no available
-  shipping method.
+  'banner' is the important one. A shopper in another state must learn a door is pickup-only
+  on the product page, not by hitting a checkout with no available shipping method.
 {%- endcomment -%}
+{%- capture ship_group -%}{%- render 'shipping-class', product: product -%}{%- endcapture -%}
 {%- liquid
-  assign group = 'free'
-  if product.tags contains 'ship:pickup-only'
-    assign group = 'pickup'
-  elsif product.tags contains 'ship:freight-299'
-    assign group = 'freight299'
-  elsif product.tags contains 'ship:freight-199'
-    assign group = 'freight199'
-  endif
   assign style = style | default: 'badge'
   assign phone = settings.phone
   assign phone_href = phone | remove: '-' | remove: ' '
+
+  comment
+    The rates. Changing one means changing content/freight.json and re-running
+    scripts/setup_shipping.py --apply, or checkout and the page disagree.
+  endcomment
+  assign rate = ''
+  if ship_group == 'freight299'
+    assign rate = '$299.99'
+  elsif ship_group == 'freight199'
+    assign rate = '$199.99'
+  endif
+  assign is_freight = false
+  if rate != ''
+    assign is_freight = true
+  endif
 -%}
 
 {%- case style -%}
 
   {%- when 'badge' -%}
-    {%- if group == 'pickup' -%}
+    {%- if ship_group == 'pickup' -%}
       <span class="badge badge--pickup">Pickup only</span>
-    {%- elsif group == 'freight299' -%}
-      <span class="badge badge--freight">Freight $299.99</span>
-    {%- elsif group == 'freight199' -%}
-      <span class="badge badge--freight">Freight $199.99</span>
+    {%- elsif is_freight -%}
+      <span class="badge badge--freight">Freight {{ rate }}</span>
     {%- else -%}
       <span class="badge badge--green">Free shipping</span>
     {%- endif -%}
 
   {%- when 'line' -%}
-    {%- if group == 'pickup' -%}
+    {%- if ship_group == 'pickup' -%}
       <span class="ship-line ship-line--pickup">{% render 'icon', name: 'pin' %} Pickup only &mdash; not shipped</span>
-    {%- elsif group == 'freight299' -%}
-      <span class="ship-line ship-line--freight">{% render 'icon', name: 'truck' %} $299.99 freight &middot; commercial address</span>
-    {%- elsif group == 'freight199' -%}
-      <span class="ship-line ship-line--freight">{% render 'icon', name: 'truck' %} $199.99 freight &middot; commercial address</span>
+    {%- elsif is_freight -%}
+      <span class="ship-line ship-line--freight">{% render 'icon', name: 'truck' %} {{ rate }} freight &middot; commercial address</span>
     {%- else -%}
       <span class="ship-line ship-line--free">{% render 'icon', name: 'truck' %} Free shipping</span>
     {%- endif -%}
 
+  {%- when 'assure' -%}
+    {%- comment -%} The one-line promise in the buybox, matched to THIS part. {%- endcomment -%}
+    {%- if ship_group == 'pickup' -%}
+      <div>{% render 'icon', name: 'pin' %}<span><b>Pickup or local delivery only.</b> We don't ship body parts or glass.</span></div>
+    {%- elsif is_freight -%}
+      <div>{% render 'icon', name: 'truck' %}<span><b>{{ rate }} flat rate freight</b> to a commercial address, or free pickup at the yard.</span></div>
+    {%- else -%}
+      <div>{% render 'icon', name: 'truck' %}<span><b>Free shipping</b> in the lower 48. Free local delivery around Amite.</span></div>
+    {%- endif -%}
+
   {%- when 'banner' -%}
-    {%- if group == 'pickup' -%}
+    {%- if ship_group == 'pickup' -%}
       <div class="ship-notice ship-notice--pickup">
         {% render 'icon', name: 'pin' %}
         <div>
@@ -71,12 +85,11 @@
         </div>
       </div>
 
-    {%- elsif group == 'freight299' or group == 'freight199' -%}
-      {%- if group == 'freight299' -%}{%- assign fee = '$299.99' -%}{%- else -%}{%- assign fee = '$199.99' -%}{%- endif -%}
+    {%- elsif is_freight -%}
       <div class="ship-notice ship-notice--freight">
         {% render 'icon', name: 'truck' %}
         <div>
-          <b>Ships freight &mdash; {{ fee }} flat rate</b>
+          <b>Ships freight &mdash; {{ rate }} flat rate</b>
           <p>
             <b>MUST SHIP TO A COMMERCIAL/BUSINESS ADDRESS WITH A FORKLIFT.</b>
             A freight truck can't unload a part this heavy at a house. Ship it to your mechanic's

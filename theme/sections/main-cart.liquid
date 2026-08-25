@@ -7,7 +7,10 @@
     assign pickup_count = 0
     assign ship_count = 0
     for line in cart.items
-      if line.product.tags contains 'ship:pickup-only'
+      capture line_ship
+        render 'shipping-class', product: line.product
+      endcapture
+      if line_ship == 'pickup'
         assign pickup_count = pickup_count | plus: 1
       else
         assign ship_count = ship_count | plus: 1
