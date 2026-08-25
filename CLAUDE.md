@@ -29,6 +29,7 @@ Three files in `content/` are an interface, read by CoreYard through paths confi
 
 | File | CoreYard setting |
 |---|---|
+| `content/freight.json` | `STORE_SHIPPING_POLICY_FILE` |
 | `content/catalog-profile.json` | `STORE_PROFILE_FILE` |
 | `content/weights.json` | `STORE_WEIGHT_RULES_FILE` |
 | `content/order-sync.json` | `STORE_ORDER_POLICY_FILE` |
@@ -38,9 +39,20 @@ the rendered product and the rendered product is what the sync fingerprints, so 
 makes the next sync republish every product it covers** — check the count with
 `bin/coreyard --sink api --dry-run` before committing a wording change.
 
-`order-sync.json` and `tag_shipping.py` share a vocabulary: the `ship:*` tags. Renaming a
-group in `content/freight.json` means updating both, or the order sync silently falls through
-to its default group and starts fulfilling parcel orders ShipStation should have closed.
+`content/freight.json` is the one shipping contract. CoreYard classifies each part against
+it and writes the `ship:*` tag during publish; the delivery profiles charge the rate; the
+theme reads the tag; the order sync derives from the same `fulfillment` keys which groups
+ShipStation owns. Changing a tag republishes the parts it covers, because the tag is part of
+the rendered product.
+
+Only `snippets/shipping-class.liquid` (tag → group) and `snippets/shipping-group.liquid`
+(wording and rates) may encode any of it. Everything else renders one of them, and
+`scripts/check_contracts.py` fails the build otherwise.
+
+The theme reads structured metafields in the `abm` namespace — `fitment`, `grade`,
+`mileage`, `condition` — rather than parsing CoreYard's generated titles or tags. Keep it
+that way: display strings are wording that improves, and code that reads them back apart
+breaks silently when it does.
 
 Never `sys.path.insert` into `../coreyard`, and never import a CoreYard module. The two
 repositories talk through Shopify, through those configuration files, and through CoreYard's
@@ -51,10 +63,10 @@ CLI. Scripts here share `scripts/_shopify.py` for auth, retry, throttling and pa
 Run checks appropriate to the changed files:
 
 ```bash
-cd theme && shopify theme check          # theme linting and structural checks
+python3 scripts/check_contracts.py        # config, theme and generated assets agree
+cd theme && shopify theme check           # theme linting and structural checks
 python3 preview/build.py                  # rebuild the self-contained static preview
 python3 -m py_compile scripts/*.py        # syntax check
-python3 -c 'import json,glob; [json.load(open(f)) for f in glob.glob("content/*.json")]'
 ```
 
 Catalog quality is a CoreYard command: `bin/coreyard audit catalog` from that checkout.

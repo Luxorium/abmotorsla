@@ -1,57 +1,42 @@
 #!/usr/bin/env python3
 """Build theme/assets/vehicles.json — the year/make/model index for the picker.
 
-CoreYard tags every part with "<year> <make> <model>" (plus bare make and
-"make model"), so the catalog already knows which vehicles we have parts for.
-This distills that into make -> model -> [years] and writes it as a theme asset,
-so the picker is instant and needs no API calls from the storefront.
+CoreYard publishes each part's fitment as a structured metafield (`abm.fitment`: a list of
+`{years, make, model, note, label}`), so the picker is built from data with named fields.
 
-Re-run it after a big sync. Building is read-only against Shopify; --deploy is the only
-part that writes, and it writes exactly one asset onto the already-published theme.
+It used to be built by parsing CoreYard's display tags — "2014 Ford F-150" split on the
+first space, with a hand-maintained list of two-word makes so "Land Rover" and "American
+Motors" did not lose half their name to the model. That list could only ever be as complete
+as somebody remembered: the live index still contains a make called "American" whose models
+are "Motors Hummer H2" and "Motors Hummer H3". Worse, it made the storefront's navigation
+depend on the exact wording of CoreYard's SEO tags, so improving a title could silently
+break the picker.
 
-Building alone changes nothing a shopper sees: the storefront serves this asset out of the
-published theme, not out of this repo, so without --deploy the picker keeps offering
-whatever vehicle list was live when the theme was last deployed by hand.
+Tags are still what *filters* a collection — Shopify has no way to facet on a metafield in a
+collection URL — but they are no longer how the vehicle list is discovered.
 
-    python3 scripts/build_vehicles.py                    # build locally
-    python3 scripts/build_vehicles.py --deploy --dry-run # what would change on the theme
-    python3 scripts/build_vehicles.py --deploy           # build and push the asset live
+    python3 scripts/build_vehicles.py               # build locally
+    python3 scripts/build_vehicles.py --deploy      # upload onto the published theme
+    python3 scripts/build_vehicles.py --deploy --dry-run
+
+Building is read-only against Shopify; --deploy writes one theme asset and nothing else.
 """
 from __future__ import annotations
 
 import argparse
 import collections
 import json
-import re
 
 from _shopify import REPO, Shopify
 
 OUT = REPO / "theme" / "assets" / "vehicles.json"
 
-# "2012 Honda Civic" -> year 2012, rest "Honda Civic"
-YEAR_TAG = re.compile(r"^(19[5-9]\d|20[0-4]\d)\s+(.+)$")
+# The namespace CoreYard publishes into, from content/catalog-profile.json.
+PROFILE = REPO / "content" / "catalog-profile.json"
 
-# Makes as CoreYard writes them. A tag's first word is the make except for these
-# two-word ones, where the model would otherwise swallow part of the make.
-TWO_WORD_MAKES = {
-    "land rover", "alfa romeo", "aston martin", "mercedes benz", "mercedes-benz",
-    "rolls royce", "am general", "general motors",
-}
-
-
-SCAN = """
-query($cursor: String) {
-  products(first: 250, after: $cursor) {
-    pageInfo { hasNextPage endCursor }
-    nodes { tags }
-  }
-}
-"""
-
-
-# The yard writes one make several ways. CoreYard's vehicle label keeps whichever form
-# the model carried, so "Mercedes-Benz" and "Mercedes" both reach the tags and would
-# otherwise open two separate makes in the picker for the same cars.
+# The yard writes one make several ways and CoreYard passes that through, so "Mercedes-Benz"
+# and "Mercedes" would open two entries in the picker for the same cars. This folds them.
+# It is a small normalization table, not a parser: the make arrives as its own field.
 MAKE_ALIASES = {
     "mercedes": "Mercedes-Benz",
     "mercedes benz": "Mercedes-Benz",
@@ -59,26 +44,55 @@ MAKE_ALIASES = {
     "chevy": "Chevrolet",
 }
 
+# A rebuild that sees far less fitment than the catalogue has is a rebuild against a
+# half-migrated store, and writing its result would empty the picker.
+MIN_COVERAGE = 0.60
+
+SCAN = """
+query($cursor: String, $ns: String!, $key: String!) {
+  products(first: 250, after: $cursor, query: "status:active") {
+    pageInfo { hasNextPage endCursor }
+    nodes { id metafield(namespace: $ns, key: $key) { value } }
+  }
+}
+"""
+
+
+def namespace() -> str:
+    """The metafield namespace this site configured CoreYard to publish into."""
+    try:
+        return json.loads(PROFILE.read_text()).get("metafield_namespace") or "abm"
+    except (OSError, json.JSONDecodeError):
+        return "abm"
+
 
 def canonical_make(make: str, model: str) -> tuple[str, str]:
     """Fold an alias onto its canonical make, and drop a make the model repeats."""
-    canon = MAKE_ALIASES.get(make.lower(), make)
-    # "Mercedes-Benz" + "Mercedes 450" -> "Mercedes-Benz" + "450"
+    canon = MAKE_ALIASES.get(make.strip().lower(), make.strip())
     head = canon.split("-")[0].split(" ")[0].lower()
     if head and model.lower().startswith(head + " "):
         model = model[len(head) + 1:]
-    return canon, model
+    return canon, model.strip()
 
 
-def split_make_model(rest: str) -> tuple[str, str] | None:
-    low = rest.lower()
-    for mk in TWO_WORD_MAKES:
-        if low.startswith(mk + " "):
-            return canonical_make(rest[: len(mk)], rest[len(mk) + 1:])
-    parts = rest.split(" ", 1)
-    if len(parts) != 2:
-        return None
-    return canonical_make(parts[0], parts[1])
+def years_of(value: str) -> list[int]:
+    """Expand a fitment row's year label: "2011-2014" -> [2011..2014], "2014" -> [2014]."""
+    text = str(value or "").strip()
+    if not text:
+        return []
+    bounds = [p.strip() for p in text.split("-", 1)]
+    try:
+        start = int(bounds[0])
+        end = int(bounds[1]) if len(bounds) > 1 and bounds[1] else start
+    except ValueError:
+        return []
+    if end < start:
+        start, end = end, start
+    # A span wider than a normal production run means a placeholder reached the data;
+    # listing 80 years in the picker would be worse than listing none.
+    if end - start > 40:
+        return []
+    return list(range(start, end + 1))
 
 
 MAIN_THEME_Q = "{ themes(first: 20) { nodes { id name role } } }"
@@ -163,53 +177,71 @@ def main() -> None:
                     help="upload the built asset onto the published theme (live storefront)")
     ap.add_argument("--dry-run", action="store_true",
                     help="with --deploy, report what would change and write nothing")
+    ap.add_argument("--allow-partial", action="store_true",
+                    help="build even when most products have no structured fitment yet")
     args = ap.parse_args()
 
     gql = Shopify.from_env()
+    ns, key = namespace(), "fitment"
 
-    tree: dict[str, dict[str, set]] = collections.defaultdict(lambda: collections.defaultdict(set))
-    parts_per_make = collections.Counter()
-    cursor, n = None, 0
+    tree: dict[str, dict[str, set]] = collections.defaultdict(
+        lambda: collections.defaultdict(set))
+    parts_per_make: collections.Counter = collections.Counter()
+    cursor, n, with_fitment, malformed = None, 0, 0, 0
 
-    print("scanning tags…", end="", flush=True)
+    print(f"reading {ns}.{key} metafields…", end="", flush=True)
     while True:
-        conn = gql(SCAN, {"cursor": cursor})["products"]
-        for p in conn["nodes"]:
+        conn = gql(SCAN, {"cursor": cursor, "ns": ns, "key": key})["products"]
+        for product in conn["nodes"]:
             n += 1
+            raw = (product.get("metafield") or {}).get("value")
+            if not raw:
+                continue
+            try:
+                rows = json.loads(raw)
+            except json.JSONDecodeError:
+                malformed += 1
+                continue
+            if not isinstance(rows, list):
+                malformed += 1
+                continue
+            with_fitment += 1
             makes_here = set()
-            for tag in p["tags"]:
-                m = YEAR_TAG.match(tag.strip())
-                if not m:
+            for row in rows:
+                if not isinstance(row, dict):
                     continue
-                year, rest = int(m.group(1)), m.group(2).strip()
-                split = split_make_model(rest)
-                if not split:
-                    # "<year> <make>" with no model: the yard has parts for the car but
-                    # never recorded a model. Register the make anyway so the picker can
-                    # still offer it — the facet applies a make-only tag filter when no
-                    # model is chosen. Dropping it hid every Smart part from the picker.
-                    # A make is a word, not a fragment: "Smart" qualifies, the stray
-                    # "CX-" left by a model that lost its make does not.
-                    letters = rest.replace("-", "").replace(".", "")
-                    if (" " not in rest and len(rest) >= 3 and letters.isalpha()
-                            and not rest.endswith("-")):
-                        bare = MAKE_ALIASES.get(rest.lower(), rest)
-                        tree[bare]            # touch: defaultdict creates the make
-                        makes_here.add(bare)
+                make, model = canonical_make(str(row.get("make") or ""),
+                                             str(row.get("model") or ""))
+                if len(make) < 2:
                     continue
-                make, model = split[0].strip(), split[1].strip()
-                if len(make) < 2 or len(model) < 1:
-                    continue
-                tree[make][model].add(year)
+                years = years_of(row.get("years"))
+                if model:
+                    tree[make][model].update(years)
+                else:
+                    # The yard has parts for the make but never recorded a model. Register
+                    # the make anyway: the picker applies a make-only tag filter when no
+                    # model is chosen, and dropping it hid every Smart part.
+                    tree[make]
                 makes_here.add(make)
-            for mk in makes_here:
-                parts_per_make[mk] += 1
+            for make in makes_here:
+                parts_per_make[make] += 1
         if not conn["pageInfo"]["hasNextPage"]:
             break
         cursor = conn["pageInfo"]["endCursor"]
         if n % 2000 < 250:
             print(".", end="", flush=True)
     print(" done")
+
+    coverage = with_fitment / n if n else 0.0
+    print(f"{n} active products, {with_fitment} carry structured fitment "
+          f"({coverage:.0%})" + (f", {malformed} malformed" if malformed else ""))
+    if n and coverage < MIN_COVERAGE and not args.allow_partial:
+        print(f"\nREFUSING to build: only {coverage:.0%} of the catalogue has fitment, "
+              f"below the {MIN_COVERAGE:.0%} floor.\nThat is what a half-migrated store "
+              f"looks like — CoreYard publishes the metafield during a normal sync, so run "
+              f"one first.\nRe-run with --allow-partial if the catalogue really is like "
+              f"this.")
+        raise SystemExit(1)
 
     out = {}
     for make, models in tree.items():
@@ -223,7 +255,6 @@ def main() -> None:
     OUT.write_text(payload)
 
     models = sum(len(m) for m in out.values())
-    print(f"{n} products scanned")
     print(f"{len(out)} makes, {models} models -> {OUT.relative_to(REPO)} ({OUT.stat().st_size / 1024:.0f} KB)")
     print("\ntop makes by parts:")
     for mk, c in parts_per_make.most_common(12):

@@ -15,11 +15,17 @@ one-purpose Python jobs for store administration and asset generation, all shari
 `scripts/_shopify.py`. Use `preview/` for the static mockup, `brand/` for logos, and `docs/`
 for launch guidance.
 
-Three files in `content/` are read by CoreYard through paths set in *its* `.env` —
-`catalog-profile.json` (`STORE_PROFILE_FILE`), `weights.json` (`STORE_WEIGHT_RULES_FILE`) and
-`order-sync.json` (`STORE_ORDER_POLICY_FILE`). They are an interface: changing a key name or
-a shipping-group tag changes backend behaviour. `catalog-profile.json` in particular is part
-of the rendered product, so editing it makes the next sync republish everything it covers.
+Four files in `content/` are read by CoreYard through paths set in *its* `.env` —
+`freight.json` (`STORE_SHIPPING_POLICY_FILE`), `catalog-profile.json` (`STORE_PROFILE_FILE`),
+`weights.json` (`STORE_WEIGHT_RULES_FILE`) and `order-sync.json` (`STORE_ORDER_POLICY_FILE`).
+They are an interface: changing a key name or a shipping-group tag changes backend behaviour.
+`freight.json` and `catalog-profile.json` both feed the rendered product, so editing either
+makes the next sync republish everything it covers.
+
+`content/freight.json` is the single shipping contract. The delivery profiles, the `ship:*`
+tag CoreYard writes, the theme's warnings and the order sync's fulfillment rules all derive
+from it. Only `snippets/shipping-class.liquid` and `snippets/shipping-group.liquid` may know
+a `ship:*` tag or a rate; `scripts/check_contracts.py` enforces that.
 
 ## Build, Test, and Development Commands
 
@@ -28,10 +34,13 @@ The theme uses plain Liquid, CSS, and JavaScript; there is no npm install or com
 ```bash
 cd theme && shopify theme dev -e staging # hot-reloading preview against an unpublished copy
 cd theme && shopify theme check         # lint Liquid, JSON, and theme structure
+python3 scripts/check_contracts.py       # config, theme and generated assets still agree
 python3 preview/build.py                 # create preview/dist/abmotors-preview.html
 python3 -m py_compile scripts/*.py       # syntax check
-python3 -c 'import json,glob; [json.load(open(f)) for f in glob.glob("content/*.json")]'
 ```
+
+`check_contracts.py` runs on every pull request alongside `coreyard validate`, which checks
+the same files against the backend's own schemas — see `.github/workflows/contracts.yml`.
 
 Catalog quality, reconciliation and repair are CoreYard commands, run from that checkout:
 `bin/coreyard audit catalog`, `bin/coreyard reconcile`, `bin/coreyard repair titles --dry-run`.
@@ -56,7 +65,14 @@ attributes and Shopify schema settings when changing UI.
 
 New scripts use `scripts/_shopify.py` for auth, retry, throttling and paging rather than
 hand-rolling another client. Never `sys.path.insert` into `../coreyard` — the two repositories
-talk through Shopify, through the configuration files above, and through CoreYard's CLI.
+talk through Shopify, through the configuration files above, and through CoreYard's CLI. CI
+checks the backend's schemas by checking that repository out, which is not a runtime import
+and must stay that way.
+
+Prefer structured metafields over parsing CoreYard's display strings. `abm.fitment` carries
+named fields; a title or a tag is wording that may improve, and anything that reads it back
+apart breaks silently when it does. Tags remain the only way to filter a collection, so that
+use stays.
 
 ## Testing Guidelines
 

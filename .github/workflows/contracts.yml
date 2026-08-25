@@ -1,0 +1,82 @@
+name: contracts
+
+# The storefront and the backend agree through configuration files, not imports. Nothing
+# enforces that at runtime, so it is enforced here: this fails a pull request that would
+# leave content/freight.json, the theme, and CoreYard's schemas disagreeing.
+#
+# No Shopify credentials. Every check is offline, so it runs on a fork's pull request too.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  storefront:
+    name: storefront contracts
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      # Only the storefront can make these: they compare the theme against the policy.
+      - name: shipping, metafield and generated-asset contracts
+        run: python3 scripts/check_contracts.py
+
+      - name: scripts compile
+        run: python3 -m py_compile scripts/*.py preview/build.py
+
+      - name: scripts import without credentials
+        # A missing .env must fail with an explanation, not an ImportError, and the shared
+        # client must not have grown a dependency.
+        run: |
+          cd scripts
+          python3 -c "import _shopify, build_vehicles, check_contracts; print('imports clean')"
+
+      - name: static preview builds
+        run: python3 preview/build.py
+
+  schemas:
+    name: config against CoreYard's schemas
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      # The backend owns the schemas for the four files this repository supplies it, so the
+      # backend validates them. Checking it out is not a runtime coupling: nothing in this
+      # repository imports CoreYard, and the storefront never needs it installed to run.
+      - name: check out CoreYard
+        uses: actions/checkout@v4
+        with:
+          repository: Luxorium/coreyard
+          path: .coreyard
+          ref: main
+
+      - name: validate catalog profile, weights, order policy and shipping policy
+        run: |
+          cd .coreyard
+          python3 -m coreyard.validate \
+            --profile  ../content/catalog-profile.json \
+            --weights  ../content/weights.json \
+            --orders   ../content/order-sync.json \
+            --shipping ../content/freight.json
+
+  theme:
+    name: shopify theme check
+    runs-on: ubuntu-latest
+    # Advisory: the Shopify CLI is a large install and its lint gains new rules over time,
+    # so a new warning must not block an unrelated fix. Read the log when it is red.
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - run: npm install -g @shopify/cli@latest
+      - run: shopify theme check --fail-level error
+        working-directory: theme

@@ -34,13 +34,15 @@ repository and never assumes a sibling checkout — it is given each path in its
 
 | File | CoreYard setting | What it decides |
 |---|---|---|
-| `content/catalog-profile.json` | `STORE_PROFILE_FILE` | what a listing may claim (condition wording, "Genuine OEM", whether OEM belongs in a title), part-type wording, which tag prefixes we own, audit thresholds |
+| `content/freight.json` | `STORE_SHIPPING_POLICY_FILE` | **how every part ships.** The groups, their rates, which parts fall in each, the `ship:*` tag CoreYard puts on the product, and who closes an invoiced order out |
+| `content/catalog-profile.json` | `STORE_PROFILE_FILE` | what a listing may claim (condition wording, "Genuine OEM", whether OEM belongs in a title), part-type wording, the `abm` metafield namespace, audit thresholds |
 | `content/weights.json` | `STORE_WEIGHT_RULES_FILE` | packed shipping weight per part type, applied on every publish |
-| `content/order-sync.json` | `STORE_ORDER_POLICY_FILE` | how an invoiced order is tagged, and which shipping groups ShipStation owns so they are *not* fulfilled early |
+| `content/order-sync.json` | `STORE_ORDER_POLICY_FILE` | what to tag and note on an invoiced order. Its fulfillment rules are *derived* from `freight.json` |
 
 Put these in the backend's `.env` (paths are absolute):
 
 ```
+STORE_SHIPPING_POLICY_FILE=/srv/abmotorsla.com/abmotorsla/content/freight.json
 STORE_PROFILE_FILE=/srv/abmotorsla.com/abmotorsla/content/catalog-profile.json
 STORE_WEIGHT_RULES_FILE=/srv/abmotorsla.com/abmotorsla/content/weights.json
 STORE_ORDER_POLICY_FILE=/srv/abmotorsla.com/abmotorsla/content/order-sync.json
@@ -48,6 +50,35 @@ STORE_REQUIRE_IMAGES=true
 STORE_PUBLICATIONS=Online Store
 STORE_CHARM_PRICES=true
 ```
+
+Check them at any time — offline, no credentials:
+
+```bash
+python3 scripts/check_contracts.py        # this repo agrees with itself and with the theme
+cd ../coreyard && bin/coreyard validate   # the files agree with the backend's schemas
+```
+
+Both run on every pull request (`.github/workflows/contracts.yml`).
+
+## What the theme reads
+
+CoreYard publishes the structured half of a listing as metafields in the `abm` namespace, so
+the theme renders named fields instead of taking generated prose apart:
+
+| Metafield | Used by |
+|---|---|
+| `abm.fitment` | the "Fits these vehicles" table, the related-parts vehicle, `build_vehicles.py` |
+| `abm.grade` | the spec table and the card's grade chip |
+| `abm.mileage` | the spec table |
+| `abm.condition` | the spec table — this is why no template hardcodes a condition line |
+
+Each `abm.fitment` row is `{years, make, model, note, label}`. `label` is exactly the vehicle
+tag CoreYard also writes, which is how a product page links to "more parts that fit this
+car" without guessing a tag from the title. Tags still do the *filtering* — Shopify cannot
+facet a collection on a metafield — but they are no longer how anything is discovered.
+
+The theme falls back gracefully everywhere: a product with no metafields renders without the
+table, so nothing breaks while a republish is still in flight.
 
 > **Editing `catalog-profile.json` republishes the catalog.** Those strings are part of the
 > rendered product and the rendered product is what the sync fingerprints, so an edit makes
@@ -64,10 +95,16 @@ interrupted. They share one Shopify client (`scripts/_shopify.py`) and read cred
 |---|---|
 | `store_setup.py` | collections, pages, policies, menus, and the draft→active flip |
 | `setup_shipping.py` | delivery profiles: free ground, $299.99 freight, $199.99 freight, pickup-only |
-| `tag_shipping.py` | writes `ship:*` tags so the theme can warn before checkout |
-| `build_vehicles.py` | rebuilds `theme/assets/vehicles.json` for the year/make/model picker |
+| `build_vehicles.py` | rebuilds `theme/assets/vehicles.json` from `abm.fitment` for the picker |
+| `check_contracts.py` | read-only: config, theme and generated assets still agree |
 | `make_light_logo.py` | derives a dark-background logo from the existing PNG |
-| `finish_listings.sh` | runs the delivery-profile and tagging steps over newly published parts |
+| `finish_listings.sh` | puts newly published variants into the right delivery profile |
+
+`tag_shipping.py` is gone: CoreYard reads `content/freight.json` itself and applies the
+`ship:*` tag during the publish that creates the product, so a part is never live wearing no
+classification. What `finish_listings.sh` still does is Shopify's own doing — a delivery
+profile is a set of variants, and a new variant lands in the default profile until something
+moves it, so keep it on a schedule.
 
 ### Catalog jobs now live in CoreYard
 
@@ -84,6 +121,7 @@ product should say. Run them from the CoreYard checkout:
 | `charm_prices.py` | `STORE_CHARM_PRICES=true`; a normal sync corrects old prices |
 | `audit_listings.py` | `coreyard audit catalog` |
 | `poll_orders.py` | `coreyard orders poll` |
+| `tag_shipping.py` | `STORE_SHIPPING_POLICY_FILE`; applied during publish, `coreyard repair tags` for the backlog |
 | `sync_invoiced.py` | `coreyard orders sync-status [--apply]`, with our policy in `content/order-sync.json` |
 | `cleanup_listings.py` | `coreyard repair titles` (the "– OEM" suffix is never generated now); `coreyard altfix` for alt text |
 | `publish_online.py` | `STORE_PUBLICATIONS=Online Store`; `coreyard reconcile --apply` for the backlog |
@@ -103,11 +141,24 @@ already ships on eBay:
 | freight — heavy | ~60 | **$199.99** flat, commercial address required |
 | pickup only | ~100 | **not shipped** — body panels and glass, pickup or local delivery |
 
-The delivery profiles enforce it at checkout; the `ship:*` tags let the theme say so on the
-product page, in the cart, and in the cart drawer. Change `freight.json`, then re-run
-`setup_shipping.py --apply` and `tag_shipping.py --apply` to keep the two in step — and
-`content/order-sync.json` if the group names themselves change, because the order sync reads
-the same tags to decide what ShipStation owns.
+`content/freight.json` is the one file that decides all of it. The delivery profiles enforce
+it at checkout, CoreYard puts the `ship:*` tag on the product, and the theme reads that tag
+to warn on the product page, in the cart and in the cart drawer. Change `freight.json`, then:
+
+* re-run `setup_shipping.py --apply` so checkout charges the new rate;
+* let the next sync republish the affected parts with their new tag (`bin/coreyard --sink
+  api --dry-run` first — a tag change moves the fingerprint), or
+  `bin/coreyard repair tags --apply` to correct them in place;
+* run `scripts/check_contracts.py`, which fails if the theme's copy of the rates or tags no
+  longer matches.
+
+The order sync no longer needs updating: it derives which groups ShipStation owns from the
+`fulfillment` key on each group here.
+
+Only two Liquid files know a `ship:*` tag exists — `snippets/shipping-class.liquid` maps tag
+to group, `snippets/shipping-group.liquid` holds the wording and rates. Everything else
+renders one of them. Before, six files each carried their own copy of the same if/elsif
+chain and four of them quoted a rate.
 
 ## Working on it
 
