@@ -76,7 +76,9 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          # The Shopify CLI needs node:module's enableCompileCache, which landed in 22.1.
+          # On 20 it dies at import with a SyntaxError before it lints anything.
+          node-version: '22'
       - run: npm install -g @shopify/cli@latest
       - run: shopify theme check --fail-level error
         working-directory: theme
