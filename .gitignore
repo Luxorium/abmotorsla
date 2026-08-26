@@ -29,3 +29,8 @@ __pycache__/
 
 # Local agent/editor state — kept out of the repo so the rule travels with a clone
 .claude/
+
+# Internal working checklists. Planning notes, business decisions, and a running record of
+# what is not done yet — written for one desk, not for a public repository, which this is.
+CHECKLIST.txt
+CLAUDE_CHECKLIST.txt
