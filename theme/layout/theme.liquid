@@ -47,10 +47,19 @@
       collection inherits that collection's description, so /collections/wheels and
       /collections/wheels/ford would otherwise ship the identical description.
     {%- endcomment -%}
+    {%- assign listed_count = collections['all'].products_count -%}
+    {%- capture listed_count_text -%}
+      {%- if listed_count > 0 -%}
+        {%- render 'count-with-delimiters', count: listed_count -%}
+      {%- endif -%}
+    {%- endcapture -%}
+    {%- assign listed_count_text = listed_count_text | strip -%}
     {%- liquid
       assign meta_description = ''
 
-      if current_tags.size > 0
+      if request.page_type == 'index' and listed_count_text != blank
+        assign meta_description = 'Shop ' | append: listed_count_text | append: ' used OEM auto parts from A&B Motors in Amite, LA. Real photos, 90-day money-back warranty, nationwide shipping, and free local delivery.'
+      elsif current_tags.size > 0
         assign tag_list = current_tags | join: ', ' | truncate: 60
         if collection.title != blank and collection.handle != 'all'
           assign meta_description = 'Used ' | append: tag_list | append: ' ' | append: collection.title | append: ' in stock at A&B Motors, Amite LA. Photographed on our own racks, 90-day warranty.'
@@ -58,7 +67,7 @@
           assign meta_description = 'Used ' | append: tag_list | append: ' parts in stock at A&B Motors, Amite LA. Pulled, inspected and photographed on our own racks. 90-day warranty.'
         endif
       elsif request.page_type == 'search' and search.performed
-        assign meta_description = 'Used OEM parts matching "' | append: search.terms | append: '" at A&B Motors in Amite, LA. Real photos of the actual part, 90-day warranty, most ship free.'
+        assign meta_description = 'Used OEM parts matching "' | append: search.terms | append: '" at A&B Motors in Amite, LA. Real photos of the actual part, 90-day warranty, flat-rate shipping shown on every listing.'
       endif
 
       if meta_description == blank
@@ -66,7 +75,7 @@
       endif
 
       if meta_description == blank and collection.title != blank
-        assign meta_description = 'Used ' | append: collection.title | append: ' from A&B Motors in Amite, LA — recycled OEM parts with a 90-day warranty. Most ship free in the lower 48.'
+        assign meta_description = 'Used ' | append: collection.title | append: ' from A&B Motors in Amite, LA — recycled OEM parts with a 90-day warranty. Flat-rate shipping shown on every listing.'
       endif
 
       assign meta_description = meta_description | default: shop.description | default: shop.name
@@ -103,7 +112,7 @@
       <meta name="google-site-verification" content="{{ settings.google_site_verification | strip | escape }}">
     {%- endif -%}
 
-    {% render 'meta-tags' %}
+    {% render 'meta-tags', description: meta_description %}
 
     {{ content_for_header }}
 

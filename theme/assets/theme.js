@@ -20,22 +20,88 @@
     });
   }
 
+  // Mirrors Shopify's own tag handleizing, which is what tag URLs are keyed on.
+  // Both vehicle pickers build /collections/all/<tag> paths with it.
+  function handleize(s) {
+    return String(s).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+  }
+
   var CHECK = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>';
   var PHOTO = '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2" fill="none" stroke="currentColor" stroke-width="1.4"/><circle cx="8.5" cy="10" r="1.6" fill="none" stroke="currentColor" stroke-width="1.4"/><path d="m4 17 5-4.5 4 3.2 3-2.4 4 3.4" fill="none" stroke="currentColor" stroke-width="1.4"/></svg>';
+
+  /* ------------------------------------------- dialog focus management */
+  /* `role="dialog" aria-modal="true"` is a promise: focus enters the dialog, stays
+     inside while it is open, and returns to whatever opened it. Neither drawer kept
+     it. Tab walked straight out into the page behind the scrim — and because the
+     background paints *under* the overlay, the focus ring went invisible, so a
+     keyboard user was left activating controls they could not see. Closing then
+     dropped focus to <body>, restarting the next Tab at the top of the document. */
+  var FOCUSABLE = 'a[href], button:not([disabled]), input:not([disabled]), ' +
+    'select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
+  var openDialog = null;     // panel currently holding focus
+  var dialogTrigger = null;  // control to hand focus back to on close
+
+  function visibleFocusable(root) {
+    return $$(FOCUSABLE, root).filter(function (el) {
+      return el.offsetWidth || el.offsetHeight || el.getClientRects().length;
+    });
+  }
+
+  // Only regions that can never contain a drawer, so this cannot inert a live dialog.
+  function backgroundRegions(panel) {
+    return $$('#MainContent, .footer').filter(function (el) { return !el.contains(panel); });
+  }
+
+  function trapFocus(panel, trigger) {
+    if (!panel) return;
+    dialogTrigger = trigger || dialogTrigger || document.activeElement;
+    openDialog = panel;
+    backgroundRegions(panel).forEach(function (el) {
+      el.inert = true;
+      el.setAttribute('aria-hidden', 'true');
+    });
+  }
+
+  function releaseFocus() {
+    if (!openDialog) return;
+    backgroundRegions(openDialog).forEach(function (el) {
+      el.inert = false;
+      el.removeAttribute('aria-hidden');
+    });
+    openDialog = null;
+    var back = dialogTrigger;
+    dialogTrigger = null;
+    if (back && document.contains(back)) back.focus();
+  }
+
+  on(document, 'keydown', function (e) {
+    if (e.key !== 'Tab' || !openDialog) return;
+    var items = visibleFocusable(openDialog);
+    if (!items.length) return;
+    var first = items[0];
+    var last = items[items.length - 1];
+    if (!openDialog.contains(document.activeElement)) { e.preventDefault(); first.focus(); }
+    else if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+    else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+  });
 
   /* --------------------------------------------------------- menu drawer */
   var drawer = $('[data-drawer]');
   function closeDrawer() {
-    if (!drawer) return;
+    // Guarded on the open state so a stray Escape cannot release another dialog's trap.
+    if (!drawer || !drawer.hasAttribute('open')) return;
     drawer.removeAttribute('open');
     document.body.style.overflow = '';
+    releaseFocus();
   }
   $$('[data-drawer-open]').forEach(function (b) {
     on(b, 'click', function () {
       if (!drawer) return;
       drawer.setAttribute('open', '');
       document.body.style.overflow = 'hidden';
-      var first = drawer.querySelector('a, button');
+      var panel = drawer.querySelector('.drawer__panel') || drawer;
+      trapFocus(panel, b);
+      var first = visibleFocusable(panel)[0];
       if (first) first.focus();
     });
   });
@@ -61,10 +127,29 @@
   /* ---------------------------------------------------- predictive search */
   // With ~9,000 one-off parts, finding the part IS the funnel. Query SKU as
   // well as title so a stock number off the part's tag lands straight on it.
+  // aria-selected is what the existing .predictive__item[aria-selected="true"] rule
+  // styles, and what tells a screen reader which suggestion is current.
+  function markSelected(panel, el) {
+    $$('.predictive__item', panel).forEach(function (item) {
+      item.setAttribute('aria-selected', item === el ? 'true' : 'false');
+    });
+  }
+
+  function announce(wrap, count, term) {
+    var status = $('[data-predictive-status]', wrap);
+    if (!status) return;
+    status.textContent = count
+      ? count + (count === 1 ? ' part matches ' : ' parts match ') + '"' + term + '"'
+      : 'No parts matched "' + term + '"';
+  }
+
   function hidePredictive(panel) {
     if (!panel) return;
-    panel.hidden = true;
     var input = $('[data-predictive-input]', panel.parentNode);
+    // Arrow keys move real focus onto result links. Hiding the panel while focus is
+    // still inside it strands focus on an unrenderable node, so hand it back first.
+    if (input && panel.contains(document.activeElement)) input.focus();
+    panel.hidden = true;
     if (input) input.setAttribute('aria-expanded', 'false');
   }
 
@@ -85,7 +170,7 @@
       var thumb = p.featured_image && p.featured_image.url
         ? '<img src="' + esc(p.featured_image.url) + '" alt="" loading="lazy">'
         : PHOTO;
-      return '<a class="predictive__item" href="' + esc(p.url) + '">' +
+      return '<a class="predictive__item" role="option" aria-selected="false" href="' + esc(p.url) + '">' +
         '<span class="predictive__thumb">' + thumb + '</span>' +
         '<span><span class="predictive__title">' + esc(p.title) + '</span>' +
         (meta ? '<span class="predictive__meta">' + meta + '</span>' : '') + '</span>' +
@@ -93,7 +178,10 @@
         '</a>';
     }).join('');
 
-    return '<div class="predictive__head">Parts</div>' + rows +
+    // The listbox wraps only the options: the heading and the "see all" link are not
+    // options, and a listbox containing non-option children is an invalid structure.
+    return '<div class="predictive__head">Parts</div>' +
+      '<div class="predictive__list" role="listbox" aria-label="Part suggestions">' + rows + '</div>' +
       '<a class="predictive__all" href="' + (window.ABM.routes.search || '/search') +
       '?q=' + encodeURIComponent(term) + '">See all results for "' + esc(term) + '" &rarr;</a>';
   }
@@ -124,6 +212,7 @@
         .then(function (data) {
           if (input.value.trim() !== term) return; // a newer keystroke won
           body.innerHTML = renderPredictive(data, term);
+          announce(wrap, $$('.predictive__item', body).length, term);
           panel.hidden = false;
           input.setAttribute('aria-expanded', 'true');
         })
@@ -143,6 +232,9 @@
       if (e.key === 'ArrowDown') { e.preventDefault(); (items[current + 1] || items[0]).focus(); }
       if (e.key === 'ArrowUp') { e.preventDefault(); (items[current - 1] || input).focus(); }
     });
+    on(panel, 'focusin', function (e) {
+      markSelected(panel, e.target.classList.contains('predictive__item') ? e.target : null);
+    });
     on(panel, 'keydown', function (e) {
       var items = $$('.predictive__item, .predictive__all', panel);
       var current = items.indexOf(document.activeElement);
@@ -158,16 +250,26 @@
   /* ------------------------------------------------- shop by vehicle (YMM) */
   // Data is a static theme asset built from the catalog's own year/make/model
   // tags, so the picker can never offer a vehicle we have no parts for.
+  //
+  // Submitting navigates to the exact tag filter — /collections/all/2014-subaru-legacy —
+  // the same route the collection sidebar facet builds. It used to hand the three values
+  // to /search as one keyword string, which is an OR match: "2014 Subaru Legacy" returned
+  // 1,000 results padded out with Dodge, Honda and Ford parts, against 102 that actually
+  // fit. The section promises "only the parts we actually have for it", so it has to be
+  // the filter and not the search index.
   $$('[data-ymm]').forEach(function (form) {
     var makeSel = $('[data-ymm-make]', form);
     var modelSel = $('[data-ymm-model]', form);
     var yearSel = $('[data-ymm-year]', form);
     var submit = $('[data-ymm-submit]', form);
-    var qField = $('[data-ymm-q]', form);
     var hint = $('[data-ymm-hint]', form);
     if (!makeSel || !window.fetch) return;
 
+    var base = form.getAttribute('data-base') || '/collections/all';
+
     var data = null;
+    var makeOnly = {};          // makes the catalogue can filter on without a model
+    var defaultHint = hint ? hint.textContent : '';
 
     function fill(sel, values, placeholder) {
       sel.innerHTML = '<option value="">' + placeholder + '</option>' +
@@ -178,6 +280,7 @@
       .then(function (r) { return r.json(); })
       .then(function (json) {
         data = json.makes || {};
+        (json.make_only || Object.keys(data)).forEach(function (m) { makeOnly[m] = true; });
         fill(makeSel, Object.keys(data), 'Choose a make');
       })
       .catch(function () {
@@ -206,12 +309,36 @@
 
     on(yearSel, 'change', sync);
 
+    // One tag, exactly as CoreYard writes it onto the product: "2014 Subaru Legacy",
+    // "Subaru Legacy" or "Subaru". A year without a model has no tag of its own —
+    // /collections/all/2014-subaru redirects away — so the year only counts once a
+    // model is chosen, which is also the order the selects unlock in.
+    function chosen() {
+      if (makeSel.value && modelSel.value && yearSel.value) {
+        return yearSel.value + ' ' + makeSel.value + ' ' + modelSel.value;
+      }
+      if (makeSel.value && modelSel.value) return makeSel.value + ' ' + modelSel.value;
+      return makeSel.value || '';
+    }
+
+    on(form, 'submit', function (e) {
+      var tag = chosen();
+      if (!tag) return;
+      e.preventDefault();
+      submit.disabled = true;
+      window.location.href = base + '/' + handleize(tag);
+    });
+
     function sync() {
-      var bits = [yearSel.value, makeSel.value, modelSel.value].filter(Boolean);
-      // Year alone is useless as a search; require at least a make.
-      var ok = Boolean(makeSel.value);
-      submit.disabled = !ok;
-      qField.value = bits.join(' ');
+      // Year alone is useless; require at least a make. A handful of makes are tagged
+      // only alongside a model — "Mercedes C-Class" exists, plain "Mercedes" does not —
+      // and vehicles.json says which, so the button waits for a model rather than
+      // sending the shopper to a filter the catalogue would drop.
+      var needsModel = makeSel.value && !makeOnly[makeSel.value];
+      submit.disabled = !makeSel.value || (needsModel && !modelSel.value);
+      if (hint) hint.textContent = (needsModel && !modelSel.value)
+        ? 'Choose a model to see ' + makeSel.value + ' parts.'
+        : defaultHint;
     }
   });
 
@@ -237,11 +364,6 @@
     var data = null;
     var hasActive = false;
     var busy = false;
-
-    // Mirrors Shopify's own tag handleizing, which is what tag URLs are keyed on.
-    function handleize(s) {
-      return String(s).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
-    }
 
     function fill(sel, values, placeholder, selected) {
       sel.innerHTML = '<option value="">' + placeholder + '</option>' +
@@ -448,7 +570,10 @@
   var cartEl = null;
 
   function closeCart() {
-    if (cartEl) { cartEl.hidden = true; document.body.style.overflow = ''; }
+    if (!cartEl || cartEl.hidden) return;
+    cartEl.hidden = true;
+    document.body.style.overflow = '';
+    releaseFocus();
   }
 
 
@@ -463,17 +588,30 @@
     pickup: 'Pickup only',
     freight299: '$299.99 freight',
     freight199: '$199.99 freight',
+    ground34: '$34.99 shipping',
+    ground24: '$24.99 shipping',
     free: 'Free shipping'
   };
+
+  /* Which groups are freight — a truck, a commercial address, a forklift. NOT simply the
+     ones that cost something: a paid parcel group costs something too, and warning its
+     buyer about a forklift loses the sale. */
+  var FREIGHT_FALLBACK = { freight299: true, freight199: true };
 
   function shipText(group) {
     var config = (window.ABM_SHIP && window.ABM_SHIP.labels) || SHIP_FALLBACK;
     return config[group] || config.free || SHIP_FALLBACK.free;
   }
 
+  function shipKind(group) {
+    if (group === 'pickup') { return 'pickup'; }
+    if (isFreight(group)) { return 'freight'; }
+    return group === 'free' ? 'free' : 'ground';
+  }
+
   function shipLabel(group) {
-    var kind = group === 'pickup' ? 'pickup' : (group === 'free' ? 'free' : 'freight');
-    return '<span class="ship-line ship-line--' + kind + '">' + shipText(group) + '</span>';
+    return '<span class="ship-line ship-line--' + shipKind(group) + '">' +
+      shipText(group) + '</span>';
   }
 
   function shipOf(line) {
@@ -481,7 +619,9 @@
   }
 
   function isFreight(group) {
-    return group !== 'pickup' && group !== 'free';
+    var rates = (window.ABM_SHIP && window.ABM_SHIP.freight && window.ABM_SHIP.freight.rates)
+      || FREIGHT_FALLBACK;
+    return Object.prototype.hasOwnProperty.call(rates, group);
   }
 
   function cartAlert(cart) {
@@ -580,6 +720,9 @@
 
     cartEl.hidden = false;
     document.body.style.overflow = 'hidden';
+    // Removing a line re-renders this panel, so re-point the trap at the new node but
+    // keep the original trigger — the control to return to is still the one that opened it.
+    trapFocus(cartEl.querySelector('.cart-drawer__panel'), openDialog ? dialogTrigger : document.activeElement);
     var closeBtn = cartEl.querySelector('.icon-btn[data-cart-close]');
     if (closeBtn) closeBtn.focus();
   }

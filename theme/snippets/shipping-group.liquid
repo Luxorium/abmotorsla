@@ -1,9 +1,12 @@
 {%- comment -%}
-  Renders the shipping notice for a part, in one of four shapes.
+  Renders the shipping notice for a part, in one of five shapes — plus two machine
+  styles that answer with a single token instead of markup, for structured data.
 
   Accepts:
     product (required)
-    style: 'badge' | 'banner' | 'line' | 'assure'   (default 'badge')
+    style: 'badge' | 'card' | 'banner' | 'line' | 'assure'   (default 'badge')
+           'rate'    -> the bare amount charged, e.g. 14.99, or 0
+           'carrier' -> 'freight' | 'parcel' | 'pickup'
 
   This file owns the customer-facing wording and the rates. 'shipping-class' owns the
   tag→group mapping. Together they are the only two places in the theme that encode the
@@ -22,28 +25,83 @@
   comment
     The rates. Changing one means changing content/freight.json and re-running
     scripts/setup_shipping.py --apply, or checkout and the page disagree.
+
+    Freight and paid ground are both a rate, and are not the same promise: freight needs a
+    commercial address and a forklift, ground goes to a house. Testing "has a rate" for
+    both is what would put the forklift warning on a glove box.
   endcomment
   assign rate = ''
+  assign is_freight = false
+  assign is_ground = false
   if ship_group == 'freight299'
     assign rate = '$299.99'
+    assign is_freight = true
   elsif ship_group == 'freight199'
     assign rate = '$199.99'
-  endif
-  assign is_freight = false
-  if rate != ''
     assign is_freight = true
+  elsif ship_group == 'ground44'
+    assign rate = '$44.99'
+    assign is_ground = true
+  elsif ship_group == 'ground34'
+    assign rate = '$34.99'
+    assign is_ground = true
+  elsif ship_group == 'ground29'
+    assign rate = '$29.99'
+    assign is_ground = true
+  elsif ship_group == 'ground24'
+    assign rate = '$24.99'
+    assign is_ground = true
+  elsif ship_group == 'ground19'
+    assign rate = '$19.99'
+    assign is_ground = true
+  elsif ship_group == 'ground14'
+    assign rate = '$14.99'
+    assign is_ground = true
+  elsif ship_group == 'ground9'
+    assign rate = '$9.99'
+    assign is_ground = true
   endif
 -%}
 
 {%- case style -%}
+
+  {%- comment -%}
+    JSON-LD needs the number, not the sentence. It asks here so that the rate a search
+    engine is told is the same string this file shows the shopper and the same one
+    check_contracts.py holds against content/freight.json. meta-tags.liquid used to keep
+    its own if/elsif of rates; it listed freight and two of the seven ground tiers, so
+    every $9.99, $14.99, $19.99, $29.99 and $44.99 part published shippingRate 0 and told
+    Google it shipped free. A rate that lives in one place cannot drift like that.
+  {%- endcomment -%}
+  {%- when 'rate' -%}
+    {%- if rate != blank -%}{{ rate | remove: '$' }}{%- else -%}0{%- endif -%}
+
+  {%- when 'carrier' -%}
+    {%- if ship_group == 'pickup' -%}pickup{%- elsif is_freight -%}freight{%- else -%}parcel{%- endif -%}
 
   {%- when 'badge' -%}
     {%- if ship_group == 'pickup' -%}
       <span class="badge badge--pickup">Pickup only</span>
     {%- elsif is_freight -%}
       <span class="badge badge--freight">Freight {{ rate }}</span>
+    {%- elsif is_ground -%}
+      <span class="badge badge--ground">{{ rate }} shipping</span>
     {%- else -%}
       <span class="badge badge--green">Free shipping</span>
+    {%- endif -%}
+
+  {%- when 'card' -%}
+    {%- comment -%}
+      A card is a dense grid tile, so it says "Freight" without the rate. Free shipping gets
+      no badge at all: on a card, silence is the free case. A paid ground rate therefore has
+      to say something, or the card reads as free and the product page contradicts it.
+    {%- endcomment -%}
+    {%- if ship_group == 'pickup' -%}
+      <span class="badge badge--pickup">Pickup only</span>
+    {%- elsif is_freight -%}
+      <span class="badge badge--freight">Freight</span>
+    {%- elsif is_ground -%}
+      <span class="badge badge--ground">{{ rate }} ship</span>
     {%- endif -%}
 
   {%- when 'line' -%}
@@ -51,6 +109,8 @@
       <span class="ship-line ship-line--pickup">{% render 'icon', name: 'pin' %} Pickup only &mdash; not shipped</span>
     {%- elsif is_freight -%}
       <span class="ship-line ship-line--freight">{% render 'icon', name: 'truck' %} {{ rate }} freight &middot; commercial address</span>
+    {%- elsif is_ground -%}
+      <span class="ship-line ship-line--ground">{% render 'icon', name: 'truck' %} {{ rate }} shipping</span>
     {%- else -%}
       <span class="ship-line ship-line--free">{% render 'icon', name: 'truck' %} Free shipping</span>
     {%- endif -%}
@@ -61,6 +121,8 @@
       <div>{% render 'icon', name: 'pin' %}<span><b>Pickup or local delivery only.</b> We don't ship body parts or glass.</span></div>
     {%- elsif is_freight -%}
       <div>{% render 'icon', name: 'truck' %}<span><b>{{ rate }} flat rate freight</b> to a commercial address, or free pickup at the yard.</span></div>
+    {%- elsif is_ground -%}
+      <div>{% render 'icon', name: 'truck' %}<span><b>{{ rate }} flat rate shipping</b> by UPS Ground in the lower 48, or free pickup at the yard.</span></div>
     {%- else -%}
       <div>{% render 'icon', name: 'truck' %}<span><b>Free shipping</b> in the lower 48. Free local delivery around Amite.</span></div>
     {%- endif -%}
@@ -102,6 +164,19 @@
           <p class="ship-notice__actions">
             <a href="{{ routes.root_url }}pages/freight" class="link">Read the freight rules &rarr;</a>
           </p>
+        </div>
+      </div>
+
+    {%- elsif is_ground -%}
+      <div class="ship-notice ship-notice--ground">
+        {% render 'icon', name: 'truck' %}
+        <div>
+          <b>Ships UPS Ground &mdash; {{ rate }} flat rate</b>
+          <p>
+            This one goes to your door like any other parcel &mdash; no commercial address and
+            no forklift. Usually the same or next business day, anywhere in the lower 48.
+          </p>
+          <p>Free pickup at our yard in Amite is always available.</p>
         </div>
       </div>
 

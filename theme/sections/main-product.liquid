@@ -10,6 +10,26 @@
   need the same answer, and the tag chain that produces it lives in one snippet.
 {%- endcomment -%}
 {%- capture ship_group -%}{%- render 'shipping-class', product: product -%}{%- endcapture -%}
+{%- comment -%}
+  Some parts are listed with photographs of the donor vehicle they came off, not of the
+  part itself. The gallery note below must not then claim the photos are "the actual part
+  … what you see is what ships".
+
+  How we tell: CoreYard names every real part photo <R#>_NN.jpg, where R# is the SKU. A
+  donor photo is named <donor-key>_NN.jpg instead, so its filename stem is not the SKU.
+  This catches legacy listings that predate CoreYard's donor-photo note as well as new
+  ones (checked against every listing carrying that note — the stem never matched the SKU
+  — and against parts photographed individually, where it always did).
+{%- endcomment -%}
+{%- assign photos_are_donor = false -%}
+{%- if product.featured_media and variant.sku != blank -%}
+  {%- assign featured_image_url = product.featured_media | image_url: width: 1 -%}
+  {%- assign featured_image_name = featured_image_url | split: '?' | first | split: '/' | last -%}
+  {%- assign featured_image_stem = featured_image_name | split: '_' | first -%}
+  {%- if featured_image_stem != blank and featured_image_stem != variant.sku -%}
+    {%- assign photos_are_donor = true -%}
+  {%- endif -%}
+{%- endif -%}
 
 <div class="page-width">
   {% render 'product-crumb', format: 'html', product: product, collection: collection %}
@@ -49,15 +69,25 @@
       {%- endcomment -%}
       {%- if product.featured_media -%}
       <p class="gallery__note">
-        {% render 'icon', name: 'check' %}
-        {%- comment -%}
-          Body panels and glass are never shipped, so promising "what ships" on one
-          contradicts the pickup-only notice sitting directly below it.
-        {%- endcomment -%}
-        <span>These are photos of the actual part on our lot — not a stock image.
-          {%- if ship_group == 'pickup' %} What you see is what you pick up.
-          {%- else %} What you see is what ships.
-          {%- endif %}</span>
+        {%- if photos_are_donor -%}
+          {% render 'icon', name: 'photo' %}
+          {%- comment -%}
+            Donor-photo listing: the pictures are of the car this part was removed from,
+            not of the part. Say so here rather than let the shopper assume otherwise.
+          {%- endcomment -%}
+          <span>These photos are of the <b>donor vehicle</b> this part was removed from —
+            not the part itself. This part was not photographed individually.</span>
+        {%- else -%}
+          {% render 'icon', name: 'check' %}
+          {%- comment -%}
+            Body panels and glass are never shipped, so promising "what ships" on one
+            contradicts the pickup-only notice sitting directly below it.
+          {%- endcomment -%}
+          <span>These are photos of the actual part on our lot — not a stock image.
+            {%- if ship_group == 'pickup' %} What you see is what you pick up.
+            {%- else %} What you see is what ships.
+            {%- endif %}</span>
+        {%- endif -%}
       </p>
       {%- endif -%}
     </div>
@@ -153,7 +183,12 @@
         {%- for field in product.metafields.abm -%}
           {%- assign key = field | first -%}
           {%- assign value = field | last -%}
-          {%- unless value == blank or key == 'fitment' -%}
+          {%- comment -%}
+            `grade` is excluded alongside `fitment`: CoreYard renders `condition` as
+            "Grade A", so listing the bare letter too gives the table two rows saying
+            the same thing.
+          {%- endcomment -%}
+          {%- unless value == blank or key == 'fitment' or key == 'grade' -%}
             <div><dt>{{ key | replace: '_', ' ' | capitalize }}</dt><dd>{{ value }}</dd></div>
           {%- endunless -%}
         {%- endfor -%}
@@ -360,7 +395,7 @@
       "name": "Accordion row",
       "settings": [
         { "type": "text", "id": "heading", "label": "Heading", "default": "Shipping" },
-        { "type": "richtext", "id": "content", "label": "Content", "default": "<p>Most parts ship free within the lower 48. Large items like doors, hoods, and engines may require a freight quote — call us and we'll sort it out.</p>" }
+        { "type": "richtext", "id": "content", "label": "Content", "default": "<p>Every listing shows what shipping costs before you buy. Most parts go UPS Ground at a flat rate; engines, transmissions and axles go LTL freight to a commercial address; body panels and glass are pickup or local delivery only.</p>" }
       ]
     }
   ],
@@ -370,7 +405,7 @@
         "type": "policy",
         "settings": {
           "heading": "Shipping",
-          "content": "<p>Most parts ship free within the lower 48, usually the same or next business day. Large items — doors, hoods, engines, transmissions — may need a freight quote. Local to Amite? Delivery is free.</p>"
+          "content": "<p>Every listing shows what shipping costs before you buy — a flat UPS Ground rate for most parts, LTL freight for engines, transmissions and axles, and pickup or free local delivery for body panels and glass. Orders leave the yard the same or next business day.</p>"
         }
       },
       {

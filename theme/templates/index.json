@@ -6,13 +6,15 @@
         "s1": {
           "type": "stat",
           "settings": {
+            "count_source": "powerlink",
             "value": "25,000+",
-            "label": "On the yard"
+            "label": "In yard inventory"
           }
         },
         "s2": {
           "type": "stat",
           "settings": {
+            "count_source": "manual",
             "value": "1958",
             "label": "Family run since"
           }
@@ -20,13 +22,15 @@
         "s3": {
           "type": "stat",
           "settings": {
-            "value": "9,300+",
+            "count_source": "listed",
+            "value": "22,000+",
             "label": "Listed online"
           }
         },
         "s4": {
           "type": "stat",
           "settings": {
+            "count_source": "manual",
             "value": "90 days",
             "label": "Money-back warranty"
           }
@@ -41,7 +45,7 @@
       "settings": {
         "eyebrow": "Used OEM parts · Amite, Louisiana",
         "heading": "The part you need is already on our lot.",
-        "subheading": "Search 25,000+ parts on our ten-acre yard — 9,300+ listed online and growing. Save up to 50% off new, backed by a 90-day money-back warranty.",
+        "subheading": "Search {powerlink_count} parts in our yard inventory — {listed_count} listed online and growing. Save up to 50% off new, backed by a 90-day money-back warranty.",
         "search_placeholder": "Try \"2012 Silverado alternator\" or a stock number",
         "button_label": "Find My Part",
         "examples": "Engine, Transmission, Alternator, Tailgate, Wheel, Seat",
@@ -63,8 +67,8 @@
           "type": "item",
           "settings": {
             "icon": "truck",
-            "title": "Free shipping",
-            "text": "On most parts, nationwide"
+            "title": "Flat-rate shipping",
+            "text": "Cost shown on every listing"
           }
         },
         "t3": {
@@ -349,8 +353,8 @@
         "s3": {
           "type": "step",
           "settings": {
-            "title": "It ships free",
-            "text": "Most parts ship free nationwide. Local to Amite? We deliver it ourselves."
+            "title": "It ships out",
+            "text": "Flat-rate UPS Ground, or LTL freight for the heavy things. The cost is on the listing before you buy. Local to Amite? We deliver it ourselves."
           }
         }
       },

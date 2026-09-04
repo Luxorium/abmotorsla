@@ -16,8 +16,16 @@
       {%- endif -%}
     </div>
 
+    {%- comment -%}
+      Posts to the exact tag filter, not to search: /collections/all/2014-subaru-legacy
+      is the route that returns only parts tagged for that vehicle. theme.js intercepts
+      the submit and builds the path from the three selects. With scripting off the
+      selects never populate, so the bare action just lands on the full catalogue rather
+      than on a keyword search that would quietly answer with other vehicles' parts.
+    {%- endcomment -%}
     <form class="ymm" data-ymm data-src="{{ 'vehicles.json' | asset_url }}"
-          action="{{ routes.search_url }}" method="get">
+          data-base="{{ routes.all_products_collection_url }}"
+          action="{{ routes.all_products_collection_url }}" method="get">
       <div class="ymm__row">
         <label class="field">
           <span>Make</span>
@@ -41,8 +49,6 @@
           {% render 'icon', name: 'search' %} {{ section.settings.button_label }}
         </button>
       </div>
-      <input type="hidden" name="q" data-ymm-q value="">
-      <input type="hidden" name="options[prefix]" value="last">
       <p class="ymm__hint" data-ymm-hint>{{ section.settings.hint }}</p>
     </form>
   </div>

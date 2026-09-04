@@ -59,7 +59,9 @@
             <div class="cart-item">
               <a href="{{ line.url }}" class="cart-item__media">
                 {%- if line.image -%}
-                  {{ line.image | image_url: width: 200 | image_tag: loading: 'lazy', alt: line.title | escape }}
+                  {%- comment -%} Alt first: a `|` in a filter argument chains onto image_tag's output. {%- endcomment -%}
+                  {%- assign line_alt = line.title | escape -%}
+                  {{ line.image | image_url: width: 200 | image_tag: loading: 'lazy', alt: line_alt }}
                 {%- endif -%}
               </a>
 
@@ -120,7 +122,7 @@
 
           <div class="buybox__assure">
             <div>{% render 'icon', name: 'shield' %}<span>{{ settings.warranty_days | default: '90' }}-day money-back warranty on every part.</span></div>
-            <div>{% render 'icon', name: 'truck' %}<span>Free shipping on most parts; free local delivery.</span></div>
+            <div>{% render 'icon', name: 'truck' %}<span>Shipping is a flat rate, shown on each item above; free local delivery.</span></div>
             <div>{% render 'icon', name: 'phone' %}<span>Questions before you buy? {{ settings.phone }}</span></div>
           </div>
         </aside>

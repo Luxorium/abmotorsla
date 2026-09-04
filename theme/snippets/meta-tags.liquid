@@ -9,12 +9,13 @@
 {%- endcomment -%}
 {%- liquid
   assign shop_name = shop.name | replace: '&#39;', "'" | replace: '&quot;', '"' | replace: '&gt;', '>' | replace: '&lt;', '<' | replace: '&amp;', '&'
+  assign social_description = description | default: page_description | default: shop.description | default: shop.name
 -%}
 <meta property="og:site_name" content="{{ shop.name }}">
 <meta property="og:url" content="{{ canonical_url }}">
 <meta property="og:title" content="{{ page_title | escape }}">
 <meta property="og:type" content="{% if request.page_type == 'product' %}product{% else %}website{% endif %}">
-<meta property="og:description" content="{{ page_description | default: shop.description | default: shop.name | escape }}">
+<meta property="og:description" content="{{ social_description | strip_html | escape_once }}">
 {%- comment -%}
   https, not http: the storefront is served over TLS, and Facebook/X reject or silently drop
   a mixed-content preview image. The JSON-LD below already had this right.
@@ -77,25 +78,32 @@
           at checkout. Body panels and glass are never shipped, so they get no
           shippingDetails at all rather than a rate we would refuse to honour.
         {%- endcomment -%}
-        {%- capture meta_ship -%}{%- render 'shipping-class', product: product -%}{%- endcapture -%}
+        {%- comment -%}
+          Both answers come from 'shipping-group', which is the file that owns the rates
+          and the only one check_contracts.py holds against content/freight.json. Keeping a
+          second table of rates here is exactly what went wrong before: it knew freight and
+          two of the seven ground tiers, so the other five published shippingRate 0 and told
+          Google that 11,000-odd paid listings shipped free.
+        {%- endcomment -%}
+        {%- capture ship_rate -%}{%- render 'shipping-group', product: product, style: 'rate' -%}{%- endcapture -%}
+        {%- capture ship_carrier -%}{%- render 'shipping-group', product: product, style: 'carrier' -%}{%- endcapture -%}
         {%- liquid
-          assign ship_rate = 0
+          assign ship_rate = ship_rate | strip
+          assign ship_carrier = ship_carrier | strip
           assign handle_min = 1
           assign handle_max = 2
           assign transit_min = 2
           assign transit_max = 5
           assign ships = true
-          if meta_ship == 'pickup'
+          if ship_carrier == 'pickup'
             assign ships = false
-          elsif meta_ship == 'freight299'
-            assign ship_rate = 299.99
-          elsif meta_ship == 'freight199'
-            assign ship_rate = 199.99
           endif
           comment
-            Freight moves on a truck, not a parcel network, so both windows widen.
+            Freight moves on a truck, not a parcel network, so both windows widen. A paid
+            ground rate is still a parcel, so it keeps the parcel windows — the test is
+            which carrier, not whether the shopper is charged.
           endcomment
-          if ship_rate > 0
+          if ship_carrier == 'freight'
             assign handle_min = 2
             assign handle_max = 4
             assign transit_min = 3

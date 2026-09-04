@@ -26,6 +26,7 @@ from __future__ import annotations
 import argparse
 import collections
 import json
+import re
 
 from _shopify import REPO, Shopify
 
@@ -52,7 +53,7 @@ SCAN = """
 query($cursor: String, $ns: String!, $key: String!) {
   products(first: 250, after: $cursor, query: "status:active") {
     pageInfo { hasNextPage endCursor }
-    nodes { id metafield(namespace: $ns, key: $key) { value } }
+    nodes { id tags metafield(namespace: $ns, key: $key) { value } }
   }
 }
 """
@@ -73,6 +74,43 @@ def canonical_make(make: str, model: str) -> tuple[str, str]:
     if head and model.lower().startswith(head + " "):
         model = model[len(head) + 1:]
     return canon, model.strip()
+
+
+def handleize(text: str) -> str:
+    """Shopify's own tag handleizing, which is what a /collections/all/<tag> URL is keyed on."""
+    return re.sub(r"^-+|-+$", "", re.sub(r"[^a-z0-9]+", "-", str(text).lower()))
+
+
+def tag_make(year: str, make: str, model: str, tags: list[str], known: set) -> str | None:
+    """The make spelling CoreYard actually tagged this vehicle with, or None if it did not.
+
+    The picker's links are tag URLs, but the picker is built from the fitment metafield, and
+    the two do not always spell a make the same way: fitment says "Mercedes-Benz" where the
+    tag says "2016 Mercedes GLE-Class", and the yard's regional splits ("BMW - US Additional")
+    never reach a tag at all. Shopify answers an unknown tag by dropping the filter, so every
+    one of those mismatches sent a shopper to the whole 22,665-part catalogue.
+
+    Nothing here is a hand-kept spelling table. The product carries both halves, so the tag
+    is read off the product itself: an exact hit first, otherwise the one tag that pairs this
+    year with this model, whose middle is then the make. A learned make that merely extends a
+    make we already know ("Chevrolet Silverado") is a greedy match against a model, not a make.
+    """
+    if f"{year} {make} {model}".strip() in tags:
+        return make
+    if model:
+        pattern = re.compile(rf"^{re.escape(year)}\s+(.+?)\s+{re.escape(model)}$")
+        for tag in tags:
+            found = pattern.match(tag)
+            if not found:
+                continue
+            learned = found.group(1).strip()
+            if any(learned != k and learned.lower().startswith(k.lower() + " ") for k in known):
+                continue
+            return learned
+    # Makes the yard tags without a model at all, such as "2016 Smart".
+    if f"{year} {make}" in tags:
+        return ""
+    return None
 
 
 def years_of(value: str) -> list[int]:
@@ -188,6 +226,9 @@ def main() -> None:
         lambda: collections.defaultdict(set))
     parts_per_make: collections.Counter = collections.Counter()
     cursor, n, with_fitment, malformed = None, 0, 0, 0
+    all_tags: set[str] = set()          # every tag in the catalogue, handleized
+    fitment_makes: set[str] = set()     # makes as the metafield spells them
+    untagged = 0                        # year rows with no tag to filter on
 
     print(f"reading {ns}.{key} metafields…", end="", flush=True)
     while True:
@@ -206,6 +247,8 @@ def main() -> None:
                 malformed += 1
                 continue
             with_fitment += 1
+            tags = list(product.get("tags") or [])
+            all_tags.update(handleize(t) for t in tags)
             makes_here = set()
             for row in rows:
                 if not isinstance(row, dict):
@@ -214,15 +257,25 @@ def main() -> None:
                                              str(row.get("model") or ""))
                 if len(make) < 2:
                     continue
-                years = years_of(row.get("years"))
-                if model:
-                    tree[make][model].update(years)
-                else:
-                    # The yard has parts for the make but never recorded a model. Register
-                    # the make anyway: the picker applies a make-only tag filter when no
-                    # model is chosen, and dropping it hid every Smart part.
-                    tree[make]
-                makes_here.add(make)
+                fitment_makes.add(make)
+                for year in years_of(row.get("years")):
+                    # Register the vehicle under the make its tag uses, not the one the
+                    # metafield uses, and skip a year the yard never tagged: the picker
+                    # links to that tag, so an entry it cannot filter on is worse than no
+                    # entry at all.
+                    tagged = tag_make(str(year), make, model, tags, fitment_makes)
+                    if tagged is None:
+                        untagged += 1
+                        continue
+                    if tagged and model:
+                        tree[tagged][model].add(year)
+                    else:
+                        # The yard has parts for the make but never recorded a model.
+                        # Register the make anyway: the picker applies a make-only tag
+                        # filter when no model is chosen, and dropping it hid every Smart part.
+                        tagged = tagged or make
+                        tree[tagged]
+                    makes_here.add(tagged)
             for make in makes_here:
                 parts_per_make[make] += 1
         if not conn["pageInfo"]["hasNextPage"]:
@@ -243,19 +296,46 @@ def main() -> None:
               f"this.")
         raise SystemExit(1)
 
-    out = {}
+    # Every level the picker can link to is checked against a tag that exists, because
+    # each one is a separate URL: choosing a model alone builds "mercedes c-class" and
+    # choosing a make alone builds "ford". A level with no tag is dropped rather than
+    # offered, so the picker cannot promise a filter the catalogue will not honour.
+    out, dropped_models, dropped_years = {}, 0, 0
     for make, models in tree.items():
         # Drop one-off noise: a make needs a couple of parts to be worth listing.
         if parts_per_make[make] < 2:
             continue
-        out[make] = {model: sorted(years) for model, years in sorted(models.items())}
+        keep = {}
+        for model, years in sorted(models.items()):
+            if handleize(f"{make} {model}") not in all_tags:
+                dropped_models += 1
+                continue
+            usable = sorted(y for y in years
+                            if handleize(f"{y} {make} {model}") in all_tags)
+            dropped_years += len(years) - len(usable)
+            if usable:
+                keep[model] = usable
+            else:
+                dropped_models += 1
+        if keep or handleize(make) in all_tags:
+            out[make] = keep
+
+    # A make whose own tag exists can be filtered on alone; the rest need a model, and
+    # the theme keeps the button disabled until it has one.
+    make_only = sorted(m for m in out if handleize(m) in all_tags)
 
     OUT.parent.mkdir(parents=True, exist_ok=True)
-    payload = json.dumps({"makes": dict(sorted(out.items()))}, separators=(",", ":"))
+    payload = json.dumps({"makes": dict(sorted(out.items())), "make_only": make_only},
+                         separators=(",", ":"))
     OUT.write_text(payload)
 
     models = sum(len(m) for m in out.values())
     print(f"{len(out)} makes, {models} models -> {OUT.relative_to(REPO)} ({OUT.stat().st_size / 1024:.0f} KB)")
+    print(f"  {len(make_only)} makes filterable on their own; "
+          f"{len(out) - len(make_only)} need a model")
+    if untagged or dropped_models or dropped_years:
+        print(f"  skipped as untaggable: {untagged} year rows, "
+              f"{dropped_models} models, {dropped_years} model-years")
     print("\ntop makes by parts:")
     for mk, c in parts_per_make.most_common(12):
         if mk in out:
