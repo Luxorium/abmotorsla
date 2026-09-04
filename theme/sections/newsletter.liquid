@@ -20,6 +20,20 @@
             <p class="small muted" style="margin-top:10px;">
               Parts alerts and yard news. Unsubscribe any time.
             </p>
+            {%- comment -%}
+              This block used to say "tell us what you need and we'll call you when it
+              comes in" above a form with one field in it: an email address. It could not
+              take the part, the vehicle or a phone number, and being a `customer` form it
+              would not have delivered them if it had — that form type creates a customer,
+              it does not send the yard a message. Somebody typing a water pump into their
+              email client's autofill and pressing Notify me got a newsletter subscription
+              and no request. The promise now matches the field, and the request goes where
+              a request can actually be answered.
+            {%- endcomment -%}
+            <p class="small" style="margin-top:10px;">
+              Looking for one specific part?
+              <a class="link" href="{{ routes.root_url }}pages/contact">Tell us the part and your vehicle &rarr;</a>
+            </p>
           {%- endif -%}
         {%- endform -%}
       </div>
@@ -31,9 +45,9 @@
 {
   "name": "Newsletter",
   "settings": [
-    { "type": "text", "id": "eyebrow", "label": "Eyebrow", "default": "Parts request" },
+    { "type": "text", "id": "eyebrow", "label": "Eyebrow", "default": "Parts alerts" },
     { "type": "text", "id": "heading", "label": "Heading", "default": "Can't find the part?" },
-    { "type": "textarea", "id": "text", "label": "Text", "default": "Our yard changes daily. Get on the list and we'll let you know when what you need comes in." },
+    { "type": "textarea", "id": "text", "label": "Text", "default": "Our yard changes daily. Join the list for new arrivals and yard news." },
     { "type": "text", "id": "button_label", "label": "Button label", "default": "Notify me" }
   ],
   "enabled_on": { "groups": ["footer"] }

@@ -58,7 +58,34 @@
       {% if product.featured_media and ld_photos == 'exact' %}"image": [{{ product.featured_media | image_url: width: 1200 | prepend: "https:" | json }}],{% endif %}
       "description": {{ ld_description | json }},
       "sku": {{ variant.sku | json }},
-      "brand": { "@type": "Brand", "name": {{ product.vendor | json }} },
+      {%- comment -%}
+        M-21. brand was product.vendor — A&B Motors — while `seller` below is also A&B
+        Motors, so the structured data claimed the yard manufactured the part it is
+        reselling. For a used OEM part the brand is the vehicle manufacturer, which
+        abm.fitment carries per application.
+
+        Only asserted when every application agrees on one make. A third of the catalogue
+        fits several makes (a mirror shared by KIA and Hyundai), and picking one of them
+        would brand a Hyundai part KIA. An absent brand costs a rich-result field; a wrong
+        one is a misrepresentation, so those omit it.
+      {%- endcomment -%}
+      {%- liquid
+        assign oem_brand = ''
+        assign oem_conflict = false
+        for row in product.metafields.abm.fitment.value
+          assign row_make = row.make | strip
+          if row_make != blank
+            if oem_brand == ''
+              assign oem_brand = row_make
+            elsif oem_brand != row_make
+              assign oem_conflict = true
+            endif
+          endif
+        endfor
+      -%}
+      {%- if oem_brand != '' and oem_conflict == false -%}
+      "brand": { "@type": "Brand", "name": {{ oem_brand | json }} },
+      {%- endif -%}
       "itemCondition": "https://schema.org/UsedCondition",
       "offers": {
         "@type": "Offer",
@@ -131,9 +158,22 @@
             "value": "{{ ship_rate }}",
             "currency": {{ cart.currency.iso_code | json }}
           },
+          {%- comment -%}
+            M-22. This said addressCountry US, which promises the rate applies in Alaska
+            and Hawaii — where the policy says to call for a quote. Naming the contiguous
+            states plus DC is the accurate form, and it is the one Google reads: a shopper
+            in Anchorage is told the flat rate is not theirs before checkout rather than
+            after. 'lower 48' in the copy and this list are the same claim.
+          {%- endcomment -%}
           "shippingDestination": {
             "@type": "DefinedRegion",
-            "addressCountry": "US"
+            "addressCountry": "US",
+            "addressRegion": [
+              "AL","AZ","AR","CA","CO","CT","DE","DC","FL","GA","ID","IL","IN","IA","KS",
+              "KY","LA","ME","MD","MA","MI","MN","MS","MO","MT","NE","NV","NH","NJ","NM",
+              "NY","NC","ND","OH","OK","OR","PA","RI","SC","SD","TN","TX","UT","VT","VA",
+              "WA","WV","WI","WY"
+            ]
           },
           "deliveryTime": {
             "@type": "ShippingDeliveryTime",
