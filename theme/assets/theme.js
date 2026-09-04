@@ -20,6 +20,15 @@
     });
   }
 
+  // The source system splits some makes by region or catch-all — "Nissan - Worldwide",
+  // "General Motors - Foreign", "Miscellaneous - Trucks". Those strings are the tag the
+  // catalogue filters on, so they cannot change, but they are internal vocabulary and a
+  // shopper should not have to read it. Relabel for display only; the value stays the tag.
+  function makeLabel(name) {
+    var split = String(name).split(' - ');
+    return split.length === 2 ? split[0] + ' (' + split[1].toLowerCase() + ')' : name;
+  }
+
   // Mirrors Shopify's own tag handleizing, which is what tag URLs are keyed on.
   // Both vehicle pickers build /collections/all/<tag> paths with it.
   function handleize(s) {
@@ -209,16 +218,35 @@
         '&resources[options][unavailable_products]=last' +
         '&resources[options][fields]=title,product_type,variants.sku,vendor,tag';
 
-      fetch(url, { headers: { Accept: 'application/json' } })
-        .then(function (r) { return r.json(); })
-        .then(function (data) {
-          if (input.value.trim() !== term) return; // a newer keystroke won
-          body.innerHTML = renderPredictive(data, term);
-          announce(wrap, $$('.predictive__item', body).length, term);
-          panel.hidden = false;
-          input.setAttribute('aria-expanded', 'true');
-        })
-        .catch(function () { hidePredictive(panel); });
+      // The suggest endpoint fails occasionally and the same query succeeds straight
+      // after — the audit hit it twice in one session. One retry costs a few hundred
+      // milliseconds and turns a dead dropdown into a working one; a second would just
+      // be stubborn. A failure after that closes the panel rather than leaving a stale
+      // list under a new query, and lastTerm is cleared so the next keystroke retries
+      // instead of being suppressed as a duplicate.
+      function attempt(retriesLeft) {
+        fetch(url, { headers: { Accept: 'application/json' } })
+          .then(function (r) {
+            if (!r.ok) throw new Error('suggest ' + r.status);
+            return r.json();
+          })
+          .then(function (data) {
+            if (input.value.trim() !== term) return; // a newer keystroke won
+            body.innerHTML = renderPredictive(data, term);
+            announce(wrap, $$('.predictive__item', body).length, term);
+            panel.hidden = false;
+            input.setAttribute('aria-expanded', 'true');
+          })
+          .catch(function () {
+            if (retriesLeft > 0) {
+              setTimeout(function () { attempt(retriesLeft - 1); }, 350);
+              return;
+            }
+            lastTerm = '';
+            hidePredictive(panel);
+          });
+      }
+      attempt(1);
     }
 
     on(input, 'input', function () {
@@ -275,7 +303,9 @@
 
     function fill(sel, values, placeholder) {
       sel.innerHTML = '<option value="">' + placeholder + '</option>' +
-        values.map(function (v) { return '<option value="' + esc(v) + '">' + esc(v) + '</option>'; }).join('');
+        values.map(function (v) {
+          return '<option value="' + esc(v) + '">' + esc(makeLabel(v)) + '</option>';
+        }).join('');
     }
 
     fetch(form.getAttribute('data-src'), { headers: { Accept: 'application/json' } })
@@ -531,7 +561,7 @@
       sel.innerHTML = '<option value="">' + placeholder + '</option>' +
         values.map(function (v) {
           return '<option value="' + esc(v) + '"' + (v === selected ? ' selected' : '') +
-            '>' + esc(v) + '</option>';
+            '>' + esc(makeLabel(v)) + '</option>';
         }).join('');
     }
 

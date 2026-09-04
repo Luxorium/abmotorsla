@@ -184,7 +184,17 @@
               here put both forms of one number on one page. Separators and the unit are
               display, so they belong to whatever is displaying it.
             {%- endcomment -%}
-            {%- if key == 'mileage' -%}
+            {%- comment -%}
+              The grade is a letter with no scale printed anywhere the shopper can reach,
+              and a part with no grade says "Used, inspected", which reads as a different
+              kind of claim rather than the same claim with less detail. Link the rubric
+              from the row that raises the question.
+            {%- endcomment -%}
+            {%- if key == 'condition' -%}
+              <div><dt>Condition</dt><dd>{{ value }} &middot;
+                <a class="link" href="{{ routes.root_url }}pages/warranty-returns#grades">What do the grades mean?</a>
+              </dd></div>
+            {%- elsif key == 'mileage' -%}
               <div><dt>Mileage</dt><dd>{%- render 'count-with-delimiters', count: value -%}&nbsp;mi</dd></div>
             {%- else -%}
               <div><dt>{{ key | replace: '_', ' ' | capitalize }}</dt><dd>{{ value }}</dd></div>
