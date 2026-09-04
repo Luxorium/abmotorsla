@@ -110,9 +110,20 @@ class Shopify:
                     self._pause = max(self._pause, time.monotonic() + 1.0)
             errors = payload.get("errors") or []
             if errors:
-                throttled = any((e.get("extensions") or {}).get("code") == "THROTTLED"
-                                for e in errors)
-                if throttled and attempt < tries - 1:
+                codes = {(e.get("extensions") or {}).get("code") for e in errors}
+                # THROTTLED is Shopify asking us to slow down. INTERNAL_SERVER_ERROR is
+                # Shopify failing on its own account: it arrives as a 200 with an error
+                # body, so the transport retry above never sees it, and the caller used to
+                # die on the spot. Seen on 2026-09-04, where three consecutive
+                # `metafieldsSet` calls in `store_setup.py --pages` failed with fresh
+                # request IDs while the identical mutation, run on its own, succeeded.
+                #
+                # Retrying a mutation is only safe because every mutation in this
+                # repository is an upsert or an idempotent update — metafieldsSet,
+                # pageUpdate, themeFilesUpsert. If a create without an idempotency key is
+                # ever added here, exclude it rather than widening this.
+                retryable = codes & {"THROTTLED", "INTERNAL_SERVER_ERROR"}
+                if retryable and attempt < tries - 1:
                     time.sleep(1.5 * (attempt + 1))
                     continue
                 raise RuntimeError(json.dumps(errors)[:400])

@@ -11,6 +11,10 @@
 
   Group ids match snippets/shipping-class.liquid. Rates match content/freight.json, which
   scripts/check_contracts.py enforces.
+
+  'freight.rates' is also the list of groups that are actually freight. The drawer's
+  commercial-address warning tests membership of it rather than "has a rate", because a
+  paid parcel group has a rate too and must not raise that warning.
 {%- endcomment -%}
 <script>
   window.ABM_SHIP = {
@@ -19,6 +23,13 @@
       "pickup": "Pickup only",
       "freight299": "$299.99 freight",
       "freight199": "$199.99 freight",
+      "ground44": "$44.99 shipping",
+      "ground34": "$34.99 shipping",
+      "ground29": "$29.99 shipping",
+      "ground24": "$24.99 shipping",
+      "ground19": "$19.99 shipping",
+      "ground14": "$14.99 shipping",
+      "ground9": "$9.99 shipping",
       "free": "Free shipping"
     }
   };

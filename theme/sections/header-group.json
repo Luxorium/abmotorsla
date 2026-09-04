@@ -14,7 +14,7 @@
       "type": "header",
       "settings": {
         "menu": "main-menu",
-        "search_placeholder": "Search by part, year, make, model, or stock #",
+        "search_placeholder": "Search by Part ID, year, make, model, or interchange #",
         "cta_label": "Sell Your Car",
         "cta_url": "/pages/sell-your-car"
       }

@@ -3,16 +3,38 @@
   if collection.sort_by != blank
     assign sort_qs = '?sort_by=' | append: collection.sort_by
   endif
+
+  comment
+    A tag-filtered route renders the underlying collection, so /collections/all/2014-subaru-legacy
+    took its heading and breadcrumb from /collections/all — "Products" — while the browser title
+    already said the vehicle. The homepage picker and vehicle-aware search both land shoppers
+    here now, so the page has to name what it is showing. current_tags carries the tags the
+    route filtered on, in the order Shopify matched them.
+  endcomment
+  assign heading = collection.title
+  if current_tags.size > 0
+    assign tag_names = current_tags | join: ' + '
+    if collection.handle == 'all'
+      assign heading = tag_names | append: ' Used Parts'
+    else
+      assign heading = tag_names | append: ' — ' | append: collection.title
+    endif
+  endif
 -%}
 {%- paginate collection.products by section.settings.per_page -%}
   <div class="page-width">
     <nav class="breadcrumbs" aria-label="Breadcrumb">
       <a href="{{ routes.root_url }}">Home</a><span>/</span>
-      <span class="muted">{{ collection.title }}</span>
+      {%- if current_tags.size > 0 -%}
+        <a href="{{ collection.url }}{{ sort_qs }}">{{ collection.title }}</a><span>/</span>
+        <span class="muted">{{ current_tags | join: ' + ' }}</span>
+      {%- else -%}
+        <span class="muted">{{ collection.title }}</span>
+      {%- endif -%}
     </nav>
 
     <div class="section-head">
-      <h1 class="h1">{{ collection.title }}</h1>
+      <h1 class="h1">{{ heading }}</h1>
       {%- if collection.description != blank -%}
         <div class="rte lede">{{ collection.description }}</div>
       {%- endif -%}
@@ -34,6 +56,15 @@
           {%- if collection.sort_by != blank -%}
             <input type="hidden" name="sort_by" value="{{ collection.sort_by }}">
           {%- endif -%}
+
+          {%- comment -%}
+            Selecting a checkbox submits this form, which is a change of context the
+            shopper has to be told about beforehand (WCAG 3.2.2) — hence the note. The
+            <noscript> button below is the functional half: without it, and with JS off,
+            a checkbox toggles visibly and does nothing at all, because the only submit
+            control in this form belongs to the price fieldset.
+          {%- endcomment -%}
+          <p class="small muted" style="margin:0 0 10px;">Filters apply as you select them.</p>
 
           {%- for filter in collection.filters -%}
             <details class="facets__group" {% if forloop.index < 4 %}open{% endif %}>
@@ -72,6 +103,15 @@
               {%- endcase -%}
             </details>
           {%- endfor -%}
+
+          <noscript>
+            <p class="small muted" style="margin:10px 0 0;">
+              JavaScript is off, so choose your filters and then apply them.
+            </p>
+            <button type="submit" class="btn btn--sm btn--outline" style="margin-top:8px;">
+              Apply filters
+            </button>
+          </noscript>
         </form>
         {%- endif -%}
 

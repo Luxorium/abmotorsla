@@ -39,7 +39,16 @@
           {%- if form.posted_successfully? -%}
             <p class="form-success">Thanks — we got it. Someone from the yard will get back to you, usually same day.</p>
           {%- elsif form.errors -%}
-            <p class="form-error">{{ form.errors | default_errors }}</p>
+            {%- comment -%}
+              role="alert" so the failure is announced rather than silently rendered, and
+              a real id so the offending field can point at it. Shopify's contact form
+              exposes only the field names in form.errors, not per-field messages, so the
+              association is name-level: the summary stays, but the email input is marked
+              invalid and described by it instead of leaving the user to guess.
+            {%- endcomment -%}
+            <p class="form-error" id="ContactFormError" role="alert" tabindex="-1">
+              {{ form.errors | default_errors }}
+            </p>
           {%- endif -%}
 
           <label class="field">
@@ -50,7 +59,8 @@
           <div class="split" style="gap:14px;grid-template-columns:1fr 1fr;">
             <label class="field">
               <span>Email</span>
-              <input type="email" name="contact[email]" required autocomplete="email">
+              <input type="email" name="contact[email]" required autocomplete="email"
+                     {% if form.errors contains 'email' %}aria-invalid="true" aria-describedby="ContactFormError"{% endif %}>
             </label>
             <label class="field">
               <span>Phone</span>
@@ -64,8 +74,8 @@
           </label>
 
           <label class="field">
-            <span>Part you need (or stock number)</span>
-            <input type="text" name="contact[part]" placeholder="Alternator — or 641-00118L">
+            <span>Part you need (or Part ID)</span>
+            <input type="text" name="contact[part]" placeholder="Alternator — or Part ID 51250">
           </label>
 
           <label class="field">

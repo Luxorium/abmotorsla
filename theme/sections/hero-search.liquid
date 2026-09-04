@@ -1,3 +1,29 @@
+{%- liquid
+  assign source_count = shop.metafields.abm.source_inventory_count.value
+  assign listed_count = collections['all'].products_count
+-%}
+{%- capture source_count_text -%}
+  {%- if source_count != blank -%}
+    {%- render 'count-with-delimiters', count: source_count -%}
+  {%- else -%}
+    25,000+
+  {%- endif -%}
+{%- endcapture -%}
+{%- capture listed_count_text -%}
+  {%- if listed_count > 0 -%}
+    {%- render 'count-with-delimiters', count: listed_count -%}
+  {%- else -%}
+    22,000+
+  {%- endif -%}
+{%- endcapture -%}
+{%- liquid
+  assign source_count_text = source_count_text | strip
+  assign listed_count_text = listed_count_text | strip
+  assign live_subheading = section.settings.subheading
+  assign live_subheading = live_subheading | replace: '{powerlink_count}', source_count_text
+  assign live_subheading = live_subheading | replace: '{listed_count}', listed_count_text
+-%}
+
 <section class="hero">
   {%- if section.settings.image != blank -%}
     <div class="hero__media">
@@ -19,7 +45,7 @@
       <h1 class="h0">{{ section.settings.heading }}</h1>
 
       {%- if section.settings.subheading != blank -%}
-        <p class="hero__sub">{{ section.settings.subheading }}</p>
+        <p class="hero__sub">{{ live_subheading }}</p>
       {%- endif -%}
 
       <div class="hero__search">
@@ -44,8 +70,16 @@
       {%- if section.blocks.size > 0 -%}
         <div class="hero__stats">
           {%- for block in section.blocks -%}
+            {%- liquid
+              assign stat_value = block.settings.value
+              if block.settings.count_source == 'powerlink'
+                assign stat_value = source_count_text
+              elsif block.settings.count_source == 'listed'
+                assign stat_value = listed_count_text
+              endif
+            -%}
             <div class="hero__stat" {{ block.shopify_attributes }}>
-              <b>{{ block.settings.value }}</b>
+              <b>{{ stat_value }}</b>
               <span>{{ block.settings.label }}</span>
             </div>
           {%- endfor -%}
@@ -66,9 +100,9 @@
       "type": "textarea",
       "id": "subheading",
       "label": "Subheading",
-      "default": "Search 25,000+ parts on our ten-acre yard — 9,300+ listed online and growing. Save up to 50% off new, backed by a 90-day money-back warranty."
+      "default": "Search {powerlink_count} parts in our yard inventory — {listed_count} listed online and growing. Save up to 50% off new, backed by a 90-day money-back warranty."
     },
-    { "type": "text", "id": "search_placeholder", "label": "Search placeholder", "default": "Try \"2012 Silverado alternator\" or a stock number" },
+    { "type": "text", "id": "search_placeholder", "label": "Search placeholder", "default": "Try \"2012 Silverado alternator\" or a Part ID" },
     { "type": "text", "id": "button_label", "label": "Button label", "default": "Find My Part" },
     { "type": "text", "id": "examples", "label": "Example searches (comma separated)", "default": "Engine, Transmission, Alternator, Tailgate, Wheel" }
   ],
@@ -78,7 +112,18 @@
       "name": "Stat",
       "limit": 4,
       "settings": [
-        { "type": "text", "id": "value", "label": "Value", "default": "9,300+" },
+        {
+          "type": "select",
+          "id": "count_source",
+          "label": "Live count",
+          "default": "manual",
+          "options": [
+            { "value": "manual", "label": "Manual value" },
+            { "value": "powerlink", "label": "Yard inventory (source database)" },
+            { "value": "listed", "label": "Listed online" }
+          ]
+        },
+        { "type": "text", "id": "value", "label": "Manual value", "default": "90 days" },
         { "type": "text", "id": "label", "label": "Label", "default": "Listed online" }
       ]
     }
@@ -87,8 +132,8 @@
     {
       "name": "Hero + part search",
       "blocks": [
-        { "type": "stat", "settings": { "value": "25,000+", "label": "On the yard" } },
-        { "type": "stat", "settings": { "value": "9,300+", "label": "Listed online" } },
+        { "type": "stat", "settings": { "count_source": "powerlink", "value": "25,000+", "label": "In yard inventory" } },
+        { "type": "stat", "settings": { "count_source": "listed", "value": "22,000+", "label": "Listed online" } },
         { "type": "stat", "settings": { "value": "Since 1958", "label": "Family run" } },
         { "type": "stat", "settings": { "value": "10 acres", "label": "Of inventory" } },
         { "type": "stat", "settings": { "value": "90 days", "label": "Money-back warranty" } }

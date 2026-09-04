@@ -344,9 +344,18 @@
     <div class="section section--paper"
          data-related
          data-related-exclude="{{ product.id }}"
+         {%- comment -%}
+           The tag behind this link is the model, not the shopper's exact vehicle: on a
+           2010-2019 Legacy listing it returns 2000-2004 Legacy parts too, which fit the
+           model name and not necessarily the car. Naming the section "parts that fit"
+           was the overstatement — the shopper reads it as vetted fitment and it is a
+           model-level browse. The tag would have to carry the year to promise more than
+           that, and a year-exact tag on a rare vehicle can return nothing at all, so the
+           heading is what changed rather than the query.
+         {%- endcomment -%}
          {%- if vehicle != blank %}
            data-related-url="{{ routes.all_products_collection_url }}/{{ vehicle | handleize }}?view=cards"
-           data-related-heading="More parts that fit the {{ vehicle | escape }}"
+           data-related-heading="Other {{ vehicle | escape }} parts &mdash; check the year and options on each"
          {%- endif %}>
       <div class="page-width">
         <div class="section-head">

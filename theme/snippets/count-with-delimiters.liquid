@@ -1,0 +1,19 @@
+{%- comment -%}
+  Render an inventory count with comma thousands separators. Shopify Liquid does not expose
+  the Admin-side number-format helper, and an exact customer-facing count should remain
+  readable even when JavaScript is disabled. Inventory here is comfortably below one
+  billion; the branches keep this dependency-free and cover growth well beyond the yard.
+
+  Usage: render 'count-with-delimiters', count: count
+{%- endcomment -%}
+{%- assign digits = count | append: '' | strip -%}
+{%- assign size = digits.size -%}
+{%- if size > 6 -%}
+  {%- assign first_size = size | minus: 6 -%}
+  {{- digits | slice: 0, first_size -}},{{- digits | slice: first_size, 3 -}},{{- digits | slice: -3, 3 -}}
+{%- elsif size > 3 -%}
+  {%- assign first_size = size | minus: 3 -%}
+  {{- digits | slice: 0, first_size -}},{{- digits | slice: -3, 3 -}}
+{%- else -%}
+  {{- digits -}}
+{%- endif -%}
