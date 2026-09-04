@@ -78,7 +78,32 @@
         assign meta_description = 'Used ' | append: collection.title | append: ' from A&B Motors in Amite, LA — recycled OEM parts with a 90-day warranty. Flat-rate shipping shown on every listing.'
       endif
 
-      assign meta_description = meta_description | default: shop.description | default: shop.name
+      comment
+        Shopify has no SEO description field for a policy, and the cart and account pages
+        have none either, so all of them fell through to shop.description — the "used auto
+        parts, automotive recycling, and used vehicles" blurb, printed identically on the
+        Privacy Policy, the Refund Policy and the cart. A page-specific line is worth more
+        than a shared one even when the page is not trying to rank.
+      endcomment
+      if meta_description == blank and request.page_type == 'policy'
+        assign meta_description = 'The ' | append: page_title | append: ' for A&B Motors, the used auto parts yard in Amite, Louisiana. Questions? Call 985-748-7195.'
+      endif
+      if meta_description == blank and request.page_type == 'cart'
+        assign meta_description = 'Your cart at A&B Motors. Every part is one of one, so what is held here is the only one we have.'
+      endif
+
+      comment
+        The last resort used to be shop.description, which is set in Online Store >
+        Preferences and reads "...used auto parts, automotive recycling, and used vehicles".
+        The yard sells no vehicles and offers no way to shop for one, so every page without
+        a description of its own — the blog, 404, account pages, the collection list —
+        advertised inventory that does not exist. This says what the site actually is.
+
+        The home page title still says "Used Auto Parts & Vehicles" and shop.description is
+        still what it is; both live in Online Store > Preferences, which has no Admin API,
+        so neither can be corrected from here.
+      endcomment
+      assign meta_description = meta_description | default: 'Used OEM auto parts from A&B Motors, a family-run salvage yard in Amite, Louisiana. Real photos, 90-day money-back warranty, nationwide shipping.'
 
       if current_page != 1
         assign meta_description = meta_description | append: ' Page ' | append: current_page | append: '.'
@@ -95,12 +120,38 @@
     {%- endif -%}
 
     {%- comment -%}
-      Indexation policy. A tag view is the same products behind a filter and a search
-      page is generated on demand, so neither earns its own entry in the index — the
-      real collections carry that value. "follow" keeps them crawlable so link equity
-      still reaches the products.
+      Indexation policy. Everything here is "follow", never "none": these pages should not
+      hold an index entry of their own, but they are how a crawler reaches the products,
+      and cutting the link equity with them would cost the listings that do earn one.
+
+      A tag view is the same products behind a filter and a search page is generated on
+      demand, so the real collections carry that value.
+
+      Page 2 onward of any paginated list is the same reasoning: /collections/just-pulled
+      alone ran to 945 self-canonical pages, and a search engine had already surfaced
+      "Just Pulled – Page 386". Page 1 stays indexable and the deep pages stay crawlable.
+
+      Cart and customer account pages are transactional and per-visitor; the cart was
+      already appearing in search results.
+
+      A blog with no articles is an H1 and nothing else. This lifts itself the moment
+      something is published, so it needs no follow-up.
     {%- endcomment -%}
-    {%- if current_tags.size > 0 or request.page_type == 'search' -%}
+    {%- liquid
+      assign no_index = false
+      if current_tags.size > 0 or request.page_type == 'search'
+        assign no_index = true
+      elsif current_page > 1
+        assign no_index = true
+      elsif request.page_type == 'cart' or request.page_type == 'gift_card'
+        assign no_index = true
+      elsif request.page_type contains 'customers/'
+        assign no_index = true
+      elsif request.page_type == 'blog' and blog.articles_count == 0
+        assign no_index = true
+      endif
+    -%}
+    {%- if no_index -%}
       <meta name="robots" content="noindex,follow">
     {%- endif -%}
 

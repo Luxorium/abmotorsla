@@ -26,7 +26,18 @@
     <nav class="breadcrumbs" aria-label="Breadcrumb">
       <a href="{{ routes.root_url }}">Home</a><span>/</span>
       {%- if current_tags.size > 0 -%}
-        <a href="{{ collection.url }}{{ sort_qs }}">{{ collection.title }}</a><span>/</span>
+        {%- comment -%}
+          /collections/all is Shopify's virtual catalogue route and has no sort order of its
+          own to set — it opens A-Z, which for a one-of-one salvage catalogue puts the oldest
+          listings first. The site's own "Shop All Parts" link avoids it by pointing at the
+          newest-first collection; this crumb, which the vehicle filters land on, carries the
+          sort explicitly so dropping a filter does not drop the shopper into 1965.
+        {%- endcomment -%}
+        {%- assign crumb_qs = sort_qs -%}
+        {%- if collection.handle == 'all' and sort_qs == blank -%}
+          {%- assign crumb_qs = '?sort_by=created-descending' -%}
+        {%- endif -%}
+        <a href="{{ collection.url }}{{ crumb_qs }}">{{ collection.title }}</a><span>/</span>
         <span class="muted">{{ current_tags | join: ' + ' }}</span>
       {%- else -%}
         <span class="muted">{{ collection.title }}</span>

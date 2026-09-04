@@ -9,7 +9,13 @@
 {%- endcomment -%}
 {%- liquid
   assign shop_name = shop.name | replace: '&#39;', "'" | replace: '&quot;', '"' | replace: '&gt;', '>' | replace: '&lt;', '<' | replace: '&amp;', '&'
-  assign social_description = description | default: page_description | default: shop.description | default: shop.name
+  comment
+    theme.liquid always passes a description and its own last resort is never blank, so the
+    remaining fallbacks are belt-and-braces for a caller that renders this snippet without
+    one. shop.description is deliberately not among them: it is the Online Store blurb that
+    advertises used vehicles the yard does not sell.
+  endcomment
+  assign social_description = description | default: page_description | default: shop.name
 -%}
 <meta property="og:site_name" content="{{ shop.name }}">
 <meta property="og:url" content="{{ canonical_url }}">

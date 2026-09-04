@@ -218,10 +218,11 @@
     },
     {
       "handle": "just-pulled",
-      "title": "Just Pulled",
+      "title": "All Parts — Newest First",
       "sort": "CREATED_DESC",
-      "description": "The newest parts off the lot. Our inventory turns over every day — this is what came off the racks most recently.",
-      "in_stock_only": true
+      "description": "Every part we have listed, newest on the racks first. The yard turns over daily, so this is the whole catalogue in the order it was pulled — not a selection. Narrow it with the filters, or shop by your vehicle.",
+      "in_stock_only": true,
+      "seo_description": "Every used OEM part listed by A&B Motors in Amite, LA, newest first. 90-day warranty, flat-rate shipping shown on every listing."
     }
   ],
   "pages": [
