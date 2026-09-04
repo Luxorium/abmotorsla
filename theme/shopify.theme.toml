@@ -5,14 +5,26 @@
 #   shopify theme push -e staging      upload to a preview copy, leaving live alone
 #   shopify theme dev  -e live         local server rendering real products
 #
-# WARNING: `theme dev -e live` is NOT a sandbox. This environment pins the
-# published theme and sets allow-live, so the CLI attaches to theme 160056508613
-# and syncs every local edit straight to it as you type — including broken
+# WARNING: `theme dev -e live` is NOT a sandbox. This environment resolves to the
+# published theme and sets allow-live, so the CLI attaches to the storefront and
+# syncs every local edit straight to it as you type — including broken
 # intermediate states. Use `-e staging` to develop against an unpublished copy.
+#
+# `live = true` asks the CLI which theme is published, rather than naming one. This
+# used to pin theme 160056508613, which stopped being the published theme at some
+# point and was never updated: on 2026-09-04 `shopify theme info -e live` reported
+# "A&B Motors — Yard", an unpublished copy, while customers were served
+# "A&B Motors — perf + redirects". A push would have gone somewhere invisible and
+# reported success. An id here goes stale every time the theme is republished, and
+# nothing fails when it does — so don't reintroduce one.
+#
+# scripts/deploy_theme.py resolves the MAIN theme the same way over the Admin API,
+# and is the better path for a deploy: it backs up every file it overwrites and
+# refuses to touch theme-editor-owned files unless asked.
 
 [environments.live]
 store = "5faf0h-z1.myshopify.com"
-theme = "160056508613"
+live = true
 allow-live = true
 
 [environments.staging]
