@@ -5,7 +5,13 @@
 
 <header class="header" data-header>
   <div class="header__bar">
-    <button class="icon-btn mobile-only" data-drawer-open aria-label="Open menu">
+    {%- comment -%}
+      aria-expanded is the half a screen reader needs: the label says what the button
+      does, this says what it did. theme.js keeps it in step and points aria-controls at
+      the drawer it opens. (WCAG 4.1.2.)
+    {%- endcomment -%}
+    <button class="icon-btn mobile-only" data-drawer-open aria-label="Open menu"
+            aria-expanded="false" aria-controls="MenuDrawer">
       {% render 'icon', name: 'menu' %}
     </button>
 
@@ -89,7 +95,7 @@
   </div>
 </header>
 
-<div class="drawer" data-drawer>
+<div class="drawer" id="MenuDrawer" data-drawer>
   <button class="drawer__scrim" data-drawer-close aria-label="Close menu" tabindex="-1"></button>
   <div class="drawer__panel" role="dialog" aria-modal="true" aria-label="Menu">
     <div class="drawer__head">

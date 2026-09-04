@@ -7,7 +7,7 @@
         <p class="muted" style="margin:0;">{{ section.settings.text }}</p>
       </div>
       <div>
-        {%- form 'customer' -%}
+        {%- form 'customer', id: 'FooterPartsAlerts' -%}
           <input type="hidden" name="contact[tags]" value="newsletter">
           {%- if form.posted_successfully? -%}
             <p class="form-success">You're on the list. We'll be in touch when it lands.</p>

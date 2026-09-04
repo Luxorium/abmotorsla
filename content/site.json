@@ -434,6 +434,10 @@
         {
           "title": "Shipping Policy",
           "url": "/policies/shipping-policy"
+        },
+        {
+          "title": "Your Privacy Choices",
+          "url": "/pages/data-sharing-opt-out"
         }
       ]
     }

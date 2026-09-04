@@ -35,7 +35,13 @@
       </div>
 
       <div>
-        {%- form 'contact', class: 'contact-form' -%}
+        {%- comment -%}
+          Shopify names every contact form "contact_form", and the footer's parts-alert
+          signup is one too, so the contact page carried the id twice — an invalid
+          document, and "/contact#contact_form" could land on either. Naming it makes the
+          id unique and the fragment land where the heading says it will.
+        {%- endcomment -%}
+        {%- form 'contact', class: 'contact-form', id: 'ContactPageForm' -%}
           {%- if form.posted_successfully? -%}
             <p class="form-success">Thanks — we got it. Someone from the yard will get back to you, usually same day.</p>
           {%- elsif form.errors -%}

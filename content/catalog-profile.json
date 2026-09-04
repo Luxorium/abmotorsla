@@ -4,8 +4,8 @@
     "",
     "CoreYard renders every product's title, description, SEO metadata and tags, but it",
     "ships neutral defaults that claim only what the yard database can prove. The claims",
-    "below are ours: we do pull parts onto racks, inspect them, and test what can be tested,",
-    "and the site says so in four other places. A yard that does not do that must not",
+    "below are ours: we do pull parts onto racks and inspect them before listing.",
+    "A yard that does not do that must not",
     "inherit the wording, which is why it lives here and not in CoreYard.",
     "",
     "Every string is TEXT, never HTML \u2014 CoreYard escapes what it is given and owns the",
@@ -17,13 +17,16 @@
     "the next run rewrite every product it touches. Run `bin/coreyard --sink api --dry-run`",
     "first to see the count."
   ],
-  "condition": "Used, tested",
+  "condition": "Used, inspected",
   "condition_graded": "Grade {grade}",
   "body_lead": "Genuine OEM {part_type}, removed from an inventoried donor vehicle and inspected.",
   "sold_by": "Sold by {origin}.",
-  "availability": "In stock and tested at {origin}.",
-  "availability_plain": "In stock and tested.",
+  "availability": "In stock and inspected at {origin}.",
+  "availability_plain": "In stock and inspected.",
   "fitment_note": "Verify fitment by year, options, and part/casting numbers where shown in the photos.",
+  "part_type_notices": {
+    "air bag": "This is a used, vehicle-specific air bag removed from a salvage vehicle; its prior replacement history has not been independently verified. A deployed air bag cannot be reused. Have an authorized repair facility verify its condition, OEM part number, vehicle compatibility, donor history, and recall status before installation."
+  },
   "_metafields": [
     "CoreYard publishes the structured half of a listing as metafields in this",
     "namespace: grade, mileage, condition, and fitment. The theme reads them as",

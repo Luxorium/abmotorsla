@@ -98,7 +98,7 @@
       <div class="product__stock">
         <span class="dot{% unless product.available %} dot--out{% endunless %}"></span>
         {%- if product.available -%}
-          In stock at the yard, ready to pull
+          In stock &mdash; ready to ship or pick up
         {%- else -%}
           This one sold — call us, we may have another
         {%- endif -%}
@@ -178,7 +178,17 @@
             the same thing.
           {%- endcomment -%}
           {%- unless value == blank or key == 'fitment' or key == 'grade' -%}
-            <div><dt>{{ key | replace: '_', ' ' | capitalize }}</dt><dd>{{ value }}</dd></div>
+            {%- comment -%}
+              Mileage is a bare integer in the metafield, and the description CoreYard
+              renders below spells the same number "224,515 mi". Printing the raw value
+              here put both forms of one number on one page. Separators and the unit are
+              display, so they belong to whatever is displaying it.
+            {%- endcomment -%}
+            {%- if key == 'mileage' -%}
+              <div><dt>Mileage</dt><dd>{%- render 'count-with-delimiters', count: value -%}&nbsp;mi</dd></div>
+            {%- else -%}
+              <div><dt>{{ key | replace: '_', ' ' | capitalize }}</dt><dd>{{ value }}</dd></div>
+            {%- endif -%}
           {%- endunless -%}
         {%- endfor -%}
         <div><dt>Warranty</dt><dd>{{ warranty }}-day money back</dd></div>
@@ -413,7 +423,7 @@
         "type": "policy",
         "settings": {
           "heading": "Shipping",
-          "content": "<p>Every listing shows what shipping costs before you buy — a flat UPS Ground rate for most parts, LTL freight for engines, transmissions and axles, and pickup or free local delivery for body panels and glass. Orders leave the yard the same or next business day.</p>"
+          "content": "<p>Every listing shows what shipping costs before you buy — a flat UPS Ground rate for most parts, LTL freight for engines, transmissions and axles, and pickup or free local delivery for body panels and glass. Orders leave the yard within 1&ndash;2 business days, usually the next one.</p>"
         }
       },
       {

@@ -180,14 +180,14 @@
         "type": "text",
         "id": "ebay_feedback_count",
         "label": "eBay feedback count",
-        "default": "16,257",
+        "default": "17,064",
         "info": "Shown as social proof. Update it now and then from your eBay profile."
       },
       {
         "type": "text",
         "id": "ebay_feedback_pct",
         "label": "eBay positive %",
-        "default": "99.2"
+        "default": "99.3"
       },
       {
         "type": "text",
@@ -199,7 +199,14 @@
         "type": "text",
         "id": "ebay_items_sold",
         "label": "Items sold",
-        "default": "53,000"
+        "default": "57,000"
+      },
+      {
+        "type": "text",
+        "id": "ebay_stats_asof",
+        "label": "Figures read from eBay in",
+        "default": "September 2026",
+        "info": "Shown beside the numbers so a stale figure reads as a dated snapshot rather than a current claim."
       }
     ]
   },

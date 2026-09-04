@@ -31,6 +31,15 @@
       <b>Since {{ settings.ebay_since }}</b>
       <span>selling online</span>
     </span>
+    {%- comment -%}
+      A hand-entered figure drifts the moment it is saved: these read 99.2%, 53,000 and
+      16,257 while eBay showed 99.3%, 57K and 17,064. Dating them makes a stale number an
+      honest snapshot instead of a false current claim, and the date is the thing whoever
+      updates the figures is most likely to remember to change.
+    {%- endcomment -%}
+    {%- if settings.ebay_stats_asof != blank -%}
+      <span class="cred__asof small muted">eBay figures as of {{ settings.ebay_stats_asof }}</span>
+    {%- endif -%}
     {%- if settings.ebay_url != blank -%}
       <a class="link" href="{{ settings.ebay_url }}" target="_blank" rel="noopener">See our eBay record &rarr;</a>
     {%- endif -%}

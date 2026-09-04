@@ -179,6 +179,13 @@
         </div>
 
         {%- if collection.products.size > 0 -%}
+          {%- comment -%}
+            The card titles are h3, and the page's only heading above them was the h1, so
+            the outline jumped h1 -> h3. The grid is a real section of the page and simply
+            had no heading of its own; this gives it one, kept out of the visual design
+            because the h1 and the filters already say what the list is. (WCAG 1.3.1.)
+          {%- endcomment -%}
+          <h2 class="visually-hidden">Parts in this collection</h2>
           <div class="grid grid--{{ section.settings.columns }}">
             {%- for product in collection.products -%}
               {% render 'card-product', card_product: product, eager: forloop.first %}

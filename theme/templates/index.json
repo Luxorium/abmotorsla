@@ -195,7 +195,7 @@
       "settings": {
         "eyebrow": "Browse",
         "heading": "Shop by part",
-        "subheading": "Foreign and domestic, 1990s through current model years.",
+        "subheading": "Foreign and domestic, primarily 1990s to current — with select older inventory.",
         "link_label": "See all parts",
         "link_url": "/collections/just-pulled",
         "columns": 5
@@ -347,7 +347,7 @@
           "type": "step",
           "settings": {
             "title": "We pull and inspect",
-            "text": "Your part is checked, cleaned up, and packed the same or next business day."
+            "text": "Your part is checked, cleaned up, and packed within 1–2 business days — usually the next one."
           }
         },
         "s3": {

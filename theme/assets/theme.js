@@ -92,6 +92,7 @@
     if (!drawer || !drawer.hasAttribute('open')) return;
     drawer.removeAttribute('open');
     document.body.style.overflow = '';
+    $$('[data-drawer-open]').forEach(function (b) { b.setAttribute('aria-expanded', 'false'); });
     releaseFocus();
   }
   $$('[data-drawer-open]').forEach(function (b) {
@@ -99,6 +100,7 @@
       if (!drawer) return;
       drawer.setAttribute('open', '');
       document.body.style.overflow = 'hidden';
+      b.setAttribute('aria-expanded', 'true');
       var panel = drawer.querySelector('.drawer__panel') || drawer;
       trapFocus(panel, b);
       var first = visibleFocusable(panel)[0];

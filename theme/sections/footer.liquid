@@ -27,7 +27,7 @@
       {%- for block in section.blocks -%}
         {%- if block.type == 'menu' -%}
           <div {{ block.shopify_attributes }}>
-            <h4>{{ block.settings.heading }}</h4>
+            <h3>{{ block.settings.heading }}</h3>
             <ul>
               {%- for link in block.settings.menu.links -%}
                 <li><a href="{{ link.url }}">{{ link.title }}</a></li>
@@ -38,7 +38,7 @@
       {%- endfor -%}
 
       <div>
-        <h4>The Yard</h4>
+        <h3>The Yard</h3>
         <div class="footer__contact">
           {%- if settings.address != blank -%}
             <div>
