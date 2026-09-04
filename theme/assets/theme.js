@@ -342,6 +342,166 @@
     }
   });
 
+  /* ------------------------------------------- vehicle-aware search (H-01) */
+  // Shopify search is an OR match: "Subaru Legacy" returns 515 results whose tail is other
+  // makes entirely, against 102 parts that actually fit. The tag filter is the honest
+  // answer, and vehicles.json already says which vehicles have one.
+  //
+  // A query that is ONLY a vehicle is replaced by that vehicle's filter (location.replace,
+  // so Back still returns to wherever the shopper came from). A query that names a vehicle
+  // plus other words keeps its results and gets a link above them — those other words are
+  // the part they came for, and the filter alone would throw them away.
+  $$('[data-vehicle-route]').forEach(function (mount) {
+    var terms = (mount.getAttribute('data-terms') || '').trim();
+    var base = mount.getAttribute('data-base') || '/collections/all';
+    if (!terms || !window.fetch) return;
+
+    // "Search all parts by keyword instead" on the filtered page links back here. Without
+    // this the two would bounce off each other forever, because the query that sent the
+    // shopper to the filter is the same query they just asked to see keyword results for.
+    var askedForKeywords =
+      new URLSearchParams(window.location.search || '').get('from') === 'keyword';
+
+    fetch(mount.getAttribute('data-src'), { headers: { Accept: 'application/json' } })
+      .then(function (r) { return r.json(); })
+      .then(function (json) {
+        var data = json.makes || {};
+        var makeOnly = {};
+        (json.make_only || Object.keys(data)).forEach(function (m) { makeOnly[m] = true; });
+
+        var words = terms.split(/\s+/).filter(Boolean);
+        var used = [];
+
+        // Pull out a 4-digit year that looks like a model year, wherever it sits.
+        var year = '', yearAt = -1;
+        for (var i = 0; i < words.length; i++) {
+          if (/^(19|20)\d{2}$/.test(words[i])) { year = words[i]; yearAt = i; used.push(i); break; }
+        }
+
+        // Longest make first, so "Land Rover" is not read as a make called "Land".
+        function matchAt(list, from) {
+          var best = null;
+          list.forEach(function (name) {
+            var parts = name.toLowerCase().split(' ');
+            if (parts.length > words.length - from) return;
+            for (var k = 0; k < parts.length; k++) {
+              if (used.indexOf(from + k) !== -1) return;
+              if (words[from + k].toLowerCase().replace(/[^a-z0-9]/g, '') !==
+                  parts[k].replace(/[^a-z0-9]/g, '')) return;
+            }
+            if (!best || parts.length > best.span) best = { name: name, span: parts.length };
+          });
+          return best;
+        }
+
+        var makes = Object.keys(data).sort(function (a, b) { return b.length - a.length; });
+        var make = null, makeAt = -1;
+        for (var w = 0; w < words.length && !make; w++) {
+          if (used.indexOf(w) !== -1) continue;
+          var hit = matchAt(makes, w);
+          if (hit) { make = hit; makeAt = w; }
+        }
+
+        // People type the model on its own — the hero placeholder suggests "2012 Silverado
+        // alternator". A model is only a vehicle when exactly one make has it: "Silverado"
+        // is a Chevrolet and nothing else, while "1500" is a Chevrolet, a GMC and a Dodge,
+        // and guessing between them would be the same wrong-vehicle answer we are fixing.
+        var soleMake = null;
+        if (!make) {
+          var owners = {};
+          Object.keys(data).forEach(function (mk) {
+            Object.keys(data[mk]).forEach(function (md) {
+              var key = md.toLowerCase();
+              (owners[key] = owners[key] || []).push(mk);
+            });
+          });
+          var names = Object.keys(owners).filter(function (k) { return owners[k].length === 1; })
+            .sort(function (a, b) { return b.length - a.length; });
+          for (var u = 0; u < words.length && !soleMake; u++) {
+            if (used.indexOf(u) !== -1) continue;
+            var mfound = matchAt(names, u);
+            if (!mfound) continue;
+            var owner = owners[mfound.name.toLowerCase()][0];
+            // Keep the catalogue's own casing rather than the shopper's.
+            var real = Object.keys(data[owner]).filter(function (md) {
+              return md.toLowerCase() === mfound.name.toLowerCase();
+            })[0];
+            soleMake = { make: owner, model: real, span: mfound.span, at: u };
+          }
+          if (!soleMake) return;
+          make = { name: soleMake.make, span: 0 };
+          makeAt = soleMake.at;
+        }
+        for (var m = 0; m < make.span; m++) used.push(makeAt + m);
+
+        var model = null, modelAt = -1;
+        if (soleMake) {
+          model = { name: soleMake.model, span: soleMake.span };
+          modelAt = soleMake.at;
+        } else {
+          var models = Object.keys(data[make.name] || {}).sort(function (a, b) { return b.length - a.length; });
+          for (var v = 0; v < words.length && !model; v++) {
+            if (used.indexOf(v) !== -1) continue;
+            var mhit = matchAt(models, v);
+            if (mhit) { model = mhit; modelAt = v; }
+          }
+        }
+        if (model) { for (var n = 0; n < model.span; n++) used.push(modelAt + n); }
+
+        // A year only narrows a model, and only one the catalogue actually tagged. A year we
+        // do not stock stays in the query as a leftover word, so the shopper gets the link
+        // and their own results rather than being moved somewhere that quietly ignored it.
+        function dropYear() {
+          year = '';
+          used = used.filter(function (ix) { return ix !== yearAt; });
+        }
+        if (year && model) {
+          var yrs = (data[make.name] || {})[model.name] || [];
+          if (yrs.indexOf(parseInt(year, 10)) === -1) dropYear();
+        } else if (year) {
+          dropYear();
+        }
+
+        var tag = model
+          ? (year ? year + ' ' + make.name + ' ' + model.name : make.name + ' ' + model.name)
+          : (makeOnly[make.name] ? make.name : '');
+        if (!tag) return;
+
+        var url = base + '/' + handleize(tag);
+        var leftover = words.filter(function (_, ix) { return used.indexOf(ix) === -1; });
+
+        if (!leftover.length && !askedForKeywords) {
+          // The query was the vehicle and nothing else — the filter IS the answer.
+          window.location.replace(url + '?from=search&q=' + encodeURIComponent(terms));
+          return;
+        }
+
+        mount.className = 'vehicle-route';
+        mount.innerHTML =
+          '<p><b>Looking for ' + esc(tag) + ' parts?</b> These keyword results include parts ' +
+          'for other vehicles. <a href="' + esc(url) + '">See only parts that fit the ' +
+          esc(tag) + '</a>, then narrow by type.</p>';
+      })
+      .catch(function () { /* keyword results stand on their own */ });
+  });
+
+  /* Arrival note for a search that was answered with a vehicle filter, so the shopper is
+     told what happened instead of silently finding themselves somewhere else. */
+  (function () {
+    var params = new URLSearchParams(window.location.search || '');
+    if (params.get('from') !== 'search') return;
+    var main = $('#MainContent') || document.body;
+    var host = $('.page-width', main) || main;
+    var said = document.createElement('div');
+    said.className = 'vehicle-route';
+    var asked = params.get('q') || '';
+    said.innerHTML = '<p>Showing parts that fit this vehicle' +
+      (asked ? ', for your search &ldquo;' + esc(asked) + '&rdquo;' : '') +
+      '. <a href="/search?q=' + encodeURIComponent(asked) + '&amp;options%5Bprefix%5D=last' +
+      '&amp;from=keyword">Search all parts by keyword instead</a>.</p>';
+    host.insertBefore(said, host.firstChild);
+  })();
+
   /* ------------------------------------- collection vehicle facet (YMM) */
   // Same vehicles.json the home-page picker uses, driving Shopify's native tag
   // filtering — /collections/all/ford+ford-ranger — so narrowing needs no filter

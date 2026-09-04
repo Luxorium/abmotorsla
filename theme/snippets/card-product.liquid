@@ -35,26 +35,31 @@
   <article class="card" data-product-id="{{ p.id }}">
     <div class="card__media{% if fit == 'contain' %} card__media--contain{% endif %}">
       {%- if img -%}
+        {%- comment -%}
+          Build the alt text first, for the reason header.liquid records: a `|` inside a
+          filter argument does not belong to that argument. Liquid ends image_tag's argument
+          list there and chains the rest onto image_tag's own *output*, so this read as
+          `escape(default(image_tag(...), p.title))` — escaping the rendered <img> tag into
+          visible markup instead of escaping the alt string.
+        {%- endcomment -%}
+        {%- assign card_alt = img.alt | default: p.title | escape -%}
         {{ img | image_url: width: 800 | image_tag:
              widths: '200,300,400,600,800',
              sizes: '(min-width: 990px) 300px, 45vw',
              loading: loading,
-             alt: img.alt | default: p.title | escape }}
+             alt: card_alt }}
       {%- else -%}
         <div class="card__placeholder">{% render 'icon', name: 'photo' %}</div>
       {%- endif -%}
 
       <div class="card__flags">
         {%- comment -%}
-          A card is a dense grid tile, so it says "Freight" without the rate — but it asks
-          the same snippet everything else does, rather than testing tags itself.
+          The card's compact shipping badge. It used to be an if/elsif chain here, reading
+          "anything that isn't free is freight" — which was true while freight was the only
+          rate, and quietly wrong the day a paid ground group was added. 'shipping-group'
+          owns the wording and the rates for every shape, this one included.
         {%- endcomment -%}
-        {%- capture card_ship -%}{%- render 'shipping-class', product: p -%}{%- endcapture -%}
-        {%- if card_ship == 'pickup' -%}
-          <span class="badge badge--pickup">Pickup only</span>
-        {%- elsif card_ship != 'free' -%}
-          <span class="badge badge--freight">Freight</span>
-        {%- endif -%}
+        {% render 'shipping-group', product: p, style: 'card' %}
         {%- unless p.available -%}
           <span class="badge badge--sold">Sold</span>
         {%- endunless -%}
@@ -66,8 +71,18 @@
         {%- endif -%}
       </div>
 
-      {%- if p.media.size > 1 -%}
-        <span class="card__count">{{ p.media.size }} photos</span>
+      {%- comment -%}
+        A bare count implies the part is in the picture. Where the photographs are of the
+        donor vehicle instead, the shopper has to learn that here, before the click — the
+        product page already says so, but only after they have arrived expecting the part.
+      {%- endcomment -%}
+      {%- capture card_photos -%}{%- render 'photo-source', product: p -%}{%- endcapture -%}
+      {%- if card_photos == 'donor' -%}
+        <span class="card__count card__count--donor">
+          {%- if p.media.size > 1 -%}{{ p.media.size }} donor vehicle photos{%- else -%}Donor vehicle photo{%- endif -%}
+        </span>
+      {%- elsif p.media.size > 1 -%}
+        <span class="card__count">{{ p.media.size }} photos of the part</span>
       {%- endif -%}
     </div>
 

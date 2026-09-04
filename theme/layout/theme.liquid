@@ -67,7 +67,7 @@
           assign meta_description = 'Used ' | append: tag_list | append: ' parts in stock at A&B Motors, Amite LA. Pulled, inspected and photographed on our own racks. 90-day warranty.'
         endif
       elsif request.page_type == 'search' and search.performed
-        assign meta_description = 'Used OEM parts matching "' | append: search.terms | append: '" at A&B Motors in Amite, LA. Real photos of the actual part, 90-day warranty, flat-rate shipping shown on every listing.'
+        assign meta_description = 'Used OEM parts matching "' | append: search.terms | append: '" at A&B Motors in Amite, LA. Real photos taken at our yard, 90-day warranty, flat-rate shipping shown on every listing.'
       endif
 
       if meta_description == blank

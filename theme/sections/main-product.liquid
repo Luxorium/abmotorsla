@@ -13,23 +13,12 @@
 {%- comment -%}
   Some parts are listed with photographs of the donor vehicle they came off, not of the
   part itself. The gallery note below must not then claim the photos are "the actual part
-  … what you see is what ships".
-
-  How we tell: CoreYard names every real part photo <R#>_NN.jpg, where R# is the SKU. A
-  donor photo is named <donor-key>_NN.jpg instead, so its filename stem is not the SKU.
-  This catches legacy listings that predate CoreYard's donor-photo note as well as new
-  ones (checked against every listing carrying that note — the stem never matched the SKU
-  — and against parts photographed individually, where it always did).
+  … what you see is what ships". 'photo-source' owns that test — the card, the search
+  result and the Product structured data ask it too.
 {%- endcomment -%}
+{%- capture photo_source -%}{%- render 'photo-source', product: product -%}{%- endcapture -%}
 {%- assign photos_are_donor = false -%}
-{%- if product.featured_media and variant.sku != blank -%}
-  {%- assign featured_image_url = product.featured_media | image_url: width: 1 -%}
-  {%- assign featured_image_name = featured_image_url | split: '?' | first | split: '/' | last -%}
-  {%- assign featured_image_stem = featured_image_name | split: '_' | first -%}
-  {%- if featured_image_stem != blank and featured_image_stem != variant.sku -%}
-    {%- assign photos_are_donor = true -%}
-  {%- endif -%}
-{%- endif -%}
+{%- if photo_source == 'donor' -%}{%- assign photos_are_donor = true -%}{%- endif -%}
 
 <div class="page-width">
   {% render 'product-crumb', format: 'html', product: product, collection: collection %}
@@ -217,9 +206,19 @@
         {%- endunless -%}
       {%- endfor -%}
       {%- assign vehicle_list = vehicle_links | split: '~' -%}
+      {%- comment -%}
+        These are the make and model collections this part belongs to — every Subaru
+        Legacy part we stock, from any donor car. It read "More from this vehicle", which
+        a shopper takes to mean the rest of the car their part came off, and the parts it
+        actually lists come off dozens of different cars.
+
+        The donor's own stock number would be the honest link, but CoreYard writes it into
+        the description body and publishes no tag or metafield for it, so there is nothing
+        the storefront can filter on. Until there is, the label says what the links do.
+      {%- endcomment -%}
       {%- if vehicle_list.size > 0 -%}
         <p class="small muted" style="margin-top:14px;">
-          More from this vehicle:
+          Browse more parts:
           {%- for link in vehicle_list -%}
             {{ link }}{%- unless forloop.last %} &middot; {% endunless -%}
           {%- endfor -%}

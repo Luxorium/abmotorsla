@@ -76,7 +76,7 @@
           "settings": {
             "icon": "photo",
             "title": "Real photos",
-            "text": "You see the exact part"
+            "text": "Shot at our yard, never stock"
           }
         },
         "t4": {
@@ -206,7 +206,7 @@
       "settings": {
         "eyebrow": "Fresh inventory",
         "heading": "Just pulled",
-        "subheading": "The newest parts on our racks — every one photographed here, never a stock photo.",
+        "subheading": "The newest parts on our racks — every photo taken here, never a stock image.",
         "count": 8,
         "columns": 4,
         "background": "section--paper",
@@ -375,13 +375,13 @@
         "c1": {
           "type": "check",
           "settings": {
-            "text": "Every part pulled, inspected and photographed on our own racks"
+            "text": "Every part pulled and inspected on our own racks"
           }
         },
         "c2": {
           "type": "check",
           "settings": {
-            "text": "Photographed on our racks — you buy the part in the picture"
+            "text": "Photographed here, never a stock image — each listing says what you are seeing"
           }
         },
         "c3": {

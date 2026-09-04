@@ -42,7 +42,14 @@
       "@type": "Product",
       "name": {{ product.title | strip_html | json }},
       "url": {{ shop.url | append: product.url | json }},
-      {% if product.featured_media %}"image": [{{ product.featured_media | image_url: width: 1200 | prepend: "https:" | json }}],{% endif %}
+      {%- comment -%}
+        Only when the photograph is of the part. A donor-vehicle picture in `image` puts a
+        whole car into a Google listing for a blower motor, which is a misrepresentation
+        the shopper never sees coming — the product page discloses the donor photo, a
+        search result does not.
+      {%- endcomment -%}
+      {%- capture ld_photos -%}{%- render 'photo-source', product: product -%}{%- endcapture -%}
+      {% if product.featured_media and ld_photos == 'exact' %}"image": [{{ product.featured_media | image_url: width: 1200 | prepend: "https:" | json }}],{% endif %}
       "description": {{ ld_description | json }},
       "sku": {{ variant.sku | json }},
       "brand": { "@type": "Brand", "name": {{ product.vendor | json }} },

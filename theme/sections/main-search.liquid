@@ -19,6 +19,25 @@
     </div>
 
     {%- if search.performed -%}
+      {%- comment -%}
+        Shopify's search is an OR match across the whole catalogue, so a vehicle typed into
+        it — "Subaru Legacy" — answers with 515 results whose tail is Infiniti, KIA and
+        Audi parts, while the tag filter for that vehicle holds 102. The shopper cannot see
+        which is which, and the wrong ones are the same category of part they came for.
+
+        theme.js reads this against the same vehicles.json the pickers use. A query that is
+        nothing but a vehicle we stock is answered with that vehicle's filter instead; a
+        query that names a vehicle *and* something else ("2012 Silverado alternator") keeps
+        its keyword results and gets a link to the filter above them, because the extra
+        words are the part the shopper actually wants.
+      {%- endcomment -%}
+      {%- if search.terms != blank -%}
+        <div data-vehicle-route
+             data-src="{{ 'vehicles.json' | asset_url }}"
+             data-base="{{ routes.all_products_collection_url }}"
+             data-terms="{{ search.terms | escape }}"></div>
+      {%- endif -%}
+
       {%- if search.results_count > 0 -%}
         <div class="toolbar">
           <span class="toolbar__count">Showing {{ search.results.size }} of {{ search.results_count }}</span>

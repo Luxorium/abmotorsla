@@ -1,0 +1,40 @@
+{%- comment -%}
+  Outputs ONE word: what a listing's photographs actually show.
+
+      {%- capture photos -%}{%- render 'photo-source', product: product -%}{%- endcapture -%}
+
+  exact  the part itself was photographed
+  donor  the pictures are of the donor vehicle the part came off, not of the part
+  none   the listing has no photograph at all
+
+  Some parts are listed with photographs of the donor vehicle rather than of the part.
+  CoreYard names every real part photo <R#>_NN.jpg, where R# is the SKU; a donor photo is
+  named <donor-key>_NN.jpg instead, so its filename stem is not the SKU. That catches
+  legacy listings predating CoreYard's donor-photo note as well as new ones (checked
+  against every listing carrying that note — the stem never matched the SKU — and against
+  parts photographed individually, where it always did).
+
+  This lived inline in main-product.liquid, where only the product page could reach it, so
+  a card, a search result and the Product structured data all went on claiming the photo
+  was the part. Anything that shows a listing's photograph asks here first.
+{%- endcomment -%}
+{%- liquid
+  assign source = 'none'
+  if product.featured_media
+    assign source = 'exact'
+    comment
+      One variant per part, so the first variant's SKU is the part's R#. Fall back through
+      selected_or_first_available_variant because a card renders no variant of its own.
+    endcomment
+    assign sku = product.selected_or_first_available_variant.sku | default: product.variants.first.sku
+    if sku != blank
+      assign photo_url = product.featured_media | image_url: width: 1
+      assign photo_name = photo_url | split: '?' | first | split: '/' | last
+      assign photo_stem = photo_name | split: '_' | first
+      if photo_stem != blank and photo_stem != sku
+        assign source = 'donor'
+      endif
+    endif
+  endif
+  echo source
+-%}

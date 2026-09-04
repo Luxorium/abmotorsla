@@ -95,7 +95,7 @@ summary::-webkit-details-marker { display: none; }
 table { border-collapse: collapse; width: 100%; }
 
 :focus-visible {
-  outline: 3px solid var(--green);
+  outline: 3px solid var(--green-dark);
   outline-offset: 2px;
   border-radius: 3px;
 }
@@ -202,7 +202,9 @@ table { border-collapse: collapse; width: 100%; }
    5. Buttons
    -------------------------------------------------------------------------- */
 .btn {
-  --btn-bg: var(--green);
+  /* White on --green is 2.59:1 — below the 4.5:1 AA minimum for this size and weight.
+     --green-dark is 5.57:1. --green stays the brand accent for decorative, non-text use. */
+  --btn-bg: var(--green-dark);
   --btn-fg: #fff;
   display: inline-flex;
   align-items: center;
@@ -222,7 +224,7 @@ table { border-collapse: collapse; width: 100%; }
   transition: transform 0.06s ease, background-color 0.15s ease, box-shadow 0.15s ease,
     border-color 0.15s ease;
 }
-.btn:hover { background: var(--green-dark); }
+.btn:hover { background: var(--green-darker); }
 .btn:active { transform: translateY(1px); }
 .btn[disabled], .btn[aria-disabled="true"] { opacity: 0.5; cursor: not-allowed; }
 
@@ -360,7 +362,7 @@ table { border-collapse: collapse; width: 100%; }
 .icon-btn__count {
   position: absolute; top: 4px; right: 3px;
   min-width: 18px; height: 18px; padding: 0 4px;
-  border-radius: 999px; background: var(--green); color: #fff;
+  border-radius: 999px; background: var(--green-dark); color: #fff;
   font-size: 11px; font-weight: 800; line-height: 18px; text-align: center;
 }
 
@@ -408,8 +410,8 @@ table { border-collapse: collapse; width: 100%; }
   -webkit-appearance: none;
 }
 .search-field input[type="search"]:focus {
-  outline: none; border-color: var(--green); background: #fff;
-  box-shadow: 0 0 0 3px rgba(37, 186, 28, 0.14);
+  outline: none; border-color: var(--green-dark); background: #fff;
+  box-shadow: 0 0 0 3px rgba(19, 121, 15, 0.22);
 }
 .search-field__submit {
   position: absolute; right: 4px; top: 50%; transform: translateY(-50%);
@@ -543,6 +545,24 @@ table { border-collapse: collapse; width: 100%; }
   padding: 3px 8px; border-radius: 4px;
   background: rgba(12, 15, 17, 0.78); color: #fff;
   font-size: 11px; font-weight: 700;
+}
+/* Vehicle-aware search: the link from an OR keyword result to the exact tag filter, and
+   the note shown when a search was answered with that filter instead. Green rather than
+   amber — it is the better answer, not a warning. */
+.vehicle-route {
+  margin: 0 0 18px; padding: 12px 14px;
+  border: 1px solid var(--green-line); border-left: 4px solid var(--green-dark);
+  border-radius: var(--radius); background: var(--green-tint);
+}
+.vehicle-route p { margin: 0; font-size: 14.5px; }
+.vehicle-route a { color: var(--green-darker); text-decoration: underline; text-underline-offset: 2px; }
+
+/* A donor-vehicle listing says so on the card, not only after the click. Amber rather
+   than the neutral slab, because it is a caveat and not a feature, and it has to survive
+   sitting on top of a photograph of a car. */
+.card__count--donor {
+  background: rgba(126, 74, 6, 0.9); max-width: calc(100% - 16px);
+  text-align: right; line-height: 1.25;
 }
 
 .card__body { display: flex; flex-direction: column; flex: 1 1 auto; padding: 12px 13px 14px; gap: 8px; }
@@ -874,6 +894,14 @@ table { border-collapse: collapse; width: 100%; }
   .grid--4 { grid-template-columns: repeat(3, 1fr); }
   .callout__actions { margin-left: 0; }
   .sticky-buy { display: flex; }
+  /* Once the buybox scrolls away the bar stays visible for the rest of the page,
+     sitting on top of the footer's last row — whose legal links a keyboard user can
+     focus but not see (WCAG 2.4.11 Focus Not Obscured). Reserve its height so the
+     end of the document clears it. Scoped with :has() so only pages that actually
+     render the bar pay the padding; where :has() is unsupported nothing changes. */
+  body:has(.sticky-buy) {
+    padding-bottom: calc(76px + env(safe-area-inset-bottom));
+  }
 }
 
 @media (max-width: 749px) {
@@ -1014,6 +1042,8 @@ table { border-collapse: collapse; width: 100%; }
    -------------------------------------------------------------------------- */
 .badge--pickup { background: #eef0f7; color: #35407a; border-color: #ccd3ea; }
 .badge--freight { background: var(--amber-tint); color: #8a5300; border-color: #f3d9a4; }
+/* Paid ground: a price to notice, not a warning. Cooler and quieter than freight amber. */
+.badge--ground { background: #eef2f7; color: #3d4c5c; border-color: #d2dce6; }
 
 .ship-line {
   display: inline-flex; align-items: center; gap: 5px;
@@ -1023,6 +1053,7 @@ table { border-collapse: collapse; width: 100%; }
 .ship-line--free { color: var(--green-dark); }
 .ship-line--freight { color: #8a5300; }
 .ship-line--pickup { color: #35407a; }
+.ship-line--ground { color: #3d4c5c; }
 
 .ship-notice {
   display: grid; grid-template-columns: 22px 1fr; gap: 12px;
@@ -1045,6 +1076,8 @@ table { border-collapse: collapse; width: 100%; }
 .ship-notice--freight > svg { color: var(--amber); }
 .ship-notice--pickup { border-left-color: #4a57a0; background: #f1f3fa; }
 .ship-notice--pickup > svg { color: #35407a; }
+.ship-notice--ground { border-left-color: #7c8ea1; background: #f2f5f8; }
+.ship-notice--ground > svg { color: #3d4c5c; }
 
 /* Cart-level warning for a mix of shippable and pickup-only parts */
 .cart-alert {
