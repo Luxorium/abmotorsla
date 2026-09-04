@@ -262,6 +262,51 @@
           {% render 'icon', name: 'car' %}
           <span>Fits these vehicles</span>
         </div>
+        {%- comment -%}
+          H-05. The title carries one span across every model it names — "2009-2025 KIA
+          Forte Soul Sportage Hyundai Tucson" — while the Forte starts in 2010 and the
+          Telluride in 2020, so a 2009 Forte owner reads the title as covering their car.
+          Rewriting the title would cost the year, which is the strongest search term a
+          parts listing has, so the caveat goes where the real ranges are.
+
+          Computed here rather than published, because the metafield already carries every
+          row's span: no catalogue republish, and it self-corrects when the fitment does.
+        {%- endcomment -%}
+        {%- liquid
+          assign span_low = 9999
+          assign span_high = 0
+          assign span_varies = false
+          for row in fitment
+            assign bounds = row.years | split: '-'
+            assign row_low = bounds | first | plus: 0
+            assign row_high = bounds | last | plus: 0
+            if row_low > 0
+              if row_low < span_low
+                assign span_low = row_low
+              endif
+              if row_high > span_high
+                assign span_high = row_high
+              endif
+            endif
+          endfor
+          for row in fitment
+            assign bounds = row.years | split: '-'
+            assign row_low = bounds | first | plus: 0
+            assign row_high = bounds | last | plus: 0
+            if row_low > 0
+              if row_low > span_low or row_high < span_high
+                assign span_varies = true
+                break
+              endif
+            endif
+          endfor
+        -%}
+        {%- if span_varies -%}
+          <p class="fitment__note small">
+            <b>Years differ by model.</b> The range in the title spans every vehicle below;
+            check the row for yours before you order.
+          </p>
+        {%- endif -%}
         <table>
           <thead><tr><th>Years</th><th>Make</th><th>Model</th><th>Notes</th></tr></thead>
           <tbody>

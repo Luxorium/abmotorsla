@@ -546,6 +546,14 @@ table { border-collapse: collapse; width: 100%; }
   background: rgba(12, 15, 17, 0.78); color: #fff;
   font-size: 11px; font-weight: 700;
 }
+/* The fitment table's own caveat, when the title's span is wider than some of the rows
+   beneath it. Amber: it qualifies a claim the shopper has already read. */
+.fitment__note {
+  margin: 0 0 12px; padding: 9px 12px;
+  border: 1px solid var(--green-line); border-left: 4px solid var(--amber);
+  border-radius: var(--radius); background: var(--amber-tint);
+}
+
 /* Vehicle-aware search: the link from an OR keyword result to the exact tag filter, and
    the note shown when a search was answered with that filter instead. Green rather than
    amber — it is the better answer, not a warning. */
