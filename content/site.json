@@ -73,15 +73,17 @@
       "handle": "wheels",
       "title": "Wheels & Tires",
       "sort": "CREATED_DESC",
-      "description": "Factory alloy and steel wheels, hub caps, and wheel covers by bolt pattern and diameter.",
+      "description": "Factory steel and alloy wheels, center caps, covers, and spare-wheel hardware. Diameter and width are in the title where the yard recorded them. Not seeing the wheel you need? Call 985-748-7195 &mdash; we hold hundreds that are not listed online yet.",
       "contains": [
-        "Wheel",
-        "Tire",
-        "Hub Cap",
+        "Wheel Rim",
+        "Wheel Center Cap",
         "Wheel Cover",
-        "Rim",
-        "Spare"
-      ]
+        "Trim Ring",
+        "Tires",
+        "Spare Wheel",
+        "Spare Tire"
+      ],
+      "seo_description": "Used factory steel and alloy wheels, center caps, wheel covers and spare-wheel hardware at A&B Motors, Amite LA. 90-day warranty."
     },
     {
       "handle": "interior-parts",

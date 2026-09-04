@@ -230,6 +230,52 @@ def _default_tag(groups: dict) -> str:
     return ""
 
 
+# Customer-facing prose that quotes what a shipping group costs. The theme renders its rates
+# from freight.json; these pages are hand-written, so they are the surface that drifts.
+POLICY_PAGES = ("pages/shipping.html", "pages/freight.html", "policies/shipping.html")
+
+
+def check_policy_pages(check: Checker, shipping: dict) -> None:
+    """The shipping pages quote the rates freight.json charges, and no others.
+
+    The audit found these pages naming engines, transmissions, axles and K-frames as the
+    whole of the freight list while the catalogue also freighted radiator core supports,
+    loaded beam axles and batteries — and describing pickup-only as "body panels and glass"
+    while seats, fuel tanks and leaf springs were pickup-only too. Prose cannot be generated
+    from the taxonomy without a templating step nobody wants here, but it can be held to the
+    rates, which is where a wrong number costs money rather than goodwill.
+    """
+    groups = shipping.get("groups") or {}
+    freight = {str(b["price"]) for b in groups.values()
+               if isinstance(b, dict) and b.get("price") not in (None, "0.00")
+               and str(b.get("tag", "")).startswith("ship:freight")}
+    if not freight:
+        return
+    known = {str(b.get("price")) for b in groups.values()
+             if isinstance(b, dict) and b.get("price") not in (None, "0.00")}
+
+    missing_file = []
+    for name in POLICY_PAGES:
+        path = CONTENT / name
+        if not path.exists():
+            missing_file.append(name)
+            continue
+        text = path.read_text(encoding="utf-8")
+        quoted = set(_MONEY.findall(text))
+        extra = quoted - known
+        if extra:
+            check.fail(f"content/{name} quotes {sorted(extra)}, which freight.json does not "
+                       f"charge ({sorted(known)})")
+        absent = freight - quoted
+        if absent:
+            check.fail(f"content/{name} does not name the freight rate(s) {sorted(absent)} "
+                       f"that freight.json charges")
+    if missing_file:
+        check.fail(f"missing shipping page(s): {', '.join(missing_file)}")
+    else:
+        check.note(f"pages: {len(POLICY_PAGES)} shipping page(s) quote only freight.json rates")
+
+
 def check_metafield_namespace(check: Checker) -> None:
     """The theme reads a namespace; the profile tells CoreYard which one to write."""
     profile = load_json(CONTENT / "catalog-profile.json", check)
@@ -269,6 +315,7 @@ def main() -> int:
     shipping = check_shipping(check)
     check_order_policy(check, shipping)
     check_theme(check, shipping)
+    check_policy_pages(check, shipping)
     check_metafield_namespace(check)
     check_generated(check)
     return check.report()
