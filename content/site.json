@@ -274,6 +274,13 @@
       "file": "pages/contact.html",
       "template_suffix": "contact",
       "seo_description": "Call the yard at 985-748-7195, Monday to Friday 8-5 Central. A&B Motors, 59174 Hwy 51, Amite, Louisiana. Send your VIN and we will check the racks."
+    },
+    {
+      "handle": "data-sharing-opt-out",
+      "title": "Your Privacy Choices",
+      "file": "pages/data-sharing-opt-out.html",
+      "_comment": "Shopify owns this page while Settings > Customer privacy > Data sharing opt-out page > 'Use automated settings' is ON: pageUpdate is accepted, returns no userErrors, and is then discarded. It was turned OFF on 2026-09-04, which is what makes this file publishable. If it is ever turned back on, Shopify will overwrite this copy and store_setup will report an update that never landed. The body keeps Shopify's opt-out widget, stylesheet and scripts verbatim — only the prose differs.",
+      "seo_description": "A&B Motors does not sell personal information or share it with advertising partners for targeted advertising. Record an opt-out preference here."
     }
   ],
   "policies": [
