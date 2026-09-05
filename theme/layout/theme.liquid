@@ -58,7 +58,7 @@
       assign meta_description = ''
 
       if request.page_type == 'index' and listed_count_text != blank
-        assign meta_description = 'Shop ' | append: listed_count_text | append: ' used OEM auto parts from A&B Motors in Amite, LA. Real photos, 90-day money-back warranty, nationwide shipping, and free local delivery.'
+        assign meta_description = 'Shop ' | append: listed_count_text | append: ' used OEM auto parts from A&B Motors in Amite, LA. Real photos, a 90-day money-back warranty, and flat-rate shipping shown on every listing.'
       elsif current_tags.size > 0
         assign tag_list = current_tags | join: ', ' | truncate: 60
         if collection.title != blank and collection.handle != 'all'
@@ -103,7 +103,7 @@
         still what it is; both live in Online Store > Preferences, which has no Admin API,
         so neither can be corrected from here.
       endcomment
-      assign meta_description = meta_description | default: 'Used OEM auto parts from A&B Motors, a family-run salvage yard in Amite, Louisiana. Real photos, 90-day money-back warranty, nationwide shipping.'
+      assign meta_description = meta_description | default: 'Used OEM auto parts from A&B Motors, a family-run salvage yard in Amite, Louisiana. Real photos, a 90-day money-back warranty, and flat-rate shipping shown on every listing.'
 
       if current_page != 1
         assign meta_description = meta_description | append: ' Page ' | append: current_page | append: '.'

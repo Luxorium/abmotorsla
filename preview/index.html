@@ -65,7 +65,7 @@
 <div class="pv-view" id="view-home">
   <div class="announcement">
     <div class="announcement__inner">
-      <span>Free shipping on most parts · Free local delivery around Amite</span>
+      <span>Flat-rate shipping — the cost is on every listing · Free local delivery around Amite</span>
       <span class="announcement__sep desktop-only">|</span>
       <a href="#" class="desktop-only">90-day money-back warranty</a>
     </div>
@@ -208,7 +208,7 @@
       <div class="step-row">
         <div class="step"><h3>Find it</h3><p>Search by part, vehicle, or stock number — or call the yard and we'll look for you.</p></div>
         <div class="step"><h3>We pull and inspect</h3><p>Your part is checked, cleaned up, and packed the same or next business day.</p></div>
-        <div class="step"><h3>It ships free</h3><p>Most parts ship free nationwide. Local to Amite? We deliver it ourselves.</p></div>
+        <div class="step"><h3>It ships out</h3><p>Flat-rate UPS Ground, or LTL freight for the heavy things. The cost is on the listing before you buy. Local to Amite? We deliver it ourselves.</p></div>
       </div>
     </div>
   </section>
@@ -328,7 +328,7 @@
           <a href="#" class="btn btn--outline btn--full">Questions? Call 985-748-7195</a>
           <div class="buybox__assure">
             <div><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l7 3v5.5c0 4.4-2.9 8.2-7 9.5-4.1-1.3-7-5.1-7-9.5V6l7-3Z" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"/></svg><span><b>90-day money-back warranty.</b> If it doesn't work out, send it back.</span></div>
-            <div><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h11v10H3zM14 9h3.6l2.4 3v4h-6" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"/><circle cx="7" cy="18" r="1.8" fill="none" stroke="currentColor" stroke-width="1.9"/><circle cx="17" cy="18" r="1.8" fill="none" stroke="currentColor" stroke-width="1.9"/></svg><span><b>Free shipping</b> on most parts. Free local delivery around Amite.</span></div>
+            <div><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h11v10H3zM14 9h3.6l2.4 3v4h-6" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"/><circle cx="7" cy="18" r="1.8" fill="none" stroke="currentColor" stroke-width="1.9"/><circle cx="17" cy="18" r="1.8" fill="none" stroke="currentColor" stroke-width="1.9"/></svg><span><b>$299.99 flat rate freight</b> to a commercial address, or free pickup at the yard.</span></div>
             <div><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg><span>Inspected and basic-refurbished before it leaves the yard.</span></div>
           </div>
         </div>
@@ -368,7 +368,7 @@
             <p>This is the description CoreYard writes automatically from the yard system — interchange fitment, condition, warranty, and shipping, no typing required.</p>
           </div>
         </details>
-        <details class="accordion__item"><summary class="accordion__summary">Shipping</summary><div class="accordion__body rte"><p>Most parts ship free within the lower 48, usually the same or next business day.</p></div></details>
+        <details class="accordion__item"><summary class="accordion__summary">Shipping</summary><div class="accordion__body rte"><p>Every listing shows what shipping costs before you buy. Most parts go UPS Ground at a flat rate; engines, transmissions and axles go LTL freight to a commercial address; body panels and glass are pickup or local delivery only.</p></div></details>
         <details class="accordion__item"><summary class="accordion__summary">90-day warranty &amp; returns</summary><div class="accordion__body rte"><p>Every part carries a 90-day money-back warranty. Refund or replacement, your call.</p></div></details>
         <details class="accordion__item"><summary class="accordion__summary">Will it fit my vehicle?</summary><div class="accordion__body rte"><p>Call us with your VIN and we'll check it against our interchange system before you buy.</p></div></details>
       </div>
@@ -513,15 +513,20 @@
 <script>
   /* Preview harness. Sample data mirrors what CoreYard actually pushes:
      long SEO titles, stock-number SKUs, one unit each. */
+  var GROUND14 = '<span class="ship-line ship-line--ground">$14.99 shipping</span>';
+  var GROUND24 = '<span class="ship-line ship-line--ground">$24.99 shipping</span>';
+  var FREIGHT299 = '<span class="ship-line ship-line--freight">$299.99 freight &middot; commercial address</span>';
+  var PICKUP_ONLY = '<span class="ship-line ship-line--pickup">Pickup only &mdash; not shipped</span>';
+
   var PARTS = [
-    { type: 'ABS Anti-Lock Brake Pump', title: '2009-2014 Cadillac Escalade / Chevrolet Suburban 1500 / Tahoe & 8 more ABS Anti-Lock Brake Pump', sku: '641-00118L', price: '$129.00', photos: 4 },
-    { type: 'Engine Assembly', title: '2011-2016 Chevrolet Silverado 1500 5.3L V8 Engine Assembly, 118K Miles', sku: '512-04471', price: '$1,849.99', photos: 9, ship: '<span class="ship-line ship-line--freight">$299.99 freight &middot; commercial address</span>', flag: 'Freight' },
-    { type: 'Transmission', title: '2013-2018 Ford F-150 3.5L EcoBoost 6R80 Automatic Transmission', sku: '400-02219R', price: '$1,425.00', photos: 6 },
-    { type: 'Alternator', title: '2007-2013 Toyota Tundra / Sequoia 4.6L 5.7L Alternator 130 Amp', sku: '601-00934', price: '$78.00', photos: 3 },
-    { type: 'Tailgate', title: '2014-2018 GMC Sierra 1500 Tailgate Assembly – Summit White', sku: '210-01188', price: '$395.00', photos: 5 },
-    { type: 'Front Door', title: '2012-2017 Nissan Altima Front Left Door Shell, Gun Metallic', sku: '124-00742L', price: '$214.99', photos: 4, ship: '<span class="ship-line ship-line--pickup">Pickup only &mdash; not shipped</span>', flag: 'Pickup only' },
-    { type: 'Wheel', title: '2015-2020 Ford F-150 18" Aluminum Wheel Rim 6-Lug', sku: '560-03310', price: '$142.00', photos: 3 },
-    { type: 'Seat', title: '2010-2015 Chevrolet Camaro Front Right Bucket Seat – Black Cloth', sku: '317-00655R', price: '$260.00', photos: 6 }
+    { type: 'ABS Anti-Lock Brake Pump', title: '2009-2014 Cadillac Escalade / Chevrolet Suburban 1500 / Tahoe & 8 more ABS Anti-Lock Brake Pump', sku: '641-00118L', price: '$129.00', photos: 4, ship: GROUND14 },
+    { type: 'Engine Assembly', title: '2011-2016 Chevrolet Silverado 1500 5.3L V8 Engine Assembly, 118K Miles', sku: '512-04471', price: '$1,849.99', photos: 9, ship: FREIGHT299, flag: 'Freight' },
+    { type: 'Transmission', title: '2013-2018 Ford F-150 3.5L EcoBoost 6R80 Automatic Transmission', sku: '400-02219R', price: '$1,425.00', photos: 6, ship: FREIGHT299, flag: 'Freight' },
+    { type: 'Alternator', title: '2007-2013 Toyota Tundra / Sequoia 4.6L 5.7L Alternator 130 Amp', sku: '601-00934', price: '$78.00', photos: 3, ship: GROUND14 },
+    { type: 'Tailgate', title: '2014-2018 GMC Sierra 1500 Tailgate Assembly – Summit White', sku: '210-01188', price: '$395.00', photos: 5, ship: PICKUP_ONLY, flag: 'Pickup only' },
+    { type: 'Front Door', title: '2012-2017 Nissan Altima Front Left Door Shell, Gun Metallic', sku: '124-00742L', price: '$214.99', photos: 4, ship: PICKUP_ONLY, flag: 'Pickup only' },
+    { type: 'Wheel', title: '2015-2020 Ford F-150 18" Aluminum Wheel Rim 6-Lug', sku: '560-03310', price: '$142.00', photos: 3, ship: GROUND24 },
+    { type: 'Seat', title: '2010-2015 Chevrolet Camaro Front Right Bucket Seat – Black Cloth', sku: '317-00655R', price: '$260.00', photos: 6, ship: PICKUP_ONLY, flag: 'Pickup only' }
   ];
 
   var PHOTO_SVG = '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2" fill="none" stroke="currentColor" stroke-width="1.3"/><circle cx="8.5" cy="10" r="1.6" fill="none" stroke="currentColor" stroke-width="1.3"/><path d="m4 17 5-4.5 4 3.2 3-2.4 4 3.4" fill="none" stroke="currentColor" stroke-width="1.3"/></svg>';
@@ -535,7 +540,7 @@
       '<div class="card__body">' +
         '<span class="card__type">' + p.type + '</span>' +
         '<h3 class="card__title"><a href="#">' + p.title + '</a></h3>' +
-        '<div class="card__meta">' + (p.ship || '<span class="ship-line ship-line--free">Free shipping</span>') + '</div>' +
+        '<div class="card__meta">' + (p.ship || '<span class="ship-line ship-line--ground">Flat-rate shipping</span>') + '</div>' +
       '<div class="card__meta"><span>Stock&nbsp;<b>' + p.sku + '</b></span></div>' +
         '<div class="card__foot"><span class="price">' + p.price + '</span>' +
         '<span class="small" style="color:var(--green-dark);font-weight:700">In stock</span></div>' +
@@ -571,7 +576,7 @@
 
   var TRUST = [
     ['90-day warranty', 'Money back, no hassle', '<path d="M12 3l7 3v5.5c0 4.4-2.9 8.2-7 9.5-4.1-1.3-7-5.1-7-9.5V6l7-3Z" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"/>'],
-    ['Free shipping', 'On most parts, nationwide', P.truck],
+    ['Flat-rate shipping', 'Cost shown on every listing', P.truck],
     ['Real photos', 'You see the exact part', '<rect x="3" y="5" width="18" height="14" rx="2" fill="none" stroke="currentColor" stroke-width="1.9"/><circle cx="8.5" cy="10" r="1.6" fill="none" stroke="currentColor" stroke-width="1.9"/>'],
     ['Talk to the yard', '985-748-7195, Mon–Fri', '<path d="M6.5 3h3l1.5 4-2 1.4a12 12 0 0 0 5.6 5.6L16 12l4 1.5v3a2 2 0 0 1-2.2 2A16.5 16.5 0 0 1 3.5 5.2 2 2 0 0 1 5.5 3Z" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"/>']
   ];

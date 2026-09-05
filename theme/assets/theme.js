@@ -903,7 +903,7 @@
         (cart.item_count
           ? '<div class="cart-drawer__foot">' +
             '<div class="cart-drawer__row"><span>Subtotal</span><b>' + money(cart.total_price) + '</b></div>' +
-            '<p class="small muted" style="margin:0 0 12px;">Shipping calculated at checkout. Most parts ship free.</p>' +
+            '<p class="small muted" style="margin:0 0 12px;">Shipping is a flat rate, shown on each item above.</p>' +
             '<form action="/cart" method="post"><button type="submit" name="checkout" class="btn btn--lg btn--full">Check out</button></form>' +
             '<a href="/cart" class="btn btn--outline btn--full" style="margin-top:8px;">View cart</a>' +
             '</div>'
