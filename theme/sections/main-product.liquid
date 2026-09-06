@@ -121,7 +121,14 @@
 
       <div class="product__stock">
         <span class="dot{% unless product.available %} dot--out{% endunless %}"></span>
-        {%- if product.available -%}
+        {%- comment -%}
+          Body panels and glass are never shipped, so "pulled and inspected within 1-2
+          business days" read as a dispatch promise on the one group that has no dispatch.
+          Say what actually happens next for this part.
+        {%- endcomment -%}
+        {%- if product.available and ship_group == 'pickup' -%}
+          In stock at the yard &mdash; ready to collect, or delivered locally, within 1&ndash;2 business days
+        {%- elsif product.available -%}
           In stock at the yard &mdash; pulled and inspected within 1&ndash;2 business days
         {%- else -%}
           This one sold — call us, we may have another

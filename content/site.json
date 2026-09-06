@@ -242,6 +242,7 @@
       "handle": "sell-your-car",
       "title": "Sell Your Car for Cash",
       "file": "pages/sell-your-car.html",
+      "template_suffix": "sell-your-car",
       "seo_description": "We buy cars and trucks in any condition, running or not. Cash offer over the phone, free towing, and we handle the paperwork. Call 985-748-7195."
     },
     {

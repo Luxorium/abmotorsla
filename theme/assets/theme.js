@@ -867,7 +867,7 @@
     freight: '<div class="cart-alert">' +
       '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h11v10H3zM14 9h3.6l2.4 3v4h-6" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"/></svg>' +
       '<div><b>Freight order — commercial address required</b>' +
-      '<p>One or more parts ship by LTL freight — a business address with a forklift, or pickup at the freight terminal. We\'ll call before anything ships.</p></div></div>'
+      '<p>One or more parts ship by LTL freight — a business address with a loading dock or forklift, or pickup at the freight terminal. We\'ll call before anything ships.</p></div></div>'
   };
 
   function alertHtml(kind) {

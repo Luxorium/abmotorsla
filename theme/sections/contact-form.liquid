@@ -79,15 +79,64 @@
             <input type="text" name="contact[vehicle]" placeholder="2012 Chevrolet Silverado 1500">
           </label>
 
-          <label class="field">
-            <span>Part you need (or Part ID)</span>
-            <input type="text" name="contact[part]" placeholder="Alternator — or Part ID 51250">
-          </label>
+          {%- comment -%}
+            Two jobs, one Shopify contact form. "Sell your car" used to link here and ask
+            the seller which part they needed — the wrong question, with none of the four
+            the yard actually has to know before it can quote: where the vehicle is, what
+            it reads, whether the title is clean, and whether it moves under its own power.
+          {%- endcomment -%}
+          {%- if section.settings.form_mode == 'vehicle' -%}
+            <div class="split" style="gap:14px;grid-template-columns:1fr 1fr;">
+              <label class="field">
+                <span>Where is it?</span>
+                <input type="text" name="contact[location]" placeholder="Town or ZIP" autocomplete="postal-code">
+              </label>
+              <label class="field">
+                <span>Mileage</span>
+                <input type="text" name="contact[mileage]" inputmode="numeric" placeholder="Approximate is fine">
+              </label>
+            </div>
 
-          <label class="field">
-            <span>Anything else</span>
-            <textarea name="contact[body]" placeholder="VIN, trim, engine size — whatever helps us match it."></textarea>
-          </label>
+            <div class="split" style="gap:14px;grid-template-columns:1fr 1fr;">
+              <label class="field">
+                <span>Title</span>
+                <select name="contact[title status]">
+                  <option value="">Choose one</option>
+                  <option>Clean title, in my name</option>
+                  <option>Title in someone else's name</option>
+                  <option>Salvage or rebuilt title</option>
+                  <option>Lien not yet released</option>
+                  <option>No title</option>
+                  <option>Not sure</option>
+                </select>
+              </label>
+              <label class="field">
+                <span>Does it run?</span>
+                <select name="contact[condition]">
+                  <option value="">Choose one</option>
+                  <option>Runs and drives</option>
+                  <option>Runs, but does not drive</option>
+                  <option>Does not run</option>
+                  <option>Not sure</option>
+                </select>
+              </label>
+            </div>
+
+            <label class="field">
+              <span>What's wrong with it</span>
+              <textarea name="contact[body]" placeholder="Wrecked front end, blown engine, flood, or just sitting — and anything already missing off it."></textarea>
+            </label>
+          {%- else -%}
+            <label class="field">
+              <span>Part you need (or Part ID)</span>
+              <input type="text" name="contact[part]" placeholder="Alternator — or Part ID 51250">
+            </label>
+
+            <label class="field">
+              <span>Anything else</span>
+              <textarea name="contact[body]" placeholder="VIN, trim, engine size — whatever helps us match it."></textarea>
+            </label>
+          {%- endif -%}
 
           <button type="submit" class="btn btn--lg btn--full">{{ section.settings.button_label }}</button>
           <p class="form-note" style="margin-top:10px;">
@@ -111,6 +160,16 @@
       "default": "<p>Not everything on the lot is listed online yet. Send us the vehicle and the part, and we'll check the yard and the interchange for you.</p>"
     },
     { "type": "text", "id": "button_label", "label": "Button label", "default": "Send it to the yard" },
+    {
+      "type": "select",
+      "id": "form_mode",
+      "label": "What this form asks for",
+      "options": [
+        { "value": "parts", "label": "A part the customer needs" },
+        { "value": "vehicle", "label": "A vehicle the customer is selling" }
+      ],
+      "default": "parts"
+    },
     { "type": "checkbox", "id": "show_map", "label": "Show map", "default": true }
   ],
   "presets": [{ "name": "Contact form" }]
