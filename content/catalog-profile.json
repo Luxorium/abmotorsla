@@ -19,10 +19,10 @@
   ],
   "condition": "Used, inspected",
   "condition_graded": "Grade {grade}",
-  "body_lead": "Genuine OEM {part_type}, removed from an inventoried donor vehicle and inspected.",
+  "body_lead": "Genuine OEM {part_type} from an inventoried donor vehicle at our yard, pulled and inspected before it ships.",
   "sold_by": "Sold by {origin}.",
-  "availability": "In stock and inspected at {origin}.",
-  "availability_plain": "In stock and inspected.",
+  "availability": "In stock at {origin}.",
+  "availability_plain": "In stock.",
   "fitment_note": "Verify fitment by year, options, and part/casting numbers where shown in the photos.",
   "part_type_notices": {
     "air bag": "This is a used, vehicle-specific air bag removed from a salvage vehicle; its prior replacement history has not been independently verified. A deployed air bag cannot be reused. Have an authorized repair facility verify its condition, OEM part number, vehicle compatibility, donor history, and recall status before installation."
@@ -38,6 +38,20 @@
     "written against it before CoreYard published anything here."
   ],
   "metafield_namespace": "abm",
+  "_availability": [
+    "Most of the yard is still on the donor vehicle when it is listed: 23,268 of 28,718",
+    "available parts sit in a yard section (SY-A..SY-G, A, AB, M, YARD) rather than a bin or",
+    "a rack, and 98.6% of live listings show donor-vehicle photographs because the part was",
+    "never photographed on its own. So the part is in stock and it is ours, but it has not",
+    "been pulled or inspected yet \u2014 that happens when the order comes in.",
+    "",
+    "'In stock and inspected' and 'removed from ... and inspected' both claimed otherwise on",
+    "every listing, against a product page that says the photos are of the donor vehicle.",
+    "The storefront now says the same thing everywhere: on our lot, pulled and inspected",
+    "within 1-2 business days.",
+    "",
+    "This republishes every product. See the note at the top of this file."
+  ],
   "_title": [
     "OEM stays out of the customer-facing title on purpose. It is a high-intent search term,",
     "but the title is already carrying four vehicles and a part type, and Google reads the",

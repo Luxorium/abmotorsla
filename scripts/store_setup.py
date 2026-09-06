@@ -214,9 +214,13 @@ def cmd_collections(gql: Shopify, specs: list[dict], replace_empty: bool, dry_ru
 
 
 # ─────────────────────────────────────────────────────────────────── pages ──
-def cmd_pages(gql: Shopify, site: dict) -> None:
+def cmd_pages(gql: Shopify, site: dict, dry_run: bool = False) -> None:
     for spec in site["pages"]:
         body = read_html(spec["file"])
+        if dry_run:
+            print(f"    /pages/{spec['handle']:<20} would update ({len(body)} chars)"
+                  + (", seo" if spec.get("seo_description") or spec.get("seo_title") else ""))
+            continue
         # There is no pageByHandle on QueryRoot; filter the connection instead.
         d = gql(
             "query($q:String!){ pages(first:1, query:$q){ nodes{ id handle } } }",
@@ -278,9 +282,12 @@ def cmd_pages(gql: Shopify, site: dict) -> None:
 
 
 # ──────────────────────────────────────────────────────────────── policies ──
-def cmd_policies(gql: Shopify, site: dict) -> None:
+def cmd_policies(gql: Shopify, site: dict, dry_run: bool = False) -> None:
     for spec in site["policies"]:
         body = read_html(spec["file"])
+        if dry_run:
+            print(f"    {spec['type']:<22} would set ({len(body)} chars)")
+            continue
         # ShopPolicyInput is keyed by policy type, not by id.
         d = gql(
             "mutation($p:ShopPolicyInput!){ shopPolicyUpdate(shopPolicy:$p){ shopPolicy{ type } userErrors{ field message } } }",
@@ -305,7 +312,7 @@ def menu_items(items: list[dict], base: str) -> list[dict]:
     return out
 
 
-def cmd_menus(gql: Shopify, site: dict) -> None:
+def cmd_menus(gql: Shopify, site: dict, dry_run: bool = False) -> None:
     d = gql("{ shop { primaryDomain { url } } }")
     base = d["shop"]["primaryDomain"]["url"].rstrip("/")
 
@@ -314,6 +321,10 @@ def cmd_menus(gql: Shopify, site: dict) -> None:
 
     for spec in site["menus"]:
         items = menu_items(spec["items"], base)
+        if dry_run:
+            verb = "would update" if spec["handle"] in existing else "would create"
+            print(f"    menu {spec['handle']:<20} {verb}, {len(items)} top-level items")
+            continue
         if spec["handle"] in existing:
             d = gql(
                 "mutation($id:ID!,$title:String!,$handle:String!,$items:[MenuItemUpdateInput!]!){"
@@ -514,18 +525,21 @@ def main() -> None:
         print("redirects:" + (" (dry run, nothing written)" if args.dry_run else ""))
         if require(scopes, "redirects"):
             cmd_redirects(gql, site, args.dry_run)
+    # These three took no dry_run at all, so `--pages --dry-run` announced a dry run in the
+    # banner and then wrote all nine pages to the live store. --dry-run is the gate this
+    # script tells you to use before applying; it has to hold for every subcommand.
     if args.pages or args.all:
-        print("pages:")
+        print("pages:" + (" (dry run, nothing written)" if args.dry_run else ""))
         if require(scopes, "pages"):
-            cmd_pages(gql, site)
+            cmd_pages(gql, site, args.dry_run)
     if args.policies or args.all:
-        print("policies:")
+        print("policies:" + (" (dry run, nothing written)" if args.dry_run else ""))
         if require(scopes, "policies"):
-            cmd_policies(gql, site)
+            cmd_policies(gql, site, args.dry_run)
     if args.menus or args.all:
-        print("menus:")
+        print("menus:" + (" (dry run, nothing written)" if args.dry_run else ""))
         if require(scopes, "menus"):
-            cmd_menus(gql, site)
+            cmd_menus(gql, site, args.dry_run)
     if args.activate:
         print("activate:")
         if require(scopes, "activate"):

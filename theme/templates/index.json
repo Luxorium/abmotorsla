@@ -46,7 +46,7 @@
         "eyebrow": "Used OEM parts · Amite, Louisiana",
         "heading": "The part you need is already on our lot.",
         "subheading": "Search {powerlink_count} parts in our yard inventory — {listed_count} listed online and growing. Save up to 50% off new, backed by a 90-day money-back warranty.",
-        "search_placeholder": "Try \"2012 Silverado alternator\" or a Part ID",
+        "search_placeholder": "Search by Part ID, year, make, model, or interchange #",
         "button_label": "Find My Part",
         "examples": "Engine, Transmission, Alternator, Tailgate, Wheel, Seat",
         "image": "shopify://shop_images/abm-storefront-hero.jpg"
@@ -206,7 +206,7 @@
       "settings": {
         "eyebrow": "Fresh inventory",
         "heading": "Just pulled",
-        "subheading": "The newest parts on our racks — every photo taken here, never a stock image.",
+        "subheading": "The newest parts on the lot — every photo taken here, never a stock image.",
         "count": 8,
         "columns": 4,
         "background": "section--paper",
@@ -375,7 +375,7 @@
         "c1": {
           "type": "check",
           "settings": {
-            "text": "Every part pulled and inspected on our own racks"
+            "text": "Every part on our own lot — pulled and inspected when you order"
           }
         },
         "c2": {

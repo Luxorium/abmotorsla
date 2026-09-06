@@ -2,7 +2,7 @@
   "general": {
     "search": {
       "title": "Search",
-      "placeholder": "Search by part, year, make, model, or stock #",
+      "placeholder": "Search by Part ID, year, make, model, or interchange #",
       "submit": "Search"
     },
     "cart": {
