@@ -10,7 +10,7 @@
       </div>
       {%- if section.settings.collection != blank -%}
         <a href="{{ section.settings.collection.url }}" class="link">
-          View all{% if section.settings.collection.products_count > 0 %} {{ section.settings.collection.products_count }}{% endif %} &rarr;
+          View all{% if section.settings.collection.products_count > 0 %} {%- render 'count-with-delimiters', count: section.settings.collection.products_count -%}{% endif %} &rarr;
         </a>
       {%- endif -%}
     </div>

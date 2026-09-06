@@ -7,7 +7,7 @@
         <div class="cart-item__media">{% if line.image %}{{ line.image | image_url: width: 200 | image_tag: alt: line.title }}{% endif %}</div>
         <div>
           <b>{{ line.title }}</b>
-          <div class="card__meta"><span>Stock <b>{{ line.sku }}</b></span><span>Qty {{ line.quantity }}</span></div>
+          <div class="card__meta"><span>Part&nbsp;ID <b>{{ line.sku }}</b></span><span>Qty {{ line.quantity }}</span></div>
         </div>
         <div style="text-align:right;"><span class="price">{{ line.final_line_price | money }}</span></div>
       </div>

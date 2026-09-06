@@ -163,7 +163,7 @@
 
         <div class="toolbar">
           <span class="toolbar__count">
-            {{ collection.products_count }} part{% if collection.products_count != 1 %}s{% endif %}
+            {%- render 'count-with-delimiters', count: collection.products_count -%} part{% if collection.products_count != 1 %}s{% endif %}
           </span>
           <div class="push">
             <label class="visually-hidden" for="SortBy">Sort by</label>

@@ -28,7 +28,7 @@
           {%- endif -%}
           <span class="cat-card__label">
             {{ collection.title }}
-            <small>{{ collection.products_count }} part{% if collection.products_count != 1 %}s{% endif %}</small>
+            <small>{%- render 'count-with-delimiters', count: collection.products_count -%} part{% if collection.products_count != 1 %}s{% endif %}</small>
           </span>
         </a>
       {%- endfor -%}
@@ -59,7 +59,7 @@
         {%- unless categories contains collection.handle or internal contains collection.handle -%}
           <li>
             <a href="{{ collection.url }}">{{ collection.title | remove: 'Used ' | remove: ' Parts' }}</a>
-            <small>{{ collection.products_count }}</small>
+            <small>{%- render 'count-with-delimiters', count: collection.products_count -%}</small>
           </li>
         {%- endunless -%}
       {%- endfor -%}

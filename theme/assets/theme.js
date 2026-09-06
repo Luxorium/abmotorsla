@@ -24,9 +24,23 @@
   // "General Motors - Foreign", "Miscellaneous - Trucks". Those strings are the tag the
   // catalogue filters on, so they cannot change, but they are internal vocabulary and a
   // shopper should not have to read it. Relabel for display only; the value stays the tag.
+  //
+  // The generic "X (y)" rewrite below is not enough on its own: "Miscellaneous (trucks)"
+  // is still a database bucket, and "General Motors (foreign)" names a division rather
+  // than the badge on the car — the models under it are Geo. Where a bucket has a name a
+  // shopper would actually recognise, say that instead.
+  var MAKE_LABELS = {
+    'Miscellaneous - Trucks': 'Other trucks',
+    'General Motors - Foreign': 'Geo',
+    'Nissan - Worldwide': 'Nissan (imported models)',
+    'American Motors': 'AMC'
+  };
+
   function makeLabel(name) {
-    var split = String(name).split(' - ');
-    return split.length === 2 ? split[0] + ' (' + split[1].toLowerCase() + ')' : name;
+    var key = String(name);
+    if (MAKE_LABELS[key]) return MAKE_LABELS[key];
+    var split = key.split(' - ');
+    return split.length === 2 ? split[0] + ' (' + split[1].toLowerCase() + ')' : key;
   }
 
   // Mirrors Shopify's own tag handleizing, which is what tag URLs are keyed on.
@@ -845,7 +859,7 @@
     mixed: '<div class="cart-alert">' +
       '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h11v10H3zM14 9h3.6l2.4 3v4h-6" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"/></svg>' +
       '<div><b>Your cart mixes a pickup-only part with parts we ship.</b>' +
-      '<p>Checkout can\'t combine the two. Place them as two separate orders, or call the yard and we\'ll do it for you in one go.</p></div></div>',
+      '<p>Collecting everything? Choose <b>Pickup</b> at checkout and the order stays together — pickup is free on every part. Need the rest shipped? Place the pickup-only part as its own order, or call the yard.</p></div></div>',
     pickup: '<div class="cart-alert">' +
       '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s7-5.6 7-11a7 7 0 1 0-14 0c0 5.4 7 11 7 11Z" fill="none" stroke="currentColor" stroke-width="1.9"/></svg>' +
       '<div><b>Pickup only — Amite, Louisiana</b>' +
@@ -889,7 +903,7 @@
         '<div><a href="' + esc(line.url) + '" style="font-weight:650;font-size:14px;line-height:1.35;display:block;">' +
         esc(line.product_title) + '</a>' +
         '<div class="card__meta" style="margin-top:6px;">' +
-        (line.sku ? '<span>Stock <b>' + esc(line.sku) + '</b></span>' : '') +
+        (line.sku ? '<span>Part&nbsp;ID <b>' + esc(line.sku) + '</b></span>' : '') +
         '<span>Qty ' + line.quantity + '</span></div>' +
         '<div class="card__meta" style="margin-top:4px;">' + shipLabel(shipOf(line)) + '</div>' +
         '<button type="button" class="small muted" data-cart-remove="' + (i + 1) +
@@ -935,8 +949,8 @@
         '<div class="cart-drawer__items">' + cartAlert(cart) + cartMarkup(cart) + '</div>' +
         (cart.item_count
           ? '<div class="cart-drawer__foot">' +
-            '<div class="cart-drawer__row"><span>Subtotal</span><b>' + money(cart.total_price) + '</b></div>' +
-            '<p class="small muted" style="margin:0 0 12px;">Shipping is a flat rate, shown on each item above.</p>' +
+            '<div class="cart-drawer__row"><span>Parts subtotal</span><b>' + money(cart.total_price) + '</b></div>' +
+            '<p class="small muted" style="margin:0 0 12px;">Shipping is a flat rate, shown on each item above. Shipping and any tax are added at checkout.</p>' +
             '<form action="/cart" method="post"><button type="submit" name="checkout" class="btn btn--lg btn--full">Check out</button></form>' +
             '<a href="/cart" class="btn btn--outline btn--full" style="margin-top:8px;">View cart</a>' +
             '</div>'

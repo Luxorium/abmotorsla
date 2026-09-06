@@ -118,7 +118,8 @@
           <span>Part&nbsp;ID&nbsp;<b>{{ p.selected_or_first_available_variant.sku }}</b></span>
         {%- endif -%}
         {%- assign miles = p.metafields.abm.mileage -%}
-        {%- if miles != blank -%}<span>{{ miles }} mi</span>{%- endif -%}
+        {%- comment -%} Same comma formatting the product page's Mileage row uses. {%- endcomment -%}
+        {%- if miles != blank -%}<span>{%- render 'count-with-delimiters', count: miles -%}&nbsp;mi</span>{%- endif -%}
       </div>
 
       <div class="card__foot">

@@ -58,7 +58,12 @@
               <div>
                 <a href="{{ line.url }}" style="font-weight:650;">{{ line.product.title }}</a>
                 <div class="card__meta" style="margin-top:6px;">
-                  {%- if line.sku != blank -%}<span>Stock <b>{{ line.sku }}</b></span>{%- endif -%}
+                  {%- comment -%}
+                    "Part ID", not "Stock" — the SKU is the yard's R#, while the donor's
+                    stock number is a different number shared by every part off that car.
+                    The product page settled on this name; the cart contradicted it.
+                  {%- endcomment -%}
+                  {%- if line.sku != blank -%}<span>Part&nbsp;ID <b>{{ line.sku }}</b></span>{%- endif -%}
                   {%- if line.product.type != blank -%}<span>{{ line.product.type }}</span>{%- endif -%}
                 </div>
                 <div class="card__meta" style="margin-top:4px;">
@@ -93,16 +98,26 @@
         </div>
 
         <aside class="cart-summary">
+          {%- comment -%}
+            "Subtotal" and "Total" both printed cart.total_price, so the cart showed the
+            same figure twice and called the second one the total — with the shipping row
+            directly between them saying it had not been worked out yet. Name what the
+            number actually is: parts only, before shipping and tax.
+          {%- endcomment -%}
           <div class="cart-summary__row">
-            <span>Subtotal</span>
+            <span>Parts subtotal</span>
             <span data-cart-total>{{ cart.total_price | money }}</span>
           </div>
           <div class="cart-summary__row">
             <span>Shipping</span>
             <span class="muted">Calculated at checkout</span>
           </div>
+          <div class="cart-summary__row">
+            <span>Tax</span>
+            <span class="muted">Calculated at checkout</span>
+          </div>
           <div class="cart-summary__row cart-summary__row--total">
-            <span>Total</span>
+            <span>Total before shipping &amp; tax</span>
             <span>{{ cart.total_price | money }}</span>
           </div>
 

@@ -13,7 +13,12 @@
           <p class="muted" style="margin:0;">{{ section.settings.subheading }}</p>
         {%- endif -%}
       </div>
-      {%- if section.settings.link_label != blank -%}
+      {%- comment -%}
+        Both, not just the label: "See all parts" is the schema default, so a section that
+        never set a URL still rendered the link — with href="" , which reloads the page the
+        shopper is already on. A link needs somewhere to go before it is worth showing.
+      {%- endcomment -%}
+      {%- if section.settings.link_label != blank and section.settings.link_url != blank -%}
         <a href="{{ section.settings.link_url }}" class="link">{{ section.settings.link_label }} &rarr;</a>
       {%- endif -%}
     </div>

@@ -3,7 +3,7 @@
     <div class="section section--tight">
       <h1 class="h1">
         {%- if search.performed -%}
-          {{ search.results_count }} result{% if search.results_count != 1 %}s{% endif %}
+          {%- render 'count-with-delimiters', count: search.results_count -%} result{% if search.results_count != 1 %}s{% endif %}
           {%- if search.terms != blank %} for &ldquo;{{ search.terms | escape }}&rdquo;{% endif -%}
         {%- else -%}
           Search the yard
@@ -42,7 +42,7 @@
 
       {%- if search.results_count > 0 -%}
         <div class="toolbar">
-          <span class="toolbar__count">Showing {{ search.results.size }} of {{ search.results_count }}</span>
+          <span class="toolbar__count">Showing {%- render 'count-with-delimiters', count: search.results.size -%} of {%- render 'count-with-delimiters', count: search.results_count -%}</span>
           <div class="push">
             <label class="visually-hidden" for="SearchSort">Sort by</label>
             <select id="SearchSort" class="select" data-sort>

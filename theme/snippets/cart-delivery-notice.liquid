@@ -22,14 +22,26 @@
 {%- case kind -%}
 
   {%- when 'mixed' -%}
+    {%- comment -%}
+      Two ways out of a mixed cart, and the cheaper one was missing: everything in the cart
+      can be picked up, because free pickup at the yard is offered on every part, not only
+      on the ones we refuse to ship. Splitting the order is only needed when the shopper
+      actually wants the shippable half delivered. Lead with the option that keeps the order
+      whole and costs nothing.
+    {%- endcomment -%}
     <div class="cart-alert">
       {% render 'icon', name: 'truck' %}
       <div>
         <b>Your cart mixes a pickup-only part with parts we ship.</b>
         <p>
-          Checkout can't combine the two &mdash; body panels and glass are pickup or local
-          delivery only, and the rest of your cart ships. Please place them as two separate
-          orders, or call the yard and we'll do it for you in one go.
+          Body panels and glass are pickup or local delivery only, so checkout can't ship
+          this cart as one order.
+        </p>
+        <p>
+          <b>Collecting everything?</b> Choose <b>Pickup</b> at checkout and the whole order
+          stays together &mdash; pickup at the yard is free on every part.
+          <b>Need the rest shipped?</b> Place the pickup-only part as its own order, or call
+          the yard and we'll do it for you in one go.
         </p>
         <p>
           {%- if settings.phone != blank -%}

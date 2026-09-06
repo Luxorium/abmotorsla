@@ -578,9 +578,13 @@ table { border-collapse: collapse; width: 100%; }
   font-size: 11px; font-weight: 800; letter-spacing: var(--tracking-caps);
   text-transform: uppercase; color: var(--green-dark);
 }
+/* Four lines, not three. The part type leads the card in .card__type, so the title's job
+   here is the vehicles and the variant — and side/position sit at the tail of it, after
+   every vehicle name. Titles grew (title_max_models 0 names every vehicle the budget
+   holds), so three lines clipped the distinguishing half of two otherwise identical cards. */
 .card__title {
   font-size: 14.5px; font-weight: 650; line-height: 1.35; margin: 0;
-  display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;
+  display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden;
 }
 .card__title a::after { content: ""; position: absolute; inset: 0; }
 .card__meta { display: flex; flex-wrap: wrap; gap: 6px 12px; font-size: 12px; color: var(--steel); }

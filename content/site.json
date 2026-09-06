@@ -393,6 +393,56 @@
       ]
     },
     {
+      "handle": "shop-parts",
+      "title": "Shop Parts",
+      "items": [
+        {
+          "title": "Shop All Parts",
+          "url": "/collections/just-pulled"
+        },
+        {
+          "title": "Engines & Transmissions",
+          "url": "/collections/engines-transmissions"
+        },
+        {
+          "title": "Body Parts & Doors",
+          "url": "/collections/body-parts"
+        },
+        {
+          "title": "Lights & Lamps",
+          "url": "/collections/lights"
+        },
+        {
+          "title": "Wheels & Tires",
+          "url": "/collections/wheels"
+        },
+        {
+          "title": "Interior Parts",
+          "url": "/collections/interior-parts"
+        },
+        {
+          "title": "Electrical & Modules",
+          "url": "/collections/electrical"
+        },
+        {
+          "title": "Brakes & ABS",
+          "url": "/collections/brakes"
+        },
+        {
+          "title": "Cooling & A/C",
+          "url": "/collections/cooling-a-c"
+        },
+        {
+          "title": "Suspension & Steering",
+          "url": "/collections/suspension-steering"
+        },
+        {
+          "title": "Fuel & Intake",
+          "url": "/collections/fuel-system"
+        }
+      ]
+    },
+    {
       "handle": "footer",
       "title": "Footer menu",
       "items": [

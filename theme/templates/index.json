@@ -330,7 +330,9 @@
       "settings": {
         "eyebrow": "Or start with your vehicle",
         "heading": "Shop by make",
-        "columns": 6
+        "columns": 6,
+        "link_label": "See all parts",
+        "link_url": "/collections/just-pulled"
       }
     },
     "steps": {
