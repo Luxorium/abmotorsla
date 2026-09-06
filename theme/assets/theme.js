@@ -169,7 +169,7 @@
     if (!products.length) {
       return '<div class="predictive__empty">' +
         '<b>No parts matched "' + esc(term) + '"</b>' +
-        'Not everything on the lot is listed yet — call the yard and we\'ll walk the racks for you.' +
+        'Not everything on the lot is listed yet — call the yard and we\'ll walk the lot for you.' +
         '</div>';
     }
     var rows = products.map(function (p) {
