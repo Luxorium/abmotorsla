@@ -816,28 +816,40 @@
     return Object.prototype.hasOwnProperty.call(rates, group);
   }
 
+  /* The cart-level delivery warning. Markup comes from window.ABM_SHIP.alerts, which
+     snippets/shipping-config.liquid renders from snippets/cart-delivery-notice.liquid —
+     the same snippet the /cart page uses, so the two carts say the same thing. The
+     literals below are only a fallback for a page that rendered without shipping-config. */
+  var ALERT_FALLBACK = {
+    mixed: '<div class="cart-alert">' +
+      '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h11v10H3zM14 9h3.6l2.4 3v4h-6" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"/></svg>' +
+      '<div><b>Your cart mixes a pickup-only part with parts we ship.</b>' +
+      '<p>Checkout can\'t combine the two. Place them as two separate orders, or call the yard and we\'ll do it for you in one go.</p></div></div>',
+    pickup: '<div class="cart-alert">' +
+      '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s7-5.6 7-11a7 7 0 1 0-14 0c0 5.4 7 11 7 11Z" fill="none" stroke="currentColor" stroke-width="1.9"/></svg>' +
+      '<div><b>Pickup only — Amite, Louisiana</b>' +
+      '<p>Choose <b>Pickup</b> at checkout. Ready at the counter within one business day.</p></div></div>',
+    freight: '<div class="cart-alert">' +
+      '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h11v10H3zM14 9h3.6l2.4 3v4h-6" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"/></svg>' +
+      '<div><b>Freight order — commercial address required</b>' +
+      '<p>One or more parts ship by LTL freight — a business address with a forklift, or pickup at the freight terminal. We\'ll call before anything ships.</p></div></div>'
+  };
+
+  function alertHtml(kind) {
+    var config = (window.ABM_SHIP && window.ABM_SHIP.alerts) || ALERT_FALLBACK;
+    return config[kind] || ALERT_FALLBACK[kind] || '';
+  }
+
+  /* Same three cases in the same order as main-cart.liquid: a pickup/ship mix can't
+     check out as one order; an all-pickup cart needs the Pickup method; a freight line
+     needs a commercial address. */
   function cartAlert(cart) {
     var groups = cart.items.map(shipOf);
     var pickup = groups.filter(function (g) { return g === 'pickup'; }).length;
     var shipped = groups.length - pickup;
-    if (pickup && shipped) {
-      return '<div class="cart-alert">' +
-        '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h11v10H3zM14 9h3.6l2.4 3v4h-6" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"/></svg>' +
-        '<div><b>This cart mixes a pickup-only part with parts we ship.</b>' +
-        '<p>Checkout can\'t combine them. Place two separate orders, or call the yard and we\'ll handle it.</p></div></div>';
-    }
-    if (pickup) {
-      return '<div class="cart-alert">' +
-        '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s7-5.6 7-11a7 7 0 1 0-14 0c0 5.4 7 11 7 11Z" fill="none" stroke="currentColor" stroke-width="1.9"/></svg>' +
-        '<div><b>Pickup only — Amite, Louisiana</b>' +
-        '<p>Choose <b>Pickup</b> at checkout. Ready at the counter within one business day.</p></div></div>';
-    }
-    if (groups.filter(isFreight).length) {
-      return '<div class="cart-alert">' +
-        '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h11v10H3zM14 9h3.6l2.4 3v4h-6" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"/></svg>' +
-        '<div><b>Freight order — commercial address required</b>' +
-        '<p>Must ship to a business address with a forklift, or pick up at a freight terminal. We\'ll call before anything ships.</p></div></div>';
-    }
+    if (pickup && shipped) { return alertHtml('mixed'); }
+    if (pickup) { return alertHtml('pickup'); }
+    if (groups.filter(isFreight).length) { return alertHtml('freight'); }
     return '';
   }
 

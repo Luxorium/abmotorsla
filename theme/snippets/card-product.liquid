@@ -21,6 +21,19 @@
   if eager
     assign loading = 'eager'
   endif
+
+  comment
+    Whether the featured image is really this listing's, and how many photos are — see
+    'photo-source'. 'none' means no photo, or one stray frame belonging to neither this
+    part nor a donor shoot; the card then shows the placeholder, not that frame.
+  endcomment
+  capture card_photos
+    render 'photo-source', product: p
+  endcapture
+  capture card_photo_count
+    render 'photo-source', product: p, style: 'count'
+  endcapture
+  assign card_photo_count = card_photo_count | plus: 0
 -%}
 
 {%- if p == blank -%}
@@ -34,7 +47,7 @@
 {%- else -%}
   <article class="card" data-product-id="{{ p.id }}">
     <div class="card__media{% if fit == 'contain' %} card__media--contain{% endif %}">
-      {%- if img -%}
+      {%- if img and card_photos != 'none' -%}
         {%- comment -%}
           Build the alt text first, for the reason header.liquid records: a `|` inside a
           filter argument does not belong to that argument. Liquid ends image_tag's argument
@@ -75,14 +88,15 @@
         A bare count implies the part is in the picture. Where the photographs are of the
         donor vehicle instead, the shopper has to learn that here, before the click — the
         product page already says so, but only after they have arrived expecting the part.
+        The count is only this listing's own frames (see the header block); a stray shot of
+        another part is neither shown above nor counted here.
       {%- endcomment -%}
-      {%- capture card_photos -%}{%- render 'photo-source', product: p -%}{%- endcapture -%}
       {%- if card_photos == 'donor' -%}
         <span class="card__count card__count--donor">
-          {%- if p.media.size > 1 -%}{{ p.media.size }} donor vehicle photos{%- else -%}Donor vehicle photo{%- endif -%}
+          {%- if card_photo_count > 1 -%}{{ card_photo_count }} donor vehicle photos{%- else -%}Donor vehicle photo{%- endif -%}
         </span>
-      {%- elsif p.media.size > 1 -%}
-        <span class="card__count">{{ p.media.size }} photos of the part</span>
+      {%- elsif card_photo_count > 1 -%}
+        <span class="card__count">{{ card_photo_count }} photos of the part</span>
       {%- endif -%}
     </div>
 

@@ -15,7 +15,15 @@
   'freight.rates' is also the list of groups that are actually freight. The drawer's
   commercial-address warning tests membership of it rather than "has a rate", because a
   paid parcel group has a rate too and must not raise that warning.
+
+  'alerts' is the cart-level delivery warning the drawer shows above the line items. It is
+  the same markup snippets/cart-delivery-notice.liquid renders on the /cart page — carried
+  here as a string because /cart.js gives theme.js no way to call a snippet. Wording lives
+  in that snippet; this only forwards it.
 {%- endcomment -%}
+{%- capture alert_mixed -%}{%- render 'cart-delivery-notice', kind: 'mixed' -%}{%- endcapture -%}
+{%- capture alert_pickup -%}{%- render 'cart-delivery-notice', kind: 'pickup' -%}{%- endcapture -%}
+{%- capture alert_freight -%}{%- render 'cart-delivery-notice', kind: 'freight' -%}{%- endcapture -%}
 <script>
   window.ABM_SHIP = {
     "freight": { "rates": { "freight299": "$299.99", "freight199": "$199.99" } },
@@ -31,6 +39,11 @@
       "ground14": "$14.99 shipping",
       "ground9": "$9.99 shipping",
       "free": "Free shipping"
+    },
+    "alerts": {
+      "mixed": {{ alert_mixed | strip | json }},
+      "pickup": {{ alert_pickup | strip | json }},
+      "freight": {{ alert_freight | strip | json }}
     }
   };
 </script>

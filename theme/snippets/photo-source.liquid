@@ -1,40 +1,84 @@
 {%- comment -%}
-  Outputs ONE word: what a listing's photographs actually show.
+  What a listing's photographs actually show — and how many of them are really this listing's.
 
       {%- capture photos -%}{%- render 'photo-source', product: product -%}{%- endcapture -%}
+      {%- capture n -%}{%- render 'photo-source', product: product, style: 'count' -%}{%- endcapture -%}
 
-  exact  the part itself was photographed
-  donor  the pictures are of the donor vehicle the part came off, not of the part
-  none   the listing has no photograph at all
+  style: 'kind' (default) — one word:
+    exact  the part itself was photographed
+    donor  the pictures are of the donor vehicle the part came off, not of the part
+    none   the listing has no usable photograph — nothing, or a single stray frame that
+           belongs to neither this part nor a donor shoot
 
-  Some parts are listed with photographs of the donor vehicle rather than of the part.
+  style: 'count' — an integer: how many of product.media share the featured image's
+    filename stem, i.e. come from the same shoot as the photo every surface vouches for.
+    Some listings have picked up stray images of other parts entirely — a screen listed
+    with alternator and engine photos. Those are not this listing's; they must not be
+    counted on a card or shown in the gallery, and the gallery/JSON-LD only ever trust
+    the featured image, which is checked here.
+
   CoreYard names every real part photo <R#>_NN.jpg, where R# is the SKU; a donor photo is
   named <donor-key>_NN.jpg instead, so its filename stem is not the SKU. That catches
   legacy listings predating CoreYard's donor-photo note as well as new ones (checked
   against every listing carrying that note — the stem never matched the SKU — and against
   parts photographed individually, where it always did).
 
+  A stem that is neither the SKU used to be trusted as a donor photo outright. It is not
+  enough: CoreYard keys donor photos by the source system's vehicle id, whose number space
+  overlaps R#, and a mis-shared frame from another part lands under the same <digits>_NN.jpg
+  name. A real donor shoot always attaches several frames (six by default), so 'donor' now
+  also needs the featured stem to appear on more than one of the listing's images; a lone
+  odd frame is 'none' — a placeholder the shopper can read, not a mirror or a visor
+  presented as the donor car. Fixing the association itself is CoreYard's job; this just
+  stops the storefront vouching for what it cannot identify.
+
   This lived inline in main-product.liquid, where only the product page could reach it, so
   a card, a search result and the Product structured data all went on claiming the photo
   was the part. Anything that shows a listing's photograph asks here first.
 {%- endcomment -%}
 {%- liquid
-  assign source = 'none'
+  assign style = style | default: 'kind'
+
+  assign featured_stem = ''
   if product.featured_media
-    assign source = 'exact'
-    comment
-      One variant per part, so the first variant's SKU is the part's R#. Fall back through
-      selected_or_first_available_variant because a card renders no variant of its own.
-    endcomment
-    assign sku = product.selected_or_first_available_variant.sku | default: product.variants.first.sku
-    if sku != blank
-      assign photo_url = product.featured_media | image_url: width: 1
-      assign photo_name = photo_url | split: '?' | first | split: '/' | last
-      assign photo_stem = photo_name | split: '_' | first
-      if photo_stem != blank and photo_stem != sku
-        assign source = 'donor'
+    assign featured_name = product.featured_media | image_url: width: 1 | split: '?' | first | split: '/' | last
+    assign featured_stem = featured_name | split: '_' | first
+  endif
+
+  comment
+    How many of the listing's media carry the featured image's stem — a real shoot attaches
+    several frames, a stray reused frame stands alone.
+  endcomment
+  assign own = 0
+  if featured_stem != blank
+    for media in product.media
+      assign media_name = media | image_url: width: 1 | split: '?' | first | split: '/' | last
+      assign media_stem = media_name | split: '_' | first
+      if media_stem == featured_stem
+        assign own = own | plus: 1
+      endif
+    endfor
+  endif
+
+  if style == 'count'
+    echo own
+  else
+    assign source = 'none'
+    if product.featured_media
+      assign source = 'exact'
+      comment
+        One variant per part, so the first variant's SKU is the part's R#. Fall back through
+        selected_or_first_available_variant because a card renders no variant of its own.
+      endcomment
+      assign sku = product.selected_or_first_available_variant.sku | default: product.variants.first.sku
+      if sku != blank and featured_stem != blank and featured_stem != sku
+        if own > 1
+          assign source = 'donor'
+        else
+          assign source = 'none'
+        endif
       endif
     endif
+    echo source
   endif
-  echo source
 -%}

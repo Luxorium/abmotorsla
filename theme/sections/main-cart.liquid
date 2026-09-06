@@ -6,43 +6,33 @@
   {%- liquid
     assign pickup_count = 0
     assign ship_count = 0
+    assign freight_count = 0
     for line in cart.items
-      capture line_ship
-        render 'shipping-class', product: line.product
+      capture line_carrier
+        render 'shipping-group', product: line.product, style: 'carrier'
       endcapture
-      if line_ship == 'pickup'
+      if line_carrier == 'pickup'
         assign pickup_count = pickup_count | plus: 1
       else
         assign ship_count = ship_count | plus: 1
+        if line_carrier == 'freight'
+          assign freight_count = freight_count | plus: 1
+        endif
       endif
     endfor
   -%}
 
+  {%- comment -%}
+    Same three cases, same order, same wording as the cart drawer (theme.js cartAlert) —
+    both render 'cart-delivery-notice'. 'mixed' wins over 'freight': a shopper told to split
+    the order meets the commercial-address rule on the freight-only cart that results.
+  {%- endcomment -%}
   {%- if pickup_count > 0 and ship_count > 0 -%}
-    <div class="cart-alert">
-      {% render 'icon', name: 'truck' %}
-      <div>
-        <b>Your cart mixes a pickup-only part with parts we ship.</b>
-        <p>
-          Checkout can't combine the two — body panels and glass are pickup or local delivery only,
-          and the rest of your cart ships. Please place them as two separate orders, or call the yard
-          and we'll do it for you in one go.
-        </p>
-        <p>
-          {%- assign phone_href = settings.phone | remove: '-' -%}
-          <a class="link" href="tel:{{ phone_href }}">{{ settings.phone }}</a> &middot;
-          <a class="link" href="{{ routes.root_url }}pages/freight">how pickup and freight work</a>
-        </p>
-      </div>
-    </div>
+    {% render 'cart-delivery-notice', kind: 'mixed' %}
   {%- elsif pickup_count > 0 -%}
-    <div class="cart-alert">
-      {% render 'icon', name: 'pin' %}
-      <div>
-        <b>Pickup only &mdash; Amite, Louisiana</b>
-        <p>Choose <b>Pickup</b> at checkout. We'll have it at the counter within one business day, Monday&ndash;Friday 8&ndash;5.</p>
-      </div>
-    </div>
+    {% render 'cart-delivery-notice', kind: 'pickup' %}
+  {%- elsif freight_count > 0 -%}
+    {% render 'cart-delivery-notice', kind: 'freight' %}
   {%- endif -%}
 
   {%- if cart.item_count == 0 -%}

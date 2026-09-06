@@ -1,0 +1,68 @@
+{%- comment -%}
+  The cart-level delivery warning — one wording, in one place.
+
+  Two carts show it and they have to say the same thing. The /cart page renders this
+  snippet directly (main-cart.liquid). The cart drawer is built client-side from /cart.js
+  and cannot call a snippet, so theme.js renders these same strings out of
+  window.ABM_SHIP.alerts, which snippets/shipping-config.liquid fills by rendering this
+  snippet once per case. Before this the drawer carried its own shorter copy and the two
+  drifted — a hood-plus-transmission cart reached checkout in the drawer with no
+  split-order warning at all.
+
+  kind (required): 'mixed' | 'pickup' | 'freight'
+    mixed   — the cart holds a pickup-only part AND a part we ship; checkout can't take both
+    pickup  — every line is pickup-only
+    freight — the cart holds an LTL freight part (shown once 'mixed' is ruled out)
+
+  The delivery group of a line comes from 'shipping-class', asked through 'shipping-group'
+  style 'carrier'. This snippet names no tag and no rate, so it stays clear of
+  scripts/check_contracts.py.
+{%- endcomment -%}
+{%- assign phone_href = settings.phone | remove: '-' | remove: ' ' -%}
+{%- case kind -%}
+
+  {%- when 'mixed' -%}
+    <div class="cart-alert">
+      {% render 'icon', name: 'truck' %}
+      <div>
+        <b>Your cart mixes a pickup-only part with parts we ship.</b>
+        <p>
+          Checkout can't combine the two &mdash; body panels and glass are pickup or local
+          delivery only, and the rest of your cart ships. Please place them as two separate
+          orders, or call the yard and we'll do it for you in one go.
+        </p>
+        <p>
+          {%- if settings.phone != blank -%}
+            <a class="link" href="tel:{{ phone_href }}">{{ settings.phone }}</a> &middot;
+          {%- endif -%}
+          <a class="link" href="{{ routes.root_url }}pages/freight">how pickup and freight work</a>
+        </p>
+      </div>
+    </div>
+
+  {%- when 'pickup' -%}
+    <div class="cart-alert">
+      {% render 'icon', name: 'pin' %}
+      <div>
+        <b>Pickup only &mdash; Amite, Louisiana</b>
+        <p>Choose <b>Pickup</b> at checkout. We'll have it at the counter within one business day, Monday&ndash;Friday 8&ndash;5.</p>
+      </div>
+    </div>
+
+  {%- when 'freight' -%}
+    <div class="cart-alert">
+      {% render 'icon', name: 'truck' %}
+      <div>
+        <b>Freight order &mdash; commercial address required</b>
+        <p>
+          One or more parts in your cart ship by LTL freight. They have to go to a business
+          address with a forklift, or you can pick up at the freight terminal nearest you.
+          We'll call to sort out delivery before anything ships.
+        </p>
+        <p>
+          <a class="link" href="{{ routes.root_url }}pages/freight">how freight works</a>
+        </p>
+      </div>
+    </div>
+
+{%- endcase -%}

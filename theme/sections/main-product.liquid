@@ -27,7 +27,12 @@
     {%- comment -%} ---------------------------------------------- gallery {%- endcomment -%}
     <div data-gallery>
       <div class="gallery__main">
-        {%- if product.featured_media -%}
+        {%- comment -%}
+          'none' means no featured image, or one lone frame that 'photo-source' could tie
+          to neither this part nor a donor shoot (a mis-shared photo of some other part).
+          Show the placeholder rather than present that frame as this listing's.
+        {%- endcomment -%}
+        {%- if product.featured_media and photo_source != 'none' -%}
           <img data-gallery-main
                src="{{ product.featured_media | image_url: width: 1400 }}"
                alt="{{ product.featured_media.alt | default: product.title | escape }}"
@@ -37,26 +42,45 @@
         {%- endif -%}
       </div>
 
-      {%- if product.media.size > 1 -%}
-        <div class="gallery__thumbs">
+      {%- comment -%}
+        Show only the images that actually depict this listing. Its own photos share the
+        featured image's filename stem — CoreYard names a real part shot <R#>_NN.jpg and a
+        donor shot <donor-key>_NN.jpg (see 'photo-source'). Some listings have also picked
+        up stray photos of other parts entirely; those are dropped here so the thumbnail
+        count, the "Photo N" labels and the note below all stay honest.
+      {%- endcomment -%}
+      {%- if product.media.size > 1 and product.featured_media and photo_source != 'none' -%}
+        {%- assign gallery_name = product.featured_media | image_url: width: 1 | split: '?' | first | split: '/' | last -%}
+        {%- assign gallery_stem = gallery_name | split: '_' | first -%}
+        {%- assign gallery_count = 0 -%}
+        {%- capture gallery_thumbs -%}
           {%- for media in product.media -%}
-            <button type="button" class="gallery__thumb"
-                    data-gallery-thumb
-                    data-full="{{ media | image_url: width: 1400 }}"
-                    data-alt="{{ media.alt | default: product.title | escape }}"
-                    aria-current="{% if forloop.first %}true{% else %}false{% endif %}"
-                    aria-label="Photo {{ forloop.index }}">
-              {{ media | image_url: width: 200 | image_tag: loading: 'lazy', alt: '' }}
-            </button>
+            {%- assign media_name = media | image_url: width: 1 | split: '?' | first | split: '/' | last -%}
+            {%- assign media_stem = media_name | split: '_' | first -%}
+            {%- if media_stem == gallery_stem -%}
+              {%- assign gallery_count = gallery_count | plus: 1 -%}
+              <button type="button" class="gallery__thumb"
+                      data-gallery-thumb
+                      data-full="{{ media | image_url: width: 1400 }}"
+                      data-alt="{{ media.alt | default: product.title | escape }}"
+                      aria-current="{% if gallery_count == 1 %}true{% else %}false{% endif %}"
+                      aria-label="Photo {{ gallery_count }}">
+                {{ media | image_url: width: 200 | image_tag: loading: 'lazy', alt: '' }}
+              </button>
+            {%- endif -%}
           {%- endfor -%}
-        </div>
+        {%- endcapture -%}
+        {%- if gallery_count > 1 -%}
+          <div class="gallery__thumbs">{{ gallery_thumbs }}</div>
+        {%- endif -%}
       {%- endif -%}
 
       {%- comment -%}
-        The gallery falls back to a placeholder when a part has no photo, and this note
-        would then promise a photo the shopper cannot see.
+        The gallery falls back to a placeholder when a part has no photo, or a photo the
+        theme cannot identify ('none'); this note would then promise a photo the shopper
+        cannot see, or vouch for one it should not.
       {%- endcomment -%}
-      {%- if product.featured_media -%}
+      {%- if product.featured_media and photo_source != 'none' -%}
       <p class="gallery__note">
         {%- if photos_are_donor -%}
           {% render 'icon', name: 'photo' %}
@@ -276,6 +300,8 @@
           assign span_low = 9999
           assign span_high = 0
           assign span_varies = false
+          assign note_varies = false
+          assign code_varies = false
           for row in fitment
             assign bounds = row.years | split: '-'
             assign row_low = bounds | first | plus: 0
@@ -300,11 +326,73 @@
               endif
             endif
           endfor
+          comment
+            A row's own span can also be a union of narrower runs — the Equinox took the
+            3.0L for 2010-2012 only. CoreYard states those years inside the note, and the
+            em dash between a year run and its qualifier is what marks one, so the caveat
+            covers this case too rather than sending a 2011 owner to a row-level year that
+            is true but not the whole answer.
+
+            code_varies: the note carries a hard match code — an engine size, a VIN
+            character, an option code. CoreYard's title builder strips the VIN *position*
+            ("4th digit") and has on occasion taken the code with it, so 54898 names "the
+            4th VIN digit" without saying it is Z. The value is never lost from abm.fitment,
+            so point the shopper at the column that still has it. Fixing the title is
+            CoreYard's (transform/seo.py _title_phrase).
+          endcomment
+          for row in fitment
+            assign row_note_l = row.note | downcase
+            if row.note contains '—'
+              assign note_varies = true
+            endif
+            if row_note_l contains 'vin ' or row_note_l contains ' digit' or row_note_l contains 'option '
+              assign code_varies = true
+            endif
+          endfor
+          comment
+            The title reads "<span> <first vehicle> <the rest> <part type>", so the lead
+            application's vehicle wears the whole span — "2007-2020 GMC Acadia" when the
+            Acadia itself stops in 2017 and 2020 is a Traverse. When the lead row is the
+            narrow one, name it and its real years instead of leaving the shopper to find
+            the mismatch in the table. Still from abm.fitment: no republish, self-correcting.
+          endcomment
+          assign lead_make = ''
+          assign lead_model = ''
+          assign lead_years = ''
+          for row in fitment
+            if row.years != blank
+              assign lead_make = row.make
+              assign lead_model = row.model
+              assign lead_years = row.years
+              break
+            endif
+          endfor
+          assign lead_bounds = lead_years | split: '-'
+          assign lead_low = lead_bounds | first | plus: 0
+          assign lead_high = lead_bounds | last | plus: 0
+          assign lead_narrower = false
+          if lead_make != blank and lead_low > 0 and span_high > 0
+            if lead_low > span_low or lead_high < span_high
+              assign lead_narrower = true
+            endif
+          endif
         -%}
-        {%- if span_varies -%}
+        {%- if lead_narrower -%}
           <p class="fitment__note small">
-            <b>Years differ by model.</b> The range in the title spans every vehicle below;
-            check the row for yours before you order.
+            <b>The title's {{ span_low }}&ndash;{{ span_high }} range spans every vehicle listed, not each one.</b>
+            The {{ lead_make }} {{ lead_model }} fits <b>{{ lead_years }}</b> &mdash; other years in
+            that range belong to other models. Check the table for yours before you order.
+          </p>
+        {%- elsif span_varies or note_varies -%}
+          <p class="fitment__note small">
+            <b>Years differ by model and version.</b> The range in the title spans every
+            vehicle below; check your own year — and the notes beside it — before you order.
+          </p>
+        {%- elsif code_varies -%}
+          <p class="fitment__note small">
+            <b>Some versions need a specific engine size or VIN code.</b> A title can't carry
+            every option — check the <b>Notes</b> column below and match it to your vehicle
+            before you order.
           </p>
         {%- endif -%}
         <table>
@@ -448,6 +536,14 @@
     <form method="post" action="{{ routes.cart_add_url }}" class="push" style="flex:1;display:flex;justify-content:flex-end;">
       <input type="hidden" name="id" value="{{ variant.id }}">
       <input type="hidden" name="quantity" value="1">
+      {%- comment -%}
+        Carry the shipping group, exactly as the main buybox form above does. Without it a
+        part added from the sticky bar lands in the cart with no _ship property, and the
+        drawer — which has only /cart.js to read and gets no tags back — falls through to
+        "Free shipping" for a freight or pickup-only part. The full cart reads the tag and
+        stays right either way, which is why this only showed in the drawer.
+      {%- endcomment -%}
+      <input type="hidden" name="properties[_ship]" value="{{ ship_group }}">
       <button type="submit" class="btn">Add to cart</button>
     </form>
   {%- else -%}
