@@ -205,11 +205,20 @@
 
     var timer = null;
     var lastTerm = '';
+    var renderedTerm = '';
 
     function lookup() {
       var term = input.value.trim();
       if (term.length < 2) { hidePredictive(panel); return; }
-      if (term === lastTerm) return;
+      if (term === lastTerm) {
+        // Refocusing or clearing and retyping a query should reopen its results.
+        // A pending request may still have the previous query's markup in the panel.
+        if (renderedTerm === term) {
+          panel.hidden = false;
+          input.setAttribute('aria-expanded', 'true');
+        }
+        return;
+      }
       lastTerm = term;
 
       var url = (window.ABM.routes.predictive || '/search/suggest') + '.json' +
@@ -233,6 +242,7 @@
           .then(function (data) {
             if (input.value.trim() !== term) return; // a newer keystroke won
             body.innerHTML = renderPredictive(data, term);
+            renderedTerm = term;
             announce(wrap, $$('.predictive__item', body).length, term);
             panel.hidden = false;
             input.setAttribute('aria-expanded', 'true');
@@ -554,6 +564,7 @@
     var current = (root.getAttribute('data-tags') || '').split('~').filter(Boolean);
     var makes = [];
     var data = null;
+    var makeOnly = {};
     var hasActive = false;
     var busy = false;
 
@@ -601,7 +612,16 @@
       return '';
     }
 
-    function sync() { applyBtn.disabled = !(makeSel.value || hasActive); }
+    function sync() {
+      // Some makes have model tags but no standalone make tag. Shopify silently
+      // drops an unknown tag, so require a model just as the homepage picker does.
+      var needsModel = makeSel.value && !makeOnly[makeSel.value] && !modelSel.value;
+      applyBtn.disabled = busy || !data || needsModel || !(makeSel.value || hasActive);
+      if (note) {
+        note.hidden = !needsModel;
+        note.textContent = needsModel ? 'Choose a model to see ' + makeLabel(makeSel.value) + ' parts.' : '';
+      }
+    }
 
     function models(make) { return Object.keys(data[make]).sort(); }
     function years(make, model) {
@@ -632,7 +652,7 @@
     on(yearSel, 'change', sync);
 
     on(applyBtn, 'click', function () {
-      if (busy) return;
+      if (busy || applyBtn.disabled) return;
       busy = true;
       applyBtn.disabled = true;
       window.location.href = urlFor(chosen());
@@ -643,6 +663,7 @@
       .then(function (json) {
         data = json.makes || {};
         // Longest first for prefix matching; the <select> itself stays alphabetical.
+        (json.make_only || Object.keys(data)).forEach(function (make) { makeOnly[make] = true; });
         makes = Object.keys(data).sort(function (a, b) { return b.length - a.length; });
 
         var active = null;

@@ -35,8 +35,12 @@ status=0
 run() {
   local label="$1"; shift
   echo "===== $label ====="
-  if ! "$PY" "$@"; then
-    echo "!! $label FAILED (exit $?)" >&2
+  # Capture the status before anything else runs: inside `if ! cmd; then`, $? is the
+  # status of the negation (always 0 there), not of the command that actually failed.
+  "$PY" "$@"
+  local code=$?
+  if [ "$code" -ne 0 ]; then
+    echo "!! $label FAILED (exit $code)" >&2
     status=1
   fi
 }

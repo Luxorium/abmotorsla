@@ -23,6 +23,7 @@ import argparse
 import collections
 import json
 import os
+import sys
 
 from _shopify import REPO, Shopify
 
@@ -34,8 +35,20 @@ CHUNK = 200
 PROFILE_NAMES = {
     "A": "Freight — Oversize",
     "B": "Freight — Heavy",
+    "GROUND44": "UPS Ground $44.99",
+    "GROUND34": "UPS Ground $34.99",
+    "GROUND29": "UPS Ground $29.99",
+    "GROUND24": "UPS Ground $24.99",
+    "GROUND19": "UPS Ground $19.99",
+    "GROUND14": "UPS Ground $14.99",
+    "GROUND9": "UPS Ground $9.99",
     "PICKUP": "Local Pickup Only",
 }
+
+# What a rate is called at checkout, when freight.json does not say. Every group started as
+# freight, so that is the default; a parcel group sets "rate_name" instead, because a buyer
+# told "Flat Rate Freight" on a glove box waits for a truck that is never coming.
+DEFAULT_RATE_NAME = "Flat Rate Freight"
 
 
 def profile_name(freight: dict, group_id: str) -> str:
@@ -47,6 +60,12 @@ def profile_name(freight: dict, group_id: str) -> str:
             f"the profile in Shopify admin under that exact name)."
         )
     return name
+
+
+def rate_name(freight: dict, group_id: str) -> str:
+    """The shopper-facing name of this group's rate, from freight.json."""
+    body = freight["groups"][group_id]
+    return str(body.get("rate_name") or DEFAULT_RATE_NAME).strip()
 
 
 PROFILES_Q = """
@@ -98,8 +117,20 @@ SCAN_Q = """
 query($cursor: String) {
   products(first: 250, after: $cursor) {
     pageInfo { hasNextPage endCursor }
-    nodes { productType variants(first: 1) { nodes { id } } }
+    nodes { id productType tags variants(first: 1) { nodes { id } } }
   }
+}
+"""
+
+TAGS_ADD_M = """
+mutation($id: ID!, $tags: [String!]!) {
+  tagsAdd(id: $id, tags: $tags) { userErrors { field message } }
+}
+"""
+
+TAGS_REMOVE_M = """
+mutation($id: ID!, $tags: [String!]!) {
+  tagsRemove(id: $id, tags: $tags) { userErrors { field message } }
 }
 """
 
@@ -137,25 +168,75 @@ def default_group(freight: dict) -> str:
     raise RuntimeError("content/freight.json has no group marked \"default\": true")
 
 
-def classify(freight: dict, product_type: str) -> str:
-    """Which group a part type falls in.
+def group_order(freight: dict) -> list[str]:
+    """Every group, most restrictive first: the match order, then the default."""
+    return match_order(freight) + [default_group(freight)]
 
-    Deliberately the same rule CoreYard applies when it writes the ship:* tag — first
-    substring hit in declared order, else the default. If these two ever disagree, a part is
-    labelled one way on the page and charged another at checkout.
+
+def by_tag(freight: dict) -> dict[str, str]:
+    """ship:* tag -> group id."""
+    return {str(body.get("tag", "")).strip().lower(): gid
+            for gid, body in (freight.get("groups") or {}).items()
+            if isinstance(body, dict) and body.get("tag")}
+
+
+def classify_by_type(freight: dict, product_type: str) -> str:
+    """Which group a *product type* falls in: first substring hit, else the default.
+
+    Only a fallback. It reads the product type Shopify holds, which is the renderer's
+    expansion of the yard's own abbreviation — "Engine Motor Assembly" for "ENGINE
+    ASSEMBLY" — so a pattern written against the yard's spelling cannot match here. That is
+    exactly how engines came to be tagged freight and quoted free, and why the tag below
+    wins whenever there is one.
     """
     t = (product_type or "").lower()
     groups = freight["groups"]
     for gid in match_order(freight):
-        for pattern in groups[gid].get("match") or []:
-            if pattern in t:
-                return gid
+        body = groups[gid]
+        if any(word in t for word in body.get("exclude") or []):
+            continue
+        if any(pattern in t for pattern in body.get("match") or []):
+            return gid
     return default_group(freight)
 
 
-def scan(gql: Shopify, freight: dict):
+def classify(freight: dict, product_type: str, tags: list[str] | None = None) -> str:
+    """Which group a product falls in.
+
+    The ship:* tag is the answer, not a second opinion: CoreYard wrote it during the publish
+    that created the product, from the yard's own part-type spelling and the same
+    freight.json this reads. This side sees only what Shopify holds, so re-deriving the
+    classification here is a copy of the rule that is free to disagree with the copy the
+    shopper is actually shown — a part labelled one way on the page and charged another at
+    checkout, which is the failure the one-file contract exists to prevent.
+
+    Read in match order so a product still carrying a stale tag beside a current one lands
+    in the more restrictive group; a product with no ship:* tag at all — one loaded before
+    the contract existed — falls back to its product type.
+    """
+    present = {t.strip().lower() for t in (tags or [])}
+    for gid in group_order(freight):
+        tag = str(freight["groups"][gid].get("tag", "")).strip().lower()
+        if tag and tag in present:
+            return gid
+    return classify_by_type(freight, product_type)
+
+
+def scan(gql: Shopify, freight: dict, by_type: bool = False):
+    """Sort every variant into its shipping group.
+
+    Normally the ship:* tag CoreYard wrote is the answer. ``by_type`` ignores the tag and
+    re-derives the group from the product type against freight.json's own match patterns.
+    That is the catch-up when a re-tag of the whole catalogue is not practical: the tag
+    still drives the product-page wording, but the delivery profile a shopper is charged
+    from is put right immediately. Only correct while freight.json's patterns cover both the
+    yard spelling and the renderer's expansion of it, which is what check_contracts.py and
+    the offline classification check verify.
+    """
     buckets = collections.defaultdict(list)
     counts = collections.Counter()
+    untagged = 0
+    tags_seen = set(by_tag(freight))
     cursor = None
     while True:
         conn = gql(SCAN_Q, {"cursor": cursor})["products"]
@@ -163,13 +244,79 @@ def scan(gql: Shopify, freight: dict):
             vs = p["variants"]["nodes"]
             if not vs:
                 continue
-            g = classify(freight, p["productType"])
+            tags = p.get("tags") or []
+            if not tags_seen.intersection(t.strip().lower() for t in tags):
+                untagged += 1
+            g = (classify_by_type(freight, p["productType"]) if by_type
+                 else classify(freight, p["productType"], tags))
             buckets[g].append(vs[0]["id"])
             counts[g] += 1
         if not conn["pageInfo"]["hasNextPage"]:
             break
         cursor = conn["pageInfo"]["endCursor"]
-    return buckets, counts
+    return buckets, counts, untagged
+
+
+def retag(gql: Shopify, freight: dict, *, apply: bool) -> None:
+    """Correct only the ship:* tag on each product, from its product type.
+
+    CoreYard writes this tag during the publish that creates a product. This is the
+    catch-up for a catalogue published before freight.json split into the current tiers,
+    when re-running the full sync is not practical: the delivery profile a shopper is
+    charged from is already put right by ``--by-type``; this brings the tag the product
+    page reads into line with it.
+
+    It adds the one right ship: tag and removes any other ship: tag. Every tag outside the
+    ship: namespace is left exactly as it is — vehicle, interchange and hand-added tags are
+    never touched.
+    """
+    tag_of = {gid: str(b.get("tag", "")).strip()
+              for gid, b in freight["groups"].items()}
+    planned: list[tuple] = []
+    scanned = 0
+    cursor = None
+    while True:
+        conn = gql(SCAN_Q, {"cursor": cursor})["products"]
+        for p in conn["nodes"]:
+            scanned += 1
+            tags = [t.strip() for t in (p.get("tags") or []) if t.strip()]
+            want = tag_of[classify_by_type(freight, p["productType"])]
+            have = [t for t in tags if t.lower().startswith("ship:")]
+            if [t.lower() for t in have] == [want.lower()]:
+                continue
+            add = [] if want.lower() in {t.lower() for t in have} else [want]
+            remove = [t for t in have if t.lower() != want.lower()]
+            planned.append((p["id"], want, add, remove))
+        if not conn["pageInfo"]["hasNextPage"]:
+            break
+        cursor = conn["pageInfo"]["endCursor"]
+
+    moved = collections.Counter(want for _, want, _, _ in planned)
+    print(f"scanned {scanned} products; {len(planned)} need their ship: tag corrected")
+    for tag, n in sorted(moved.items(), key=lambda kv: -kv[1]):
+        print(f"    -> {tag:<20} {n}")
+    if not planned:
+        print("every product already carries the right ship: tag.")
+        return
+    if not apply:
+        print("\nplan only — nothing written. Re-run with --retag --apply.")
+        return
+
+    done = failed = 0
+    for pid, _want, add, remove in planned:
+        try:
+            if remove:
+                gql(TAGS_REMOVE_M, {"id": pid, "tags": remove})
+            if add:
+                gql(TAGS_ADD_M, {"id": pid, "tags": add})
+            done += 1
+        except RuntimeError as exc:
+            failed += 1
+            if failed <= 5:
+                print(f"  ! {pid}: {exc}", file=sys.stderr)
+        if (done + failed) % 200 == 0 or (done + failed) == len(planned):
+            print(f"  {done + failed}/{len(planned)}")
+    print(f"re-tagged {done} product(s), {failed} failed.")
 
 
 def zone(name: str, rates: list[dict]) -> dict:
@@ -283,10 +430,10 @@ def reconcile_variants(gql: Shopify, profile_id: str, desired: set[str], current
 
 
 def managed_profile_payload(profile: dict, location: dict, name: str,
-                            price: str | None, description: str) -> dict:
+                            price: str | None, description: str, rate: str) -> dict:
     payload = {"name": name}
     group = location_group_for(profile, location["id"])
-    rates = [flat("Flat Rate Freight", price, description)] if price else []
+    rates = [flat(rate, price, description)] if price else []
     if group is None:
         create = {"locations": [location["id"]]}
         if rates:
@@ -315,7 +462,7 @@ def managed_profile_payload(profile: dict, location: dict, name: str,
         group_input["zonesToCreate"] = [zone("Domestic", rates)]
     else:
         methods = target["methodDefinitions"]["nodes"]
-        matching = [m for m in methods if m["name"].casefold() == "flat rate freight"]
+        matching = [m for m in methods if m["name"].casefold() == rate.casefold()]
         keep = matching[0] if matching else None
         remove = [m["id"] for m in methods if m is not keep]
         if remove:
@@ -323,7 +470,7 @@ def managed_profile_payload(profile: dict, location: dict, name: str,
         zone_input = {"id": target["zone"]["id"]}
         if keep:
             zone_input["methodDefinitionsToUpdate"] = [
-                flat("Flat Rate Freight", price, description, keep["id"])
+                flat(rate, price, description, keep["id"])
             ]
         else:
             zone_input["methodDefinitionsToCreate"] = rates
@@ -368,7 +515,7 @@ def default_profile_payload(profile: dict, location: dict) -> dict:
     return payload
 
 
-def verify_rates(profile: dict, location: dict, price: str | None) -> None:
+def verify_rates(profile: dict, location: dict, price: str | None, rate: str) -> None:
     if not profile_has_location(profile, location["id"]):
         raise RuntimeError(f"{profile['name']}: selected location is not assigned")
     zones = all_zones(profile)
@@ -379,8 +526,8 @@ def verify_rates(profile: dict, location: dict, price: str | None) -> None:
     if len(zones) != 1:
         raise RuntimeError(f"{profile['name']}: expected one shipping zone, found {len(zones)}")
     methods = zones[0]["methodDefinitions"]["nodes"]
-    if len(methods) != 1 or methods[0]["name"] != "Flat Rate Freight":
-        raise RuntimeError(f"{profile['name']}: freight rate reconciliation failed")
+    if len(methods) != 1 or methods[0]["name"] != rate:
+        raise RuntimeError(f"{profile['name']}: {rate} rate reconciliation failed")
     provider = methods[0].get("rateProvider") or {}
     amount = ((provider.get("price") or {}).get("amount"))
     if amount is None or abs(float(amount) - float(price)) > 0.001:
@@ -391,6 +538,13 @@ def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--plan", action="store_true")
     ap.add_argument("--apply", action="store_true")
+    ap.add_argument("--by-type", action="store_true", dest="by_type",
+                    help="assign each variant's delivery profile from its product type "
+                         "against freight.json, not from the ship:* tag it currently "
+                         "carries (use when the catalogue has not been re-tagged yet)")
+    ap.add_argument("--retag", action="store_true",
+                    help="correct only the ship:* tag on each product from its product "
+                         "type; touches no other tag and no delivery profile")
     ap.add_argument("--location", default=os.environ.get("ABM_LOCATION"),
                     help="active Shopify location name or GraphQL ID (or set ABM_LOCATION)")
     args = ap.parse_args()
@@ -401,16 +555,23 @@ def main() -> None:
     gql = Shopify.from_env()
     freight = json.loads((REPO / "content" / "freight.json").read_text())
 
+    if args.retag:
+        retag(gql, freight, apply=args.apply)
+        return
+
     profiles = gql(PROFILES_Q)["deliveryProfiles"]["nodes"]
     by_name = {p["name"]: p for p in profiles}
     default = next(p for p in profiles if p["default"])
     loc = choose_location(gql, args.location)
     print(f"using location: {loc['name']} ({loc['id']})")
 
-    print("scanning catalog…")
-    buckets, counts = scan(gql, freight)
+    print("scanning catalog…" + ("  (classifying by product type)" if args.by_type else ""))
+    buckets, counts, untagged = scan(gql, freight, by_type=args.by_type)
     total = sum(counts.values())
     print(f"  {total} products")
+    if untagged:
+        print(f"  {untagged} carry no ship:* tag and were classified from their product "
+              f"type; run `bin/coreyard sync` so CoreYard tags them")
     for gid, body in freight["groups"].items():
         price = body.get("price")
         rate = f"${price}" if price and price != "0.00" else (
@@ -425,19 +586,19 @@ def main() -> None:
     # admin-internal — shoppers see rate names — so matching what exists costs nothing.
     plan = [
         (profile_name(freight, gid), gid, freight["groups"][gid].get("price"),
-         freight["groups"][gid].get("note") or "")
+         freight["groups"][gid].get("note") or "", rate_name(freight, gid))
         for gid in match_order(freight)
     ]
     print("\nprofiles to create/update:")
-    for name, group, price, _ in plan:
+    for name, group, price, note, rate in plan:
         profile = by_name.get(name)
         current = profile_variants(gql, profile["id"]) if profile else set()
         desired = set(buckets[group])
         if profile:
-            managed_profile_payload(profile, loc, name, price, _)
+            managed_profile_payload(profile, loc, name, price, note, rate)
         state = "exists" if profile else "create"
-        rate = f"${price}" if price else "no shipping rates (pickup only)"
-        print(f"  {name:<30}{state:<8}{counts[group]:>5} products   {rate}")
+        charge = f"${price} as {rate!r}" if price else "no shipping rates (pickup only)"
+        print(f"  {name:<30}{state:<8}{counts[group]:>5} products   {charge}")
         print(f"    associate {len(desired - current)}, dissociate {len(current - desired)}")
 
     default_rates = [
@@ -469,15 +630,16 @@ def main() -> None:
     print("  local pickup enabled")
 
     # Reconcile restrictive profiles before changing the default profile.
-    for name, group, price, desc in plan:
+    for name, group, price, desc, rate in plan:
         desired = set(buckets[group])
-        rates = [flat("Flat Rate Freight", price, desc)] if price else []
+        rates = [flat(rate, price, desc)] if price else []
         if name in by_name:
             profile = by_name[name]
             pid = profile["id"]
             current = profile_variants(gql, pid)
             print(f"\n{name}: reconciling settings and {len(desired)} products…")
-            update_profile(gql, pid, managed_profile_payload(profile, loc, name, price, desc), name)
+            update_profile(gql, pid,
+                           managed_profile_payload(profile, loc, name, price, desc, rate), name)
         else:
             body = {
                 "name": name,
@@ -500,7 +662,7 @@ def main() -> None:
     print("\nverifying final delivery profiles…")
     refreshed = gql(PROFILES_Q)["deliveryProfiles"]["nodes"]
     refreshed_by_name = {p["name"]: p for p in refreshed}
-    for name, group, price, _ in plan:
+    for name, group, price, _, rate in plan:
         profile = refreshed_by_name[name]
         actual = profile_variants(gql, profile["id"])
         desired = set(buckets[group])
@@ -509,7 +671,7 @@ def main() -> None:
                 f"{name}: verification failed ({len(desired - actual)} missing, "
                 f"{len(actual - desired)} stale)"
             )
-        verify_rates(profile, loc, price)
+        verify_rates(profile, loc, price, rate)
         print(f"  {name}: {len(actual)} products, rates correct")
 
     refreshed_default = next(p for p in refreshed if p["default"])

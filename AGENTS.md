@@ -1,5 +1,30 @@
 # Repository Guidelines
 
+## Agent Workflow
+
+These instructions apply to Codex using GPT-6 Astra (`gpt-6-astra`) and to other coding
+agents. Select the model in Codex configuration; this file does not select it. Keep the
+configured reasoning effort unless the user requests a change. `CLAUDE.md` supplements
+this file with operational context; this section owns the shared working conventions.
+
+Treat requests to change or fix something as instructions to implement and verify it.
+Carry authorized work through to completion, making routine choices from repository and
+conversation context. Incorporate follow-up corrections and questions while continuing
+the original task unless the user replaces it. Preserve unrelated working-tree edits.
+
+Follow explicit user instructions over repository or skill guidance, within system and
+developer constraints. Reuse authorization already given for the same action and scope.
+If a missing decision blocks work, complete independent preparation first, then explain
+the concrete decision needed. When a file causes a pause, link it and quote the relevant
+instruction. The live-store and publishing safeguards below still apply.
+
+Use concise progress updates and report the outcome, verification, and any remaining
+blocker plainly. Batch independent read-only checks when useful; use subagents only when
+the user or governing session instructions request them. For documentation-only edits,
+review the diff, check references, and run `git diff --check`. For other edits, run the
+applicable checks below; repeat or broaden them only for a change, failure, or unresolved
+concern. Add tests when they establish meaningful behavior.
+
 ## Project Structure & Module Organization
 
 This repository is the **storefront**: the Shopify theme, the brand, the copy, and A&B's own
@@ -24,8 +49,9 @@ makes the next sync republish everything it covers.
 
 `content/freight.json` is the single shipping contract. The delivery profiles, the `ship:*`
 tag CoreYard writes, the theme's warnings and the order sync's fulfillment rules all derive
-from it. Only `snippets/shipping-class.liquid` and `snippets/shipping-group.liquid` may know
-a `ship:*` tag or a rate; `scripts/check_contracts.py` enforces that.
+from it. Only `snippets/shipping-class.liquid`, `snippets/shipping-group.liquid` and
+`snippets/shipping-config.liquid` (which hands the same map to the cart drawer's JavaScript)
+may know a `ship:*` tag or a rate; `scripts/check_contracts.py` enforces that.
 
 ## Build, Test, and Development Commands
 

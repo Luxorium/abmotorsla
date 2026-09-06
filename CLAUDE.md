@@ -1,7 +1,10 @@
-# Claude Code Guidance
+# Agent Operational Guidance
 
-Read and follow `AGENTS.md` for the repository's contributor conventions. This file
-highlights the operational rules most important when making changes with Claude Code.
+Read [AGENTS.md](AGENTS.md), including its Agent Workflow section, for the shared
+contributor and execution conventions used with GPT-6 Astra in Codex and other coding
+agents. This file retains its `CLAUDE.md` name for Claude Code discovery and adds
+operational context. Keep shared workflow guidance in `AGENTS.md` to avoid conflicting
+copies. Model selection belongs in the coding client's configuration.
 
 ## Repository Context
 
@@ -45,9 +48,11 @@ theme reads the tag; the order sync derives from the same `fulfillment` keys whi
 ShipStation owns. Changing a tag republishes the parts it covers, because the tag is part of
 the rendered product.
 
-Only `snippets/shipping-class.liquid` (tag → group) and `snippets/shipping-group.liquid`
-(wording and rates) may encode any of it. Everything else renders one of them, and
-`scripts/check_contracts.py` fails the build otherwise.
+Only `snippets/shipping-class.liquid` (tag → group), `snippets/shipping-group.liquid`
+(wording and rates) and `snippets/shipping-config.liquid` (the same map handed to
+JavaScript, because the cart drawer is built from `/cart.js`, which returns no tags) may
+encode any of it. Everything else renders one of them, and `scripts/check_contracts.py`
+fails the build otherwise — it checks all three against `content/freight.json`.
 
 The theme reads structured metafields in the `abm` namespace — `fitment`, `grade`,
 `mileage`, `condition` — rather than parsing CoreYard's generated titles or tags. Keep it
@@ -60,7 +65,8 @@ CLI. Scripts here share `scripts/_shopify.py` for auth, retry, throttling and pa
 
 ## Validation
 
-Run checks appropriate to the changed files:
+For documentation-only changes, review the diff, check references, and run
+`git diff --check`. Otherwise, run checks appropriate to the changed files:
 
 ```bash
 python3 scripts/check_contracts.py        # config, theme and generated assets agree
