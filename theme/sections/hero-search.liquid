@@ -1,6 +1,14 @@
 {%- liquid
+  # `collections.all.products_count` is a denormalised counter Shopify updates lazily: it
+  # read 25,001 against a store holding 26,735 published products. The metafield is written
+  # every minute by `coreyard counts` from the yard's own listable set, which reconcile
+  # keeps equal to what is published, so it is both fresher and exact. Liquid's own count
+  # stays as the fallback for a store that does not run that job.
   assign source_count = shop.metafields.abm.source_inventory_count.value
-  assign listed_count = collections['all'].products_count
+  assign listed_count = shop.metafields.abm.source_inventory_count.value
+  if listed_count == blank
+    assign listed_count = collections['all'].products_count
+  endif
 -%}
 {%- capture source_count_text -%}
   {%- if source_count != blank -%}
@@ -100,7 +108,7 @@
       "type": "textarea",
       "id": "subheading",
       "label": "Subheading",
-      "default": "Search {powerlink_count} parts in our yard inventory — {listed_count} listed online and growing. Save up to 50% off new, backed by a 90-day money-back warranty."
+      "default": "Search {listed_count} parts listed online and growing. Save up to 50% off new, backed by a 90-day money-back warranty."
     },
     { "type": "text", "id": "search_placeholder", "label": "Search placeholder", "default": "Search by Part ID, year, make, model, or interchange #" },
     { "type": "text", "id": "button_label", "label": "Button label", "default": "Find My Part" },
@@ -119,7 +127,7 @@
           "default": "manual",
           "options": [
             { "value": "manual", "label": "Manual value" },
-            { "value": "powerlink", "label": "Yard inventory (source database)" },
+            { "value": "powerlink", "label": "Yard inventory (not shown by default)" },
             { "value": "listed", "label": "Listed online" }
           ]
         },
@@ -132,8 +140,7 @@
     {
       "name": "Hero + part search",
       "blocks": [
-        { "type": "stat", "settings": { "count_source": "powerlink", "value": "25,000+", "label": "In yard inventory" } },
-        { "type": "stat", "settings": { "count_source": "listed", "value": "22,000+", "label": "Listed online" } },
+        { "type": "stat", "settings": { "count_source": "listed", "value": "22,000+", "label": "Parts listed online" } },
         { "type": "stat", "settings": { "value": "Since 1958", "label": "Family run" } },
         { "type": "stat", "settings": { "value": "10 acres", "label": "Of inventory" } },
         { "type": "stat", "settings": { "value": "90 days", "label": "Money-back warranty" } }

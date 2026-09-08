@@ -3,14 +3,6 @@
     "hero": {
       "type": "hero-search",
       "blocks": {
-        "s1": {
-          "type": "stat",
-          "settings": {
-            "count_source": "powerlink",
-            "value": "25,000+",
-            "label": "In yard inventory"
-          }
-        },
         "s2": {
           "type": "stat",
           "settings": {
@@ -24,7 +16,7 @@
           "settings": {
             "count_source": "listed",
             "value": "22,000+",
-            "label": "Listed online"
+            "label": "Parts listed online"
           }
         },
         "s4": {
@@ -37,7 +29,6 @@
         }
       },
       "block_order": [
-        "s1",
         "s3",
         "s2",
         "s4"
@@ -45,7 +36,7 @@
       "settings": {
         "eyebrow": "Used OEM parts · Amite, Louisiana",
         "heading": "The part you need is already on our lot.",
-        "subheading": "Search {powerlink_count} parts in our yard inventory — {listed_count} listed online and growing. Save up to 50% off new, backed by a 90-day money-back warranty.",
+        "subheading": "Search {listed_count} parts listed online and growing. Save up to 50% off new, backed by a 90-day money-back warranty.",
         "search_placeholder": "Search by Part ID, year, make, model, or interchange #",
         "button_label": "Find My Part",
         "examples": "Engine, Transmission, Alternator, Tailgate, Wheel, Seat",
@@ -330,9 +321,7 @@
       "settings": {
         "eyebrow": "Or start with your vehicle",
         "heading": "Shop by make",
-        "columns": 6,
-        "link_label": "See all parts",
-        "link_url": "/collections/just-pulled"
+        "columns": 6
       }
     },
     "steps": {
