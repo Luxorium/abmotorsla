@@ -29,11 +29,20 @@
   // is still a database bucket, and "General Motors (foreign)" names a division rather
   // than the badge on the car — the models under it are Geo. Where a bucket has a name a
   // shopper would actually recognise, say that instead.
+  //
+  // "KIA" is a different defect with the same symptom. It is not a regional split: the
+  // renderer's title-caser treats any token of three characters or fewer as an acronym,
+  // which is right for BMW, GMC and MDX and wrong for the one make that is an ordinary
+  // word. The catalogue is fixed at the source, but a tag is only respelled when its
+  // product is republished, so the picker would keep shouting until every Kia part had
+  // been through a sync. Relabelling costs nothing here: the tag handleizes to "kia"
+  // either way, so the link this option builds is byte-identical.
   var MAKE_LABELS = {
     'Miscellaneous - Trucks': 'Other trucks',
     'General Motors - Foreign': 'Geo',
     'Nissan - Worldwide': 'Nissan (imported models)',
-    'American Motors': 'AMC'
+    'American Motors': 'AMC',
+    'KIA': 'Kia'
   };
 
   function makeLabel(name) {
@@ -393,7 +402,7 @@
       var needsModel = makeSel.value && !makeOnly[makeSel.value];
       submit.disabled = !makeSel.value || (needsModel && !modelSel.value);
       if (hint) hint.textContent = (needsModel && !modelSel.value)
-        ? 'Choose a model to see ' + makeSel.value + ' parts.'
+        ? 'Choose a model to see ' + makeLabel(makeSel.value) + ' parts.'
         : defaultHint;
     }
   });
