@@ -29,6 +29,12 @@
     "Keep the freight lists tight — a freight charge on a part that could have gone ground",
     "loses the sale outright.",
     "",
+    "Air bags (part type 253) are in GROUND14 at $14.99. They were shipping FREE before",
+    "2026-09-09, so this recovers the cost rather than starting to ship something new —",
+    "but an undeployed air bag is a DOT Class 9 pyrotechnic (UN3268, Safety devices),",
+    "and a flat parcel rate assumes the carrier hazmat agreement that covers it. If that",
+    "agreement ever lapses the right move is PICKUP, not a higher ground tier.",
+    "",
     "PICKUP matches hitches on the bare word 'hitch'. Do NOT write 'tow' — part type 528 is",
     "'Strut Tower Brace', and 'tow' is a substring of 'tower', which would make every strut",
     "tower brace pickup-only. 'hitch' is unique to part type 586 across the whole part-type",
@@ -234,7 +240,7 @@
       "handle": "ground-14",
       "price": "14.99",
       "rate_name": "UPS Ground",
-      "note": "Smaller mechanical and electrical parts — mirrors, window regulators, alternators, starters, radios, pumps, boosters, ABS units, AC compressors, gauges and reservoirs. Ships UPS Ground for a flat $14.99 anywhere in the lower 48. Goes to a house like any parcel — no commercial address, no forklift. Free pickup at the yard.",
+      "note": "Smaller mechanical and electrical parts — mirrors, window regulators, alternators, starters, radios, pumps, boosters, ABS units, air bags, AC compressors, gauges and reservoirs. Ships UPS Ground for a flat $14.99 anywhere in the lower 48. Goes to a house like any parcel — no commercial address, no forklift. Free pickup at the yard.",
       "fulfillment": "external",
       "match": [
         "door window reg, fr",
@@ -244,6 +250,7 @@
         "side view mirror",
         "side view door mirror",
         "seat belt, front",
+        "air bag",
         "trans shift assy",
         "transmission gear shifter",
         "speedo head",
@@ -281,7 +288,7 @@
       "handle": "ground-9",
       "price": "9.99",
       "rate_name": "UPS Ground",
-      "note": "Small light parts — fuel filler doors, interior mirrors, sun visors, master cylinders, control modules, cabin fuse boxes, front door switches and climate controls. Ships UPS Ground for a flat $9.99 anywhere in the lower 48. Goes to a house like any parcel — no commercial address, no forklift. Free pickup at the yard.",
+      "note": "Small light parts — fuel filler doors, interior mirrors, sun visors, master cylinders, control modules, cabin fuse boxes, front door switches, blower motors and climate controls. Ships UPS Ground for a flat $9.99 anywhere in the lower 48. Goes to a house like any parcel — no commercial address, no forklift. Free pickup at the yard.",
       "fulfillment": "external",
       "match": [
         "fuel filler door",
@@ -300,7 +307,8 @@
         "front door switch",
         "front door window master switch",
         "temp control",
-        "temperature climate control"
+        "temperature climate control",
+        "blower motor"
       ]
     },
     "GROUND": {
