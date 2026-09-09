@@ -540,12 +540,6 @@ table { border-collapse: collapse; width: 100%; }
 }
 .card__placeholder svg { width: 44%; height: 44%; }
 .card__flags { position: absolute; top: 8px; left: 8px; display: flex; flex-direction: column; gap: 5px; align-items: flex-start; }
-.card__count {
-  position: absolute; bottom: 8px; right: 8px;
-  padding: 3px 8px; border-radius: 4px;
-  background: rgba(12, 15, 17, 0.78); color: #fff;
-  font-size: 11px; font-weight: 700;
-}
 /* The fitment table's own caveat, when the title's span is wider than some of the rows
    beneath it. Amber: it qualifies a claim the shopper has already read. */
 .fitment__note {
@@ -564,14 +558,6 @@ table { border-collapse: collapse; width: 100%; }
 }
 .vehicle-route p { margin: 0; font-size: 14.5px; }
 .vehicle-route a { color: var(--green-darker); text-decoration: underline; text-underline-offset: 2px; }
-
-/* A donor-vehicle listing says so on the card, not only after the click. Amber rather
-   than the neutral slab, because it is a caveat and not a feature, and it has to survive
-   sitting on top of a photograph of a car. */
-.card__count--donor {
-  background: rgba(126, 74, 6, 0.9); max-width: calc(100% - 16px);
-  text-align: right; line-height: 1.25;
-}
 
 .card__body { display: flex; flex-direction: column; flex: 1 1 auto; padding: 12px 13px 14px; gap: 8px; }
 .card__type {

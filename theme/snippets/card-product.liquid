@@ -23,17 +23,13 @@
   endif
 
   comment
-    Whether the featured image is really this listing's, and how many photos are — see
-    'photo-source'. 'none' means no photo, or one stray frame belonging to neither this
-    part nor a donor shoot; the card then shows the placeholder, not that frame.
+    Whether the featured image is really this listing's — see 'photo-source'. 'none' means
+    no photo, or one stray frame belonging to neither this part nor a donor shoot; the card
+    then shows the placeholder, not that frame.
   endcomment
   capture card_photos
     render 'photo-source', product: p
   endcapture
-  capture card_photo_count
-    render 'photo-source', product: p, style: 'count'
-  endcapture
-  assign card_photo_count = card_photo_count | plus: 0
 -%}
 
 {%- if p == blank -%}
@@ -85,19 +81,15 @@
       </div>
 
       {%- comment -%}
-        A bare count implies the part is in the picture. Where the photographs are of the
-        donor vehicle instead, the shopper has to learn that here, before the click — the
-        product page already says so, but only after they have arrived expecting the part.
-        The count is only this listing's own frames (see the header block); a stray shot of
-        another part is neither shown above nor counted here.
+        No photo count and no donor caption on the card. Both were removed deliberately:
+        the count told a shopper nothing they could not see by looking, and carrying it on
+        every card made the grid read as cluttered and over-explained.
+
+        The disclosure this replaced is NOT lost — 'main-product' states it in full ("These
+        photos are of the donor vehicle this part was removed from — not the part itself"),
+        which is the surface a shopper has to pass before they can buy. If a pre-click
+        caveat is ever wanted back, add it here, not as a count.
       {%- endcomment -%}
-      {%- if card_photos == 'donor' -%}
-        <span class="card__count card__count--donor">
-          {%- if card_photo_count > 1 -%}{{ card_photo_count }} donor vehicle photos{%- else -%}Donor vehicle photo{%- endif -%}
-        </span>
-      {%- elsif card_photo_count > 1 -%}
-        <span class="card__count">{{ card_photo_count }} photos of the part</span>
-      {%- endif -%}
     </div>
 
     <div class="card__body">
