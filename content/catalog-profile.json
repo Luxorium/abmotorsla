@@ -83,7 +83,7 @@
     "Catalogue spread today: A 17,550, C 1,895, B 605, ungraded 6,808. An ungraded part",
     "says nothing rather than guessing."
   ],
-  "title_grade": "{grade} Grade",
+  "title_grade": "",
   "_title_mileage": [
     "Donor mileage in the title, but only where mileage is what a buyer judges the part by.",
     "The source system stamps the donor's odometer on every part pulled from it, so a door",
