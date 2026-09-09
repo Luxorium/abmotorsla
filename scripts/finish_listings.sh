@@ -32,6 +32,16 @@ esac
 cd "$REPO" || exit 1
 status=0
 
+# A run boundary, in the format `coreyard doctor` looks for ("=== coreyard").
+#
+# This log lives in CoreYard's out/ and doctor's check_logs reads it, but the check can only
+# scope to the newest run when it can find where that run starts. With no header it falls
+# back to a blunt "last 150 lines", so a failure keeps being re-reported until enough later
+# output pushes it out of that window. On 2026-09-09 a transient throttle here stayed lit as
+# a WARN for two hours after the very next run had succeeded. One line fixes it: doctor now
+# reads only from here down, so a fixed problem stops being reported on the next clean run.
+printf '=== coreyard finish @ %s ===\n' "$(date +%Y-%m-%dT%H:%M:%S)"
+
 run() {
   local label="$1"; shift
   echo "===== $label ====="
