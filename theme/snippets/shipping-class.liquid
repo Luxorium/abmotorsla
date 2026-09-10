@@ -13,8 +13,8 @@
   that creates the product, so a part is never live wearing the wrong one. scripts/
   check_contracts.py verifies the group ids and tags below still match that file.
 
-  The ids are pickup | freight299 | freight199 | ground44 | ground34 | ground29 | ground24 |
-  ground19 | ground14 | ground9 | free. They are STABLE IDENTIFIERS, not rate declarations:
+  The ids are pickup | freight299 | freight199 | ground49 | ground44 | ground34 | ground29 |
+  ground24 | ground19 | ground14 | ground9 | free. They are STABLE IDENTIFIERS, not rate declarations:
   they travel in the hidden _ship cart line property and sit inside shopper carts right now,
   so renaming one would make an in-flight cart fall back to the free-shipping wording. If a
   rate changes, change the rate in 'shipping-group' and in content/freight.json; leave the
@@ -28,6 +28,8 @@
     assign group = 'freight299'
   elsif product.tags contains 'ship:freight-199'
     assign group = 'freight199'
+  elsif product.tags contains 'ship:ground-49'
+    assign group = 'ground49'
   elsif product.tags contains 'ship:ground-44'
     assign group = 'ground44'
   elsif product.tags contains 'ship:ground-34'
