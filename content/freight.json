@@ -130,6 +130,16 @@
         "carrier assembly"
       ]
     },
+    "GROUND49": {
+      "tag": "ship:ground-49",
+      "label": "UPS Ground — $49.99",
+      "handle": "ground-49",
+      "price": "49.99",
+      "rate_name": "UPS Ground",
+      "note": "Ships UPS Ground for a flat $49.99 anywhere in the lower 48. Goes to a house like any parcel — no commercial address, no forklift. Free pickup at the yard.",
+      "fulfillment": "external",
+      "_reachable_only_by_override": "Deliberately absent from 'match_order', so no part type can fall into this tier. It exists for per-part 'ship' overrides in STORE_CATALOG_OVERRIDES_FILE: a part that does not ship like the rest of its type, named one R# at a time. Give it a 'match' list only if this rate should ever apply to a whole part type."
+    },
     "GROUND44": {
       "tag": "ship:ground-44",
       "label": "UPS Ground — $44.99",
