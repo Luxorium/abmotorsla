@@ -35,6 +35,7 @@ CHUNK = 200
 PROFILE_NAMES = {
     "A": "Freight — Oversize",
     "B": "Freight — Heavy",
+    "GROUND49": "UPS Ground $49.99",
     "GROUND44": "UPS Ground $44.99",
     "GROUND34": "UPS Ground $34.99",
     "GROUND29": "UPS Ground $29.99",

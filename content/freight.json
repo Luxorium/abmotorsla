@@ -138,7 +138,7 @@
       "rate_name": "UPS Ground",
       "note": "Ships UPS Ground for a flat $49.99 anywhere in the lower 48. Goes to a house like any parcel — no commercial address, no forklift. Free pickup at the yard.",
       "fulfillment": "external",
-      "_reachable_only_by_override": "Deliberately absent from 'match_order', so no part type can fall into this tier. It exists for per-part 'ship' overrides in STORE_CATALOG_OVERRIDES_FILE: a part that does not ship like the rest of its type, named one R# at a time. Give it a 'match' list only if this rate should ever apply to a whole part type."
+      "_reachable_only_by_override": "Carries no 'match' patterns, so no part type can fall into this tier -- neither CoreYard's classify (which skips a group with no patterns) nor setup_shipping.py's classify_by_type (whose any() over an empty list is False). It IS listed in match_order, because setup_shipping.py reads that list to build delivery profiles and to map ship:* tags back to groups; a tier left out of it gets no profile, and a product wearing its tag silently falls back to its product type's rate -- the page saying one price and checkout charging another. Reachable only by a per-part 'ship' override in STORE_CATALOG_OVERRIDES_FILE. Give it a 'match' list only if this rate should ever apply to a whole part type."
     },
     "GROUND44": {
       "tag": "ship:ground-44",
@@ -343,6 +343,7 @@
     "PICKUP",
     "A",
     "B",
+    "GROUND49",
     "GROUND44",
     "GROUND34",
     "GROUND29",
