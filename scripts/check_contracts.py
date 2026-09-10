@@ -168,7 +168,7 @@ def check_order_policy(check: Checker, shipping: dict) -> None:
 
 
 def check_theme(check: Checker, shipping: dict) -> None:
-    """The theme's copy of the contract matches, and only the two snippets hold one."""
+    """The theme's copy of the contract matches, and only the three snippets hold one."""
     groups = shipping.get("groups") or {}
     declared = {str(b.get("tag", "")).lower()
                 for b in groups.values() if isinstance(b, dict) and b.get("tag")}
@@ -211,10 +211,14 @@ def check_theme(check: Checker, shipping: dict) -> None:
         if extra:
             check.fail(f"{snippet.relative_to(REPO)} quotes {sorted(extra)}, which is not a "
                        f"price in freight.json ({sorted(prices)})")
+        # Checked for BOTH snippets, not just the wording one. This was gated to
+        # shipping-group, so shipping-config could silently omit a rate — and it did:
+        # ground49 was missing from the drawer's label map while every other check passed,
+        # which is half of how a $49.99 part came to advertise free shipping.
         absent = prices - quoted
-        if snippet is GROUP_SNIPPET and absent:
-            check.fail(f"freight.json charges {sorted(absent)} but shipping-group.liquid "
-                       f"never says so")
+        if absent:
+            check.fail(f"freight.json charges {sorted(absent)} but "
+                       f"{snippet.relative_to(REPO).name} never says so")
     check.note(f"theme: rates {sorted(prices)} match, ship:* tested in one snippet")
 
 
