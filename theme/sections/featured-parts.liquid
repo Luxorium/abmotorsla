@@ -9,8 +9,24 @@
         {%- endif -%}
       </div>
       {%- if section.settings.collection != blank -%}
+        {%- liquid
+          # `products_count` is the same denormalised Shopify counter called out in
+          # hero-search.liquid: it lags the real catalogue size (seen live showing 25,001
+          # against a hero reading 26,966 from the same minute). `all` and `just-pulled`
+          # are defined to list every in-stock part, not a subset — see content/site.json's
+          # "the whole catalogue ... not a selection" — so for those two only, prefer the
+          # same minute-fresh count the hero uses. Any other, genuinely narrower collection
+          # keeps its own real count untouched.
+          assign view_all_count = section.settings.collection.products_count
+          if section.settings.collection.handle == 'all' or section.settings.collection.handle == 'just-pulled'
+            assign accurate_count = shop.metafields.abm.source_inventory_count.value
+            if accurate_count != blank
+              assign view_all_count = accurate_count
+            endif
+          endif
+        -%}
         <a href="{{ section.settings.collection.url }}" class="link">
-          View all{% if section.settings.collection.products_count > 0 %} {%- render 'count-with-delimiters', count: section.settings.collection.products_count -%}{% endif %} &rarr;
+          View all{% if view_all_count > 0 %} {%- render 'count-with-delimiters', count: view_all_count -%}{% endif %} &rarr;
         </a>
       {%- endif -%}
     </div>
