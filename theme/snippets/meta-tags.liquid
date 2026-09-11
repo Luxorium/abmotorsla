@@ -28,7 +28,12 @@
 {%- endcomment -%}
 {%- if request.page_type == 'product' and product.featured_media -%}
   <meta property="og:image" content="https:{{ product.featured_media | image_url: width: 1200 }}">
-  <meta property="og:image:alt" content="{{ product.title | escape }}">
+  {%- comment -%}
+    featured_media.alt carries CoreYard's donor-vs-part distinction — the gallery below
+    reads it the same way. Falling back to product.title alone relabels a donor-vehicle
+    photo as the part itself in the social preview, which is what shipped before this.
+  {%- endcomment -%}
+  <meta property="og:image:alt" content="{{ product.featured_media.alt | default: product.title | escape }}">
   <meta property="og:price:amount" content="{{ product.price | divided_by: 100.0 }}">
   <meta property="og:price:currency" content="{{ cart.currency.iso_code }}">
 {%- elsif settings.logo -%}
