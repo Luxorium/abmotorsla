@@ -41,8 +41,10 @@
       {%- endif -%}
 
       {%- if search.results_count > 0 -%}
+        {%- assign range_first = paginate.current_offset | plus: 1 -%}
+        {%- assign range_last = paginate.current_offset | plus: search.results.size -%}
         <div class="toolbar">
-          <span class="toolbar__count">Showing {% render 'count-with-delimiters', count: search.results.size %} of {% render 'count-with-delimiters', count: search.results_count %}</span>
+          <span class="toolbar__count">Showing {% if range_first == range_last %}{% render 'count-with-delimiters', count: range_first %}{% else %}{% render 'count-with-delimiters', count: range_first %}&ndash;{% render 'count-with-delimiters', count: range_last %}{% endif %} of {% render 'count-with-delimiters', count: search.results_count %}</span>
           <div class="push">
             <label class="visually-hidden" for="SearchSort">Sort by</label>
             <select id="SearchSort" class="select" data-sort>
