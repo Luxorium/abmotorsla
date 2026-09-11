@@ -270,7 +270,7 @@
       {%- if vehicle_list.size > 0 -%}
         <p class="small muted" style="margin-top:14px;">
           Browse more parts:
-          {%- for link in vehicle_list -%}
+          {% for link in vehicle_list -%}
             {{ link }}{%- unless forloop.last %} &middot; {% endunless -%}
           {%- endfor -%}
         </p>
