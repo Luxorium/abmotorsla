@@ -28,7 +28,7 @@
           {%- endif -%}
           <span class="cat-card__label">
             {{ collection.title }}
-            <small>{%- render 'count-with-delimiters', count: collection.products_count -%} part{% if collection.products_count != 1 %}s{% endif %}</small>
+            <small>{%- render 'count-with-delimiters', count: collection.products_count %} part{% if collection.products_count != 1 %}s{% endif %}</small>
           </span>
         </a>
       {%- endfor -%}
